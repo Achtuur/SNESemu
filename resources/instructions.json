@@ -1,0 +1,2562 @@
+[
+    {
+        "name": "ADC",
+        "addr_mode": "DP Indexed Indirect,X",
+        "code_name": "AdcDPIX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "61",
+        "group": "arithmetic",
+        "desc": "Add With Carry (DP Indexed Indirect,X)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "Stack Relative",
+        "code_name": "AdcSR",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "63",
+        "group": "arithmetic",
+        "desc": "Add With Carry (Stack Relative)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "Direct Page",
+        "code_name": "AdcDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "65",
+        "group": "arithmetic",
+        "desc": "Add With Carry (Direct Page)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "DP Indirect Long",
+        "code_name": "AdcDPLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "67",
+        "group": "arithmetic",
+        "desc": "Add With Carry (DP Indirect Long)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "Immediate",
+        "code_name": "AdcImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "69",
+        "group": "arithmetic",
+        "desc": "Add With Carry (Immediate)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "Absolute",
+        "code_name": "AdcAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "6D",
+        "group": "arithmetic",
+        "desc": "Add With Carry (Absolute)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "Absolute Long",
+        "code_name": "AdcAbsLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "6F",
+        "group": "arithmetic",
+        "desc": "Add With Carry (Absolute Long)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "DP Indirect Indexed, Y",
+        "code_name": "AdcDPIY",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "71",
+        "group": "arithmetic",
+        "desc": "Add With Carry (DP Indirect Indexed, Y)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "DP Indirect",
+        "code_name": "AdcDPI",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "72",
+        "group": "arithmetic",
+        "desc": "Add With Carry (DP Indirect)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "SR Indirect Indexed,Y",
+        "code_name": "AdcSRY",
+        "bytes": "2",
+        "cycles": "7",
+        "op": "73",
+        "group": "arithmetic",
+        "desc": "Add With Carry (SR Indirect Indexed,Y)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "AdcDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "75",
+        "group": "arithmetic",
+        "desc": "Add With Carry (DP Indexed,X)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "DP Indirect Long Indexed, Y",
+        "code_name": "AdcDPIYLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "77",
+        "group": "arithmetic",
+        "desc": "Add With Carry (DP Indirect Long Indexed, Y)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "Absolute Indexed,Y",
+        "code_name": "AdcAbsY",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "79",
+        "group": "arithmetic",
+        "desc": "Add With Carry (Absolute Indexed,Y)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "AdcAbsX",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "7D",
+        "group": "arithmetic",
+        "desc": "Add With Carry (Absolute Indexed,X)"
+    },
+    {
+        "name": "ADC",
+        "addr_mode": "Absolute Long Indexed,X",
+        "code_name": "AdcAbsXLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "7F",
+        "group": "arithmetic",
+        "desc": "Add With Carry (Absolute Long Indexed,X)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "DP Indexed Indirect,X",
+        "code_name": "AndDPIX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "21",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (DP Indexed Indirect,X)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "Stack Relative",
+        "code_name": "AndSR",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "23",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (Stack Relative)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "Direct Page",
+        "code_name": "AndDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "25",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (Direct Page)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "DP Indirect Long",
+        "code_name": "AndDPLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "27",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (DP Indirect Long)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "Immediate",
+        "code_name": "AndImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "29",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (Immediate)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "Absolute",
+        "code_name": "AndAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "2D",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (Absolute)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "Absolute Long",
+        "code_name": "AndAbsLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "2F",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (Absolute Long)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "DP Indirect Indexed, Y",
+        "code_name": "AndDPIY",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "31",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (DP Indirect Indexed, Y)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "DP Indirect",
+        "code_name": "AndDPI",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "32",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (DP Indirect)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "SR Indirect Indexed,Y",
+        "code_name": "AndSRY",
+        "bytes": "2",
+        "cycles": "7",
+        "op": "33",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (SR Indirect Indexed,Y)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "AndDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "35",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (DP Indexed,X)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "DP Indirect Long Indexed, Y",
+        "code_name": "AndDPIYLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "37",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (DP Indirect Long Indexed, Y)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "Absolute Indexed,Y",
+        "code_name": "AndAbsY",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "39",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (Absolute Indexed,Y)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "AndAbsX",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "3D",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (Absolute Indexed,X)"
+    },
+    {
+        "name": "AND",
+        "addr_mode": "Absolute Long Indexed,X",
+        "code_name": "AndAbsXLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "3F",
+        "group": "logical",
+        "desc": "AND Accumulator with Memory (Absolute Long Indexed,X)"
+    },
+    {
+        "name": "ASL",
+        "addr_mode": "Direct Page",
+        "code_name": "AslDP",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "06",
+        "group": "arithmetic",
+        "desc": "Arithmetic Shift Left (Direct Page)"
+    },
+    {
+        "name": "ASL",
+        "addr_mode": "Accumulator",
+        "code_name": "Asl",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "0A",
+        "group": "arithmetic",
+        "desc": "Arithmetic Shift Left (Accumulator)"
+    },
+    {
+        "name": "ASL",
+        "addr_mode": "Absolute",
+        "code_name": "AslAbs",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "0E",
+        "group": "arithmetic",
+        "desc": "Arithmetic Shift Left (Absolute)"
+    },
+    {
+        "name": "ASL",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "AslDPX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "16",
+        "group": "arithmetic",
+        "desc": "Arithmetic Shift Left (DP Indexed,X)"
+    },
+    {
+        "name": "ASL",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "AslAbsX",
+        "bytes": "3",
+        "cycles": "7",
+        "op": "1E",
+        "group": "arithmetic",
+        "desc": "Arithmetic Shift Left (Absolute Indexed,X)"
+    },
+    {
+        "name": "BLT",
+        "addr_mode": "Program Counter Relative",
+        "code_name": "Blt",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "90",
+        "group": "branch",
+        "desc": "Branch if Carry Clear (Program Counter Relative)"
+    },
+    {
+        "name": "BGE",
+        "addr_mode": "Program Counter Relative",
+        "code_name": "Bge",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "B0",
+        "group": "branch",
+        "desc": "Branch if Carry Set (Program Counter Relative)"
+    },
+    {
+        "name": "BEQ",
+        "addr_mode": "Program Counter Relative",
+        "code_name": "Beq",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "F0",
+        "group": "branch",
+        "desc": "Branch if Equal (Program Counter Relative)"
+    },
+    {
+        "name": "BIT",
+        "addr_mode": "Direct Page",
+        "code_name": "BitDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "24",
+        "group": "logical",
+        "desc": "Test Bits (Direct Page)"
+    },
+    {
+        "name": "BIT",
+        "addr_mode": "Absolute",
+        "code_name": "BitAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "2C",
+        "group": "logical",
+        "desc": "Test Bits (Absolute)"
+    },
+    {
+        "name": "BIT",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "BitDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "34",
+        "group": "logical",
+        "desc": "Test Bits (DP Indexed,X)"
+    },
+    {
+        "name": "BIT",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "BitAbsX",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "3C",
+        "group": "logical",
+        "desc": "Test Bits (Absolute Indexed,X)"
+    },
+    {
+        "name": "BIT",
+        "addr_mode": "Immediate",
+        "code_name": "BitImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "89",
+        "group": "logical",
+        "desc": "Test Bits (Immediate)"
+    },
+    {
+        "name": "BMI",
+        "addr_mode": "Program Counter Relative",
+        "code_name": "Bmi",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "30",
+        "group": "branch",
+        "desc": "Branch if Minus (Program Counter Relative)"
+    },
+    {
+        "name": "BNE",
+        "addr_mode": "Program Counter Relative",
+        "code_name": "Bne",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "D0",
+        "group": "branch",
+        "desc": "Branch if Not Equal (Program Counter Relative)"
+    },
+    {
+        "name": "BPL",
+        "addr_mode": "Program Counter Relative",
+        "code_name": "Bpl",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "10",
+        "group": "branch",
+        "desc": "Branch if Plus (Program Counter Relative)"
+    },
+    {
+        "name": "BRA",
+        "addr_mode": "Program Counter Relative",
+        "code_name": "Bra",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "80",
+        "group": "branch",
+        "desc": "Branch Always (Program Counter Relative)"
+    },
+    {
+        "name": "BRK",
+        "addr_mode": "Stack/Interrupt",
+        "code_name": "Brk",
+        "bytes": "2",
+        "cycles": "7",
+        "op": "00",
+        "group": "interrupt",
+        "desc": "Break (Stack/Interrupt)"
+    },
+    {
+        "name": "BRL",
+        "addr_mode": "Program Counter Relative Long",
+        "code_name": "Brl",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "82",
+        "group": "branch",
+        "desc": "Branch Long Always (Program Counter Relative Long)"
+    },
+    {
+        "name": "BVC",
+        "addr_mode": "Program Counter Relative",
+        "code_name": "Bvc",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "50",
+        "group": "branch",
+        "desc": "Branch if Overflow Clear (Program Counter Relative)"
+    },
+    {
+        "name": "BVS",
+        "addr_mode": "Program Counter Relative",
+        "code_name": "Bvs",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "70",
+        "group": "branch",
+        "desc": "Branch if Overflow Set (Program Counter Relative)"
+    },
+    {
+        "name": "CLC",
+        "addr_mode": "Implied",
+        "code_name": "Clc",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "18",
+        "group": "flag",
+        "desc": "Clear Carry (Implied)"
+    },
+    {
+        "name": "CLD",
+        "addr_mode": "Implied",
+        "code_name": "Cld",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "D8",
+        "group": "flag",
+        "desc": "Clear Decimal Mode Flag (Implied)"
+    },
+    {
+        "name": "CLI",
+        "addr_mode": "Implied",
+        "code_name": "Cli",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "58",
+        "group": "flag",
+        "desc": "Clear Interrupt Disable Flag (Implied)"
+    },
+    {
+        "name": "CLV",
+        "addr_mode": "Implied",
+        "code_name": "Clv",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "B8",
+        "group": "flag",
+        "desc": "Clear Overflow Flag (Implied)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "DP Indexed Indirect,X",
+        "code_name": "CmpDPIX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "C1",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (DP Indexed Indirect,X)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "Stack Relative",
+        "code_name": "CmpSR",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "C3",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (Stack Relative)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "Direct Page",
+        "code_name": "CmpDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "C5",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (Direct Page)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "DP Indirect Long",
+        "code_name": "CmpDPLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "C7",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (DP Indirect Long)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "Immediate",
+        "code_name": "CmpImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "C9",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (Immediate)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "Absolute",
+        "code_name": "CmpAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "CD",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (Absolute)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "Absolute Long",
+        "code_name": "CmpAbsLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "CF",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (Absolute Long)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "DP Indirect Indexed, Y",
+        "code_name": "CmpDPIY",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "D1",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (DP Indirect Indexed, Y)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "DP Indirect",
+        "code_name": "CmpDPI",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "D2",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (DP Indirect)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "SR Indirect Indexed,Y",
+        "code_name": "CmpSRY",
+        "bytes": "2",
+        "cycles": "7",
+        "op": "D3",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (SR Indirect Indexed,Y)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "CmpDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "D5",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (DP Indexed,X)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "DP Indirect Long Indexed, Y",
+        "code_name": "CmpDPIYLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "D7",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (DP Indirect Long Indexed, Y)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "Absolute Indexed,Y",
+        "code_name": "CmpAbsY",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "D9",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (Absolute Indexed,Y)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "CmpAbsX",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "DD",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (Absolute Indexed,X)"
+    },
+    {
+        "name": "CMP",
+        "addr_mode": "Absolute Long Indexed,X",
+        "code_name": "CmpAbsXLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "DF",
+        "group": "logical",
+        "desc": "Compare Accumulator with Memory (Absolute Long Indexed,X)"
+    },
+    {
+        "name": "COP",
+        "addr_mode": "Stack/Interrupt",
+        "code_name": "Cop",
+        "bytes": "2",
+        "cycles": "7",
+        "op": "02",
+        "group": "interrupt",
+        "desc": "Co-Processor (Stack/Interrupt)"
+    },
+    {
+        "name": "CPX",
+        "addr_mode": "Immediate",
+        "code_name": "CpxImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "E0",
+        "group": "logical",
+        "desc": "Compare Index Register X with Memory (Immediate)"
+    },
+    {
+        "name": "CPX",
+        "addr_mode": "Direct Page",
+        "code_name": "CpxDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "E4",
+        "group": "logical",
+        "desc": "Compare Index Register X with Memory (Direct Page)"
+    },
+    {
+        "name": "CPX",
+        "addr_mode": "Absolute",
+        "code_name": "CpxAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "EC",
+        "group": "logical",
+        "desc": "Compare Index Register X with Memory (Absolute)"
+    },
+    {
+        "name": "CPY",
+        "addr_mode": "Immediate",
+        "code_name": "CpyImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "C0",
+        "group": "logical",
+        "desc": "Compare Index Register Y with Memory (Immediate)"
+    },
+    {
+        "name": "CPY",
+        "addr_mode": "Direct Page",
+        "code_name": "CpyDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "C4",
+        "group": "logical",
+        "desc": "Compare Index Register Y with Memory (Direct Page)"
+    },
+    {
+        "name": "CPY",
+        "addr_mode": "Absolute",
+        "code_name": "CpyAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "CC",
+        "group": "logical",
+        "desc": "Compare Index Register Y with Memory (Absolute)"
+    },
+    {
+        "name": "DEA",
+        "addr_mode": "Accumulator",
+        "code_name": "Dea",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "3A",
+        "group": "arithmetic",
+        "desc": "Decrement (Accumulator)"
+    },
+    {
+        "name": "DEC",
+        "addr_mode": "Direct Page",
+        "code_name": "DecDP",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "C6",
+        "group": "arithmetic",
+        "desc": "Decrement (Direct Page)"
+    },
+    {
+        "name": "DEC",
+        "addr_mode": "Absolute",
+        "code_name": "DecAbs",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "CE",
+        "group": "arithmetic",
+        "desc": "Decrement (Absolute)"
+    },
+    {
+        "name": "DEC",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "DecDPX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "D6",
+        "group": "arithmetic",
+        "desc": "Decrement (DP Indexed,X)"
+    },
+    {
+        "name": "DEC",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "DecAbsX",
+        "bytes": "3",
+        "cycles": "7",
+        "op": "DE",
+        "group": "arithmetic",
+        "desc": "Decrement (Absolute Indexed,X)"
+    },
+    {
+        "name": "DEX",
+        "addr_mode": "Implied",
+        "code_name": "Dex",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "CA",
+        "group": "arithmetic",
+        "desc": "Decrement Index Register X (Implied)"
+    },
+    {
+        "name": "DEY",
+        "addr_mode": "Implied",
+        "code_name": "Dey",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "88",
+        "group": "arithmetic",
+        "desc": "Decrement Index Register Y (Implied)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "DP Indexed Indirect,X",
+        "code_name": "EorDPIX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "41",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (DP Indexed Indirect,X)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "Stack Relative",
+        "code_name": "EorSR",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "43",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (Stack Relative)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "Direct Page",
+        "code_name": "EorDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "45",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (Direct Page)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "DP Indirect Long",
+        "code_name": "EorDPLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "47",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (DP Indirect Long)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "Immediate",
+        "code_name": "EorImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "49",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (Immediate)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "Absolute",
+        "code_name": "EorAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "4D",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (Absolute)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "Absolute Long",
+        "code_name": "EorAbsLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "4F",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (Absolute Long)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "DP Indirect Indexed, Y",
+        "code_name": "EorDPIY",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "51",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (DP Indirect Indexed, Y)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "DP Indirect",
+        "code_name": "EorDPI",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "52",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (DP Indirect)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "SR Indirect Indexed,Y",
+        "code_name": "EorSRY",
+        "bytes": "2",
+        "cycles": "7",
+        "op": "53",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (SR Indirect Indexed,Y)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "EorDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "55",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (DP Indexed,X)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "DP Indirect Long Indexed, Y",
+        "code_name": "EorDPIYLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "57",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (DP Indirect Long Indexed, Y)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "Absolute Indexed,Y",
+        "code_name": "EorAbsY",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "59",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (Absolute Indexed,Y)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "EorAbsX",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "5D",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (Absolute Indexed,X)"
+    },
+    {
+        "name": "EOR",
+        "addr_mode": "Absolute Long Indexed,X",
+        "code_name": "EorAbsXLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "5F",
+        "group": "logical",
+        "desc": "Exclusive-OR Accumulator with Memory (Absolute Long Indexed,X)"
+    },
+    {
+        "name": "INA",
+        "addr_mode": "Accumulator",
+        "code_name": "Ina",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "1A",
+        "group": "arithmetic",
+        "desc": "Increment (Accumulator)"
+    },
+    {
+        "name": "INC",
+        "addr_mode": "Direct Page",
+        "code_name": "IncDP",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "E6",
+        "group": "arithmetic",
+        "desc": "Increment (Direct Page)"
+    },
+    {
+        "name": "INC",
+        "addr_mode": "Absolute",
+        "code_name": "IncAbs",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "EE",
+        "group": "arithmetic",
+        "desc": "Increment (Absolute)"
+    },
+    {
+        "name": "INC",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "IncDPX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "F6",
+        "group": "arithmetic",
+        "desc": "Increment (DP Indexed,X)"
+    },
+    {
+        "name": "INC",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "IncAbsX",
+        "bytes": "3",
+        "cycles": "7",
+        "op": "FE",
+        "group": "arithmetic",
+        "desc": "Increment (Absolute Indexed,X)"
+    },
+    {
+        "name": "INX",
+        "addr_mode": "Implied",
+        "code_name": "Inx",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "E8",
+        "group": "arithmetic",
+        "desc": "Increment Index Register X (Implied)"
+    },
+    {
+        "name": "INY",
+        "addr_mode": "Implied",
+        "code_name": "Iny",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "C8",
+        "group": "arithmetic",
+        "desc": "Increment Index Register Y (Implied)"
+    },
+    {
+        "name": "JMP",
+        "addr_mode": "Absolute",
+        "code_name": "JmpAbs",
+        "bytes": "3",
+        "cycles": "3",
+        "op": "4C",
+        "group": "jump",
+        "desc": "Jump (Absolute)"
+    },
+    {
+        "name": "JML",
+        "addr_mode": "Absolute Long",
+        "code_name": "JmlAbsLong",
+        "bytes": "4",
+        "cycles": "4",
+        "op": "5C",
+        "group": "jump",
+        "desc": "Jump (Absolute Long)"
+    },
+    {
+        "name": "JMP",
+        "addr_mode": "Absolute Indirect",
+        "code_name": "Jmp",
+        "bytes": "3",
+        "cycles": "5",
+        "op": "6C",
+        "group": "jump",
+        "desc": "Jump (Absolute Indirect)"
+    },
+    {
+        "name": "JMP",
+        "addr_mode": "Absolute Indexed Indirect",
+        "code_name": "JmpAbsIX",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "7C",
+        "group": "jump",
+        "desc": "Jump (Absolute Indexed Indirect)"
+    },
+    {
+        "name": "JML",
+        "addr_mode": "Absolute Indirect Long",
+        "code_name": "Jml",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "DC",
+        "group": "jump",
+        "desc": "Jump (Absolute Indirect Long)"
+    },
+    {
+        "name": "JSR",
+        "addr_mode": "Absolute",
+        "code_name": "JsrAbs",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "20",
+        "group": "jump",
+        "desc": "Jump to Subroutine (Absolute)"
+    },
+    {
+        "name": "JSL",
+        "addr_mode": "Absolute Long",
+        "code_name": "JslAbsLong",
+        "bytes": "4",
+        "cycles": "8",
+        "op": "22",
+        "group": "jump",
+        "desc": "Jump to Subroutine (Absolute Long)"
+    },
+    {
+        "name": "JSR",
+        "addr_mode": "Absolute Indexed Indirect",
+        "code_name": "JsrAbsIX",
+        "bytes": "3",
+        "cycles": "8",
+        "op": "FC",
+        "group": "jump",
+        "desc": "Jump to Subroutine (Absolute Indexed Indirect)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "DP Indexed Indirect,X",
+        "code_name": "LdaDPIX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "A1",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (DP Indexed Indirect,X)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "Stack Relative",
+        "code_name": "LdaSR",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "A3",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (Stack Relative)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "Direct Page",
+        "code_name": "LdaDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "A5",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (Direct Page)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "DP Indirect Long",
+        "code_name": "LdaDPLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "A7",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (DP Indirect Long)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "Immediate",
+        "code_name": "LdaImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "A9",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (Immediate)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "Absolute",
+        "code_name": "LdaAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "AD",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (Absolute)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "Absolute Long",
+        "code_name": "LdaAbsLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "AF",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (Absolute Long)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "DP Indirect Indexed, Y",
+        "code_name": "LdaDPIY",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "B1",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (DP Indirect Indexed, Y)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "DP Indirect",
+        "code_name": "LdaDPI",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "B2",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (DP Indirect)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "SR Indirect Indexed,Y",
+        "code_name": "LdaSRY",
+        "bytes": "2",
+        "cycles": "7",
+        "op": "B3",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (SR Indirect Indexed,Y)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "LdaDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "B5",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (DP Indexed,X)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "DP Indirect Long Indexed, Y",
+        "code_name": "LdaDPIYLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "B7",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (DP Indirect Long Indexed, Y)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "Absolute Indexed,Y",
+        "code_name": "LdaAbsY",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "B9",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (Absolute Indexed,Y)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "LdaAbsX",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "BD",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (Absolute Indexed,X)"
+    },
+    {
+        "name": "LDA",
+        "addr_mode": "Absolute Long Indexed,X",
+        "code_name": "LdaAbsXLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "BF",
+        "group": "load_store",
+        "desc": "Load Accumulator from Memory (Absolute Long Indexed,X)"
+    },
+    {
+        "name": "LDX",
+        "addr_mode": "Immediate",
+        "code_name": "LdxImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "A2",
+        "group": "load_store",
+        "desc": "Load Index Register X from Memory (Immediate)"
+    },
+    {
+        "name": "LDX",
+        "addr_mode": "Direct Page",
+        "code_name": "LdxDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "A6",
+        "group": "load_store",
+        "desc": "Load Index Register X from Memory (Direct Page)"
+    },
+    {
+        "name": "LDX",
+        "addr_mode": "Absolute",
+        "code_name": "LdxAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "AE",
+        "group": "load_store",
+        "desc": "Load Index Register X from Memory (Absolute)"
+    },
+    {
+        "name": "LDX",
+        "addr_mode": "DP Indexed,Y",
+        "code_name": "LdxDPY",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "B6",
+        "group": "load_store",
+        "desc": "Load Index Register X from Memory (DP Indexed,Y)"
+    },
+    {
+        "name": "LDX",
+        "addr_mode": "Absolute Indexed,Y",
+        "code_name": "LdxAbsY",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "BE",
+        "group": "load_store",
+        "desc": "Load Index Register X from Memory (Absolute Indexed,Y)"
+    },
+    {
+        "name": "LDY",
+        "addr_mode": "Immediate",
+        "code_name": "LdyImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "A0",
+        "group": "load_store",
+        "desc": "Load Index Register Y from Memory (Immediate)"
+    },
+    {
+        "name": "LDY",
+        "addr_mode": "Direct Page",
+        "code_name": "LdyDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "A4",
+        "group": "load_store",
+        "desc": "Load Index Register Y from Memory (Direct Page)"
+    },
+    {
+        "name": "LDY",
+        "addr_mode": "Absolute",
+        "code_name": "LdyAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "AC",
+        "group": "load_store",
+        "desc": "Load Index Register Y from Memory (Absolute)"
+    },
+    {
+        "name": "LDY",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "LdyDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "B4",
+        "group": "load_store",
+        "desc": "Load Index Register Y from Memory (DP Indexed,X)"
+    },
+    {
+        "name": "LDY",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "LdyAbsX",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "BC",
+        "group": "load_store",
+        "desc": "Load Index Register Y from Memory (Absolute Indexed,X)"
+    },
+    {
+        "name": "LSR",
+        "addr_mode": "Direct Page",
+        "code_name": "LsrDP",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "46",
+        "group": "logical",
+        "desc": "Logical Shift Memory or Accumulator Right (Direct Page)"
+    },
+    {
+        "name": "LSR",
+        "addr_mode": "Accumulator",
+        "code_name": "Lsr",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "4A",
+        "group": "logical",
+        "desc": "Logical Shift Memory or Accumulator Right (Accumulator)"
+    },
+    {
+        "name": "LSR",
+        "addr_mode": "Absolute",
+        "code_name": "LsrAbs",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "4E",
+        "group": "logical",
+        "desc": "Logical Shift Memory or Accumulator Right (Absolute)"
+    },
+    {
+        "name": "LSR",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "LsrDPX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "56",
+        "group": "logical",
+        "desc": "Logical Shift Memory or Accumulator Right (DP Indexed,X)"
+    },
+    {
+        "name": "LSR",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "LsrAbsX",
+        "bytes": "3",
+        "cycles": "7",
+        "op": "5E",
+        "group": "logical",
+        "desc": "Logical Shift Memory or Accumulator Right (Absolute Indexed,X)"
+    },
+    {
+        "name": "MVN",
+        "addr_mode": "Block Move",
+        "code_name": "Mvn",
+        "bytes": "3",
+        "cycles": "1",
+        "op": "54",
+        "group": "block",
+        "desc": "Block Move Negative (Block Move)"
+    },
+    {
+        "name": "MVP",
+        "addr_mode": "Block Move",
+        "code_name": "Mvp",
+        "bytes": "3",
+        "cycles": "1",
+        "op": "44",
+        "group": "block",
+        "desc": "Block Move Positive (Block Move)"
+    },
+    {
+        "name": "NOP",
+        "addr_mode": "Implied",
+        "code_name": "Nop",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "EA",
+        "group": "other",
+        "desc": "No Operation (Implied)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "DP Indexed Indirect,X",
+        "code_name": "OraDPIX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "01",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (DP Indexed Indirect,X)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "Stack Relative",
+        "code_name": "OraSR",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "03",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (Stack Relative)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "Direct Page",
+        "code_name": "OraDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "05",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (Direct Page)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "DP Indirect Long",
+        "code_name": "OraDPLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "07",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (DP Indirect Long)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "Immediate",
+        "code_name": "OraImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "09",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (Immediate)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "Absolute",
+        "code_name": "OraAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "0D",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (Absolute)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "Absolute Long",
+        "code_name": "OraAbsLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "0F",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (Absolute Long)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "DP Indirect Indexed, Y",
+        "code_name": "OraDPIY",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "11",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (DP Indirect Indexed, Y)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "DP Indirect",
+        "code_name": "OraDPI",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "12",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (DP Indirect)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "SR Indirect Indexed,Y",
+        "code_name": "OraSRY",
+        "bytes": "2",
+        "cycles": "7",
+        "op": "13",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (SR Indirect Indexed,Y)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "OraDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "15",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (DP Indexed,X)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "DP Indirect Long Indexed, Y",
+        "code_name": "OraDPIYLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "17",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (DP Indirect Long Indexed, Y)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "Absolute Indexed,Y",
+        "code_name": "OraAbsY",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "19",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (Absolute Indexed,Y)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "OraAbsX",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "1D",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (Absolute Indexed,X)"
+    },
+    {
+        "name": "ORA",
+        "addr_mode": "Absolute Long Indexed,X",
+        "code_name": "OraAbsXLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "1F",
+        "group": "logical",
+        "desc": "OR Accumulator with Memory (Absolute Long Indexed,X)"
+    },
+    {
+        "name": "PEA",
+        "addr_mode": "Stack (Absolute)",
+        "code_name": "Pea",
+        "bytes": "3",
+        "cycles": "5",
+        "op": "F4",
+        "group": "stack",
+        "desc": "Push Effective Absolute Address (Stack (Absolute))"
+    },
+    {
+        "name": "PEI",
+        "addr_mode": "Stack (DP Indirect)",
+        "code_name": "Pei",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "D4",
+        "group": "stack",
+        "desc": "Push Effective Indirect Address (Stack (DP Indirect))"
+    },
+    {
+        "name": "PER",
+        "addr_mode": "Stack (PC Relative Long)",
+        "code_name": "Per",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "62",
+        "group": "stack",
+        "desc": "Push Effective PC Relative Indirect Address (Stack (PC Relative Long))"
+    },
+    {
+        "name": "PHA",
+        "addr_mode": "Stack (Push)",
+        "code_name": "Pha",
+        "bytes": "1",
+        "cycles": "3",
+        "op": "48",
+        "group": "stack",
+        "desc": "Push Accumulator (Stack (Push))"
+    },
+    {
+        "name": "PHB",
+        "addr_mode": "Stack (Push)",
+        "code_name": "Phb",
+        "bytes": "1",
+        "cycles": "3",
+        "op": "8B",
+        "group": "stack",
+        "desc": "Push Data Bank Register (Stack (Push))"
+    },
+    {
+        "name": "PHD",
+        "addr_mode": "Stack (Push)",
+        "code_name": "Phd",
+        "bytes": "1",
+        "cycles": "4",
+        "op": "0B",
+        "group": "stack",
+        "desc": "Push Direct Page Register (Stack (Push))"
+    },
+    {
+        "name": "PHK",
+        "addr_mode": "Stack (Push)",
+        "code_name": "Phk",
+        "bytes": "1",
+        "cycles": "3",
+        "op": "4B",
+        "group": "stack",
+        "desc": "Push Program Bank Register (Stack (Push))"
+    },
+    {
+        "name": "PHP",
+        "addr_mode": "Stack (Push)",
+        "code_name": "Php",
+        "bytes": "1",
+        "cycles": "3",
+        "op": "08",
+        "group": "stack",
+        "desc": "Push Processor Status Register (Stack (Push))"
+    },
+    {
+        "name": "PHX",
+        "addr_mode": "Stack (Push)",
+        "code_name": "Phx",
+        "bytes": "1",
+        "cycles": "3",
+        "op": "DA",
+        "group": "stack",
+        "desc": "Push Index Register X (Stack (Push))"
+    },
+    {
+        "name": "PHY",
+        "addr_mode": "Stack (Push)",
+        "code_name": "Phy",
+        "bytes": "1",
+        "cycles": "3",
+        "op": "5A",
+        "group": "stack",
+        "desc": "Push Index Register Y (Stack (Push))"
+    },
+    {
+        "name": "PLA",
+        "addr_mode": "Stack (Pull)",
+        "code_name": "Pla",
+        "bytes": "1",
+        "cycles": "4",
+        "op": "68",
+        "group": "stack",
+        "desc": "Pull Accumulator (Stack (Pull))"
+    },
+    {
+        "name": "PLB",
+        "addr_mode": "Stack (Pull)",
+        "code_name": "Plb",
+        "bytes": "1",
+        "cycles": "4",
+        "op": "AB",
+        "group": "stack",
+        "desc": "Pull Data Bank Register (Stack (Pull))"
+    },
+    {
+        "name": "PLD",
+        "addr_mode": "Stack (Pull)",
+        "code_name": "Pld",
+        "bytes": "1",
+        "cycles": "5",
+        "op": "2B",
+        "group": "stack",
+        "desc": "Pull Direct Page Register (Stack (Pull))"
+    },
+    {
+        "name": "PLP",
+        "addr_mode": "Stack (Pull)",
+        "code_name": "Plp",
+        "bytes": "1",
+        "cycles": "4",
+        "op": "28",
+        "group": "stack",
+        "desc": "Pull Processor Status Register (Stack (Pull))"
+    },
+    {
+        "name": "PLX",
+        "addr_mode": "Stack (Pull)",
+        "code_name": "Plx",
+        "bytes": "1",
+        "cycles": "4",
+        "op": "FA",
+        "group": "stack",
+        "desc": "Pull Index Register X (Stack (Pull))"
+    },
+    {
+        "name": "PLY",
+        "addr_mode": "Stack (Pull)",
+        "code_name": "Ply",
+        "bytes": "1",
+        "cycles": "4",
+        "op": "7A",
+        "group": "stack",
+        "desc": "Pull Index Register Y (Stack (Pull))"
+    },
+    {
+        "name": "REP",
+        "addr_mode": "Immediate",
+        "code_name": "RepImm",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "C2",
+        "group": "flag",
+        "desc": "Reset Processor Status Bits (Immediate)"
+    },
+    {
+        "name": "ROL",
+        "addr_mode": "Direct Page",
+        "code_name": "RolDP",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "26",
+        "group": "logical",
+        "desc": "Rotate Memory or Accumulator Left (Direct Page)"
+    },
+    {
+        "name": "ROL",
+        "addr_mode": "Accumulator",
+        "code_name": "Rol",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "2A",
+        "group": "logical",
+        "desc": "Rotate Memory or Accumulator Left (Accumulator)"
+    },
+    {
+        "name": "ROL",
+        "addr_mode": "Absolute",
+        "code_name": "RolAbs",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "2E",
+        "group": "logical",
+        "desc": "Rotate Memory or Accumulator Left (Absolute)"
+    },
+    {
+        "name": "ROL",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "RolDPX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "36",
+        "group": "logical",
+        "desc": "Rotate Memory or Accumulator Left (DP Indexed,X)"
+    },
+    {
+        "name": "ROL",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "RolAbsX",
+        "bytes": "3",
+        "cycles": "7",
+        "op": "3E",
+        "group": "logical",
+        "desc": "Rotate Memory or Accumulator Left (Absolute Indexed,X)"
+    },
+    {
+        "name": "ROR",
+        "addr_mode": "Direct Page",
+        "code_name": "RorDP",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "66",
+        "group": "logical",
+        "desc": "Rotate Memory or Accumulator Right (Direct Page)"
+    },
+    {
+        "name": "ROR",
+        "addr_mode": "Accumulator",
+        "code_name": "Ror",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "6A",
+        "group": "logical",
+        "desc": "Rotate Memory or Accumulator Right (Accumulator)"
+    },
+    {
+        "name": "ROR",
+        "addr_mode": "Absolute",
+        "code_name": "RorAbs",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "6E",
+        "group": "logical",
+        "desc": "Rotate Memory or Accumulator Right (Absolute)"
+    },
+    {
+        "name": "ROR",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "RorDPX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "76",
+        "group": "logical",
+        "desc": "Rotate Memory or Accumulator Right (DP Indexed,X)"
+    },
+    {
+        "name": "ROR",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "RorAbsX",
+        "bytes": "3",
+        "cycles": "7",
+        "op": "7E",
+        "group": "logical",
+        "desc": "Rotate Memory or Accumulator Right (Absolute Indexed,X)"
+    },
+    {
+        "name": "RTI",
+        "addr_mode": "Stack (RTI)",
+        "code_name": "Rti",
+        "bytes": "1",
+        "cycles": "6",
+        "op": "40",
+        "group": "interrupt",
+        "desc": "Return from Interrupt (Stack (RTI))"
+    },
+    {
+        "name": "RTL",
+        "addr_mode": "Stack (RTL)",
+        "code_name": "Rtl",
+        "bytes": "1",
+        "cycles": "6",
+        "op": "6B",
+        "group": "jump",
+        "desc": "Return from Subroutine Long (Stack (RTL))"
+    },
+    {
+        "name": "RTS",
+        "addr_mode": "Stack (RTS)",
+        "code_name": "Rts",
+        "bytes": "1",
+        "cycles": "6",
+        "op": "60",
+        "group": "jump",
+        "desc": "Return from Subroutine (Stack (RTS))"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "DP Indexed Indirect,X",
+        "code_name": "SbcDPIX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "E1",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (DP Indexed Indirect,X)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "Stack Relative",
+        "code_name": "SbcSR",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "E3",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (Stack Relative)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "Direct Page",
+        "code_name": "SbcDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "E5",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (Direct Page)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "DP Indirect Long",
+        "code_name": "SbcDPLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "E7",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (DP Indirect Long)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "Immediate",
+        "code_name": "SbcImm",
+        "bytes": "2",
+        "cycles": "2",
+        "op": "E9",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (Immediate)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "Absolute",
+        "code_name": "SbcAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "ED",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (Absolute)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "Absolute Long",
+        "code_name": "SbcAbsLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "EF",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (Absolute Long)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "DP Indirect Indexed, Y",
+        "code_name": "SbcDPIY",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "F1",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (DP Indirect Indexed, Y)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "DP Indirect",
+        "code_name": "SbcDPI",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "F2",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (DP Indirect)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "SR Indirect Indexed,Y",
+        "code_name": "SbcSRY",
+        "bytes": "2",
+        "cycles": "7",
+        "op": "F3",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (SR Indirect Indexed,Y)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "SbcDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "F5",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (DP Indexed,X)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "DP Indirect Long Indexed, Y",
+        "code_name": "SbcDPIYLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "F7",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (DP Indirect Long Indexed, Y)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "Absolute Indexed,Y",
+        "code_name": "SbcAbsY",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "F9",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (Absolute Indexed,Y)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "SbcAbsX",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "FD",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (Absolute Indexed,X)"
+    },
+    {
+        "name": "SBC",
+        "addr_mode": "Absolute Long Indexed,X",
+        "code_name": "SbcAbsXLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "FF",
+        "group": "arithmetic",
+        "desc": "Subtract with Borrow from Accumulator (Absolute Long Indexed,X)"
+    },
+    {
+        "name": "SEC",
+        "addr_mode": "Implied",
+        "code_name": "Sec",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "38",
+        "group": "flag",
+        "desc": "Set Carry Flag (Implied)"
+    },
+    {
+        "name": "SED",
+        "addr_mode": "Implied",
+        "code_name": "Sed",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "F8",
+        "group": "flag",
+        "desc": "Set Decimal Flag (Implied)"
+    },
+    {
+        "name": "SEI",
+        "addr_mode": "Implied",
+        "code_name": "Sei",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "78",
+        "group": "flag",
+        "desc": "Set Interrupt Disable Flag (Implied)"
+    },
+    {
+        "name": "SEP",
+        "addr_mode": "Immediate",
+        "code_name": "SepImm",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "E2",
+        "group": "flag",
+        "desc": "Set Processor Status Bits (Immediate)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "DP Indexed Indirect,X",
+        "code_name": "StaDPIX",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "81",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (DP Indexed Indirect,X)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "Stack Relative",
+        "code_name": "StaSR",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "83",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (Stack Relative)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "Direct Page",
+        "code_name": "StaDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "85",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (Direct Page)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "DP Indirect Long",
+        "code_name": "StaDPLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "87",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (DP Indirect Long)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "Absolute",
+        "code_name": "StaAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "8D",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (Absolute)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "Absolute Long",
+        "code_name": "StaAbsLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "8F",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (Absolute Long)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "DP Indirect Indexed, Y",
+        "code_name": "StaDPIY",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "91",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (DP Indirect Indexed, Y)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "DP Indirect",
+        "code_name": "StaDPI",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "92",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (DP Indirect)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "SR Indirect Indexed,Y",
+        "code_name": "StaSRY",
+        "bytes": "2",
+        "cycles": "7",
+        "op": "93",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (SR Indirect Indexed,Y)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "StaDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "95",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (DP Indexed,X)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "DP Indirect Long Indexed, Y",
+        "code_name": "StaDPIYLong",
+        "bytes": "2",
+        "cycles": "6",
+        "op": "97",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (DP Indirect Long Indexed, Y)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "Absolute Indexed,Y",
+        "code_name": "StaAbsY",
+        "bytes": "3",
+        "cycles": "5",
+        "op": "99",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (Absolute Indexed,Y)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "StaAbsX",
+        "bytes": "3",
+        "cycles": "5",
+        "op": "9D",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (Absolute Indexed,X)"
+    },
+    {
+        "name": "STA",
+        "addr_mode": "Absolute Long Indexed,X",
+        "code_name": "StaAbsXLong",
+        "bytes": "4",
+        "cycles": "5",
+        "op": "9F",
+        "group": "load_store",
+        "desc": "Store Accumulator to Memory (Absolute Long Indexed,X)"
+    },
+    {
+        "name": "STP",
+        "addr_mode": "Implied",
+        "code_name": "Stp",
+        "bytes": "1",
+        "cycles": "3",
+        "op": "DB",
+        "group": "other",
+        "desc": "Stop Processor (Implied)"
+    },
+    {
+        "name": "STX",
+        "addr_mode": "Direct Page",
+        "code_name": "StxDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "86",
+        "group": "load_store",
+        "desc": "Store Index Register X to Memory (Direct Page)"
+    },
+    {
+        "name": "STX",
+        "addr_mode": "Absolute",
+        "code_name": "StxAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "8E",
+        "group": "load_store",
+        "desc": "Store Index Register X to Memory (Absolute)"
+    },
+    {
+        "name": "STX",
+        "addr_mode": "DP Indexed,Y",
+        "code_name": "StxDPY",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "96",
+        "group": "load_store",
+        "desc": "Store Index Register X to Memory (DP Indexed,Y)"
+    },
+    {
+        "name": "STY",
+        "addr_mode": "Direct Page",
+        "code_name": "StyDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "84",
+        "group": "load_store",
+        "desc": "Store Index Register Y to Memory (Direct Page)"
+    },
+    {
+        "name": "STY",
+        "addr_mode": "Absolute",
+        "code_name": "StyAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "8C",
+        "group": "load_store",
+        "desc": "Store Index Register Y to Memory (Absolute)"
+    },
+    {
+        "name": "STY",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "StyDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "94",
+        "group": "load_store",
+        "desc": "Store Index Register Y to Memory (DP Indexed,X)"
+    },
+    {
+        "name": "STZ",
+        "addr_mode": "Direct Page",
+        "code_name": "StzDP",
+        "bytes": "2",
+        "cycles": "3",
+        "op": "64",
+        "group": "load_store",
+        "desc": "Store Zero to Memory (Direct Page)"
+    },
+    {
+        "name": "STZ",
+        "addr_mode": "DP Indexed,X",
+        "code_name": "StzDPX",
+        "bytes": "2",
+        "cycles": "4",
+        "op": "74",
+        "group": "load_store",
+        "desc": "Store Zero to Memory (DP Indexed,X)"
+    },
+    {
+        "name": "STZ",
+        "addr_mode": "Absolute",
+        "code_name": "StzAbs",
+        "bytes": "3",
+        "cycles": "4",
+        "op": "9C",
+        "group": "load_store",
+        "desc": "Store Zero to Memory (Absolute)"
+    },
+    {
+        "name": "STZ",
+        "addr_mode": "Absolute Indexed,X",
+        "code_name": "StzAbsX",
+        "bytes": "3",
+        "cycles": "5",
+        "op": "9E",
+        "group": "load_store",
+        "desc": "Store Zero to Memory (Absolute Indexed,X)"
+    },
+    {
+        "name": "TAX",
+        "addr_mode": "Implied",
+        "code_name": "Tax",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "AA",
+        "group": "transfer",
+        "desc": "Transfer Accumulator to Index Register X (Implied)"
+    },
+    {
+        "name": "TAY",
+        "addr_mode": "Implied",
+        "code_name": "Tay",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "A8",
+        "group": "transfer",
+        "desc": "Transfer Accumulator to Index Register Y (Implied)"
+    },
+    {
+        "name": "TCD",
+        "addr_mode": "Implied",
+        "code_name": "Tcd",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "5B",
+        "group": "transfer",
+        "desc": "Transfer 16-bit Accumulator to Direct Page Register (Implied)"
+    },
+    {
+        "name": "TCS",
+        "addr_mode": "Implied",
+        "code_name": "Tcs",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "1B",
+        "group": "transfer",
+        "desc": "Transfer 16-bit Accumulator to Stack Pointer (Implied)"
+    },
+    {
+        "name": "TDC",
+        "addr_mode": "Implied",
+        "code_name": "Tdc",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "7B",
+        "group": "transfer",
+        "desc": "Transfer Direct Page Register to 16-bit Accumulator (Implied)"
+    },
+    {
+        "name": "TRB",
+        "addr_mode": "Direct Page",
+        "code_name": "TrbDP",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "14",
+        "group": "flag",
+        "desc": "Test and Reset Memory Bits Against Accumulator (Direct Page)"
+    },
+    {
+        "name": "TRB",
+        "addr_mode": "Absolute",
+        "code_name": "TrbAbs",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "1C",
+        "group": "flag",
+        "desc": "Test and Reset Memory Bits Against Accumulator (Absolute)"
+    },
+    {
+        "name": "TSB",
+        "addr_mode": "Direct Page",
+        "code_name": "TsbDP",
+        "bytes": "2",
+        "cycles": "5",
+        "op": "04",
+        "group": "flag",
+        "desc": "Test and Set Memory Bits Against Accumulator (Direct Page)"
+    },
+    {
+        "name": "TSB",
+        "addr_mode": "Absolute",
+        "code_name": "TsbAbs",
+        "bytes": "3",
+        "cycles": "6",
+        "op": "0C",
+        "group": "flag",
+        "desc": "Test and Set Memory Bits Against Accumulator (Absolute)"
+    },
+    {
+        "name": "TSC",
+        "addr_mode": "Implied",
+        "code_name": "Tsc",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "3B",
+        "group": "transfer",
+        "desc": "Transfer Stack Pointer to 16-bit Accumulator (Implied)"
+    },
+    {
+        "name": "TSX",
+        "addr_mode": "Implied",
+        "code_name": "Tsx",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "BA",
+        "group": "transfer",
+        "desc": "Transfer Stack Pointer to Index Register X (Implied)"
+    },
+    {
+        "name": "TXA",
+        "addr_mode": "Implied",
+        "code_name": "Txa",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "8A",
+        "group": "transfer",
+        "desc": "Transfer Index Register X to Accumulator (Implied)"
+    },
+    {
+        "name": "TXS",
+        "addr_mode": "Implied",
+        "code_name": "Txs",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "9A",
+        "group": "transfer",
+        "desc": "Transfer Index Register X to Stack Pointer (Implied)"
+    },
+    {
+        "name": "TXY",
+        "addr_mode": "Implied",
+        "code_name": "Txy",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "9B",
+        "group": "transfer",
+        "desc": "Transfer Index Register X to Index Register Y (Implied)"
+    },
+    {
+        "name": "TYA",
+        "addr_mode": "Implied",
+        "code_name": "Tya",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "98",
+        "group": "transfer",
+        "desc": "Transfer Index Register Y to Accumulator (Implied)"
+    },
+    {
+        "name": "TYX",
+        "addr_mode": "Implied",
+        "code_name": "Tyx",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "BB",
+        "group": "transfer",
+        "desc": "Transfer Index Register Y to Index Register X (Implied)"
+    },
+    {
+        "name": "WAI",
+        "addr_mode": "Implied",
+        "code_name": "Wai",
+        "bytes": "1",
+        "cycles": "3",
+        "op": "CB",
+        "group": "interrupt",
+        "desc": "Wait for Interrupt (Implied)"
+    },
+    {
+        "name": "WDM",
+        "addr_mode": "",
+        "code_name": "Wdm",
+        "bytes": "2",
+        "cycles": "0",
+        "op": "42",
+        "group": "other",
+        "desc": "<em>Reserved for Future Expansion</em> ()"
+    },
+    {
+        "name": "XBA",
+        "addr_mode": "Implied",
+        "code_name": "Xba",
+        "bytes": "1",
+        "cycles": "3",
+        "op": "EB",
+        "group": "other",
+        "desc": "Exchange B and A 8-bit Accumulators (Implied)"
+    },
+    {
+        "name": "XCE",
+        "addr_mode": "Implied",
+        "code_name": "Xce",
+        "bytes": "1",
+        "cycles": "2",
+        "op": "FB",
+        "group": "other",
+        "desc": "Exchange Carry and Emulation Flags (Implied)"
+    }
+]
