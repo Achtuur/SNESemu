@@ -85,7 +85,6 @@ impl Memory {
                 Ok(())
             },
             Err(e) => {
-                println!("{:?}", e);
                 mapper.reset();
                 Err(e) 
             },

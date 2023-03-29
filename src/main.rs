@@ -30,6 +30,7 @@ fn main() {
     let m = arc_mut!(Memory::new());
     
     let _ = m.lock().unwrap().insert_cartridge(rom);
+    // println!("Cartridge parsed succesfully!: {0:#?}", m.lock().unwrap().cartridge_metadata);
 
     let mut cpu = Cpu::new();
     let mut ppu = Ppu::new();
@@ -39,5 +40,4 @@ fn main() {
     ppu.set_memory(m.clone());
     apu.set_memory(m.clone());
     
-
 }

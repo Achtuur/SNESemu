@@ -17,9 +17,9 @@ bitflags! {
         /// Overflow
         const Overflow = 0b00_0100_0000;
         /// Accumulator register size (native mode only) (0 = 16 bits, 1 = 8 bits)
-        const Accumulatorsize = 0b00_0010_0000;
+        const Accumulator8bit = 0b00_0010_0000;
         /// X register size (native mode only) (0 = 16 bits, 1 = 8 bits)
-        const Xregistersize = 0b00_0001_0000;
+        const Xreg8bit = 0b00_0001_0000;
         /// Decimal
         const Decimal = 0b00_0000_1000;
         /// IRQ disable
@@ -39,5 +39,13 @@ impl ProcessorStatusFlags {
 
     pub fn clear_all(&mut self) {
         *self.0.bits_mut() = 0;
+    }
+
+    pub fn set_flag(&mut self, flags: Self) {
+        self.set(flags, true);
+    } 
+
+    pub fn clear_flag(&mut self, flags: Self) {
+        self.set(flags, false);
     }
 }

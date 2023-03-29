@@ -4,8 +4,8 @@ use crate::memory::Memory;
 
 use self::processorstatusflag::ProcessorStatusFlags;
 
-mod cpu;
 pub mod processorstatusflag;
+pub mod instructions;
 
 pub struct Cpu {
     // Registers
@@ -82,5 +82,13 @@ impl Cpu {
         // read data needed by instruction
 
         // execute instruction
+    }
+
+    /// Returns `0_u16` if carry flag is unset, `1_u16` if carry flag is set
+    pub fn carry(&self) -> u16 {
+        match self.status.contains(ProcessorStatusFlags::Carry) {
+            true => 1,
+            false => 0,
+        }
     }
 }
