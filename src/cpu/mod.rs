@@ -1,5 +1,3 @@
-pub mod instructions;
-pub mod processorstatusflag;
 mod cpu;
 
 use bitflags::bitflags;

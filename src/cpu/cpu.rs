@@ -1,4 +1,4 @@
-use super::{Cpu, ProcessorStatusFlags};
+use super::{Cpu};
 
 impl Cpu {
     pub fn new() -> Self {
