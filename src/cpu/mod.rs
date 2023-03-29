@@ -1,38 +1,7 @@
-pub mod instructions;
+use self::processorstatusflag::ProcessorStatusFlags;
+
+mod cpu;
 pub mod processorstatusflag;
-
-use bitflags::bitflags;
-
-bitflags! {
-    #[derive(Debug, Clone, Copy)]
-    /// Status flags for SNES CPU
-    ///
-    /// Use `cpu.status.set(ProccerStatusFlags::<variant>, true|false)` to set/clear a flag and `cpu.status.contains(ProcessorStatusFlags::<variant>)` to check if flag is set
-    ///
-    /// Status flags can also be unions, so checking for example the negative and overflow flags at the same time can be done with `cpu.status.contains(ProcessorStatusFlags::Negative | ProcessorStatusFlags::Overflow)`
-    pub struct ProcessorStatusFlags: u16 {
-        /// Emulation mode
-        const Emulation = 0b10_0000_0000;
-        /// Break (only in Emulation mode)
-        const Break = 0b01_0000_0000;
-        /// Negative
-        const Negative = 0b00_1000_0000;
-        /// Overflow
-        const Overflow = 0b00_0100_0000;
-        /// Accumulator register size (native mode only) (0 = 16 bits, 1 = 8 bits)
-        const Accumulatorsize = 0b00_0010_0000;
-        /// X register size (native mode only) (0 = 16 bits, 1 = 8 bits)
-        const Xregistersize = 0b00_0001_0000;
-        /// Decimal
-        const Decimal = 0b00_0000_1000;
-        /// IRQ disable
-        const IRQdisable = 0b00_0000_0100;
-        /// Zero
-        const Zero = 0b00_0000_0010;
-        /// Carry
-        const Carry = 0b00_0000_0001;
-    }
-}
 
 pub struct Cpu {
     // Registers
@@ -83,11 +52,16 @@ impl Cpu {
         }
     }
 
-    pub fn init(&mut self) {}
+    pub fn init(&mut self) {
 
+    }
+
+    // This function is called every 'clock cycle'
     pub fn tick(&mut self) {
-        //read instruction
+        // read instruction
 
-        //execute instruction
+        // read data needed by instruction
+
+        // execute instruction
     }
 }
