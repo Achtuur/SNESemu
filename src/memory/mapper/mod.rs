@@ -22,6 +22,34 @@ pub trait Mappermode {
     /// * Q4
     fn write(&mut self, long_addr: u32, value: u8);
 
+    /// Copy raw bytes to internal rom vector
+    fn copy_bytes_to_rom(&mut self, bytes: &[u8]);
+
+    fn get_rom_size(&self) -> usize;
+
+    /// Set size of ram where size indicates `1 << size` kB of ram
+    fn set_ram_size(&mut self, size: u8);
+
+    /// Returns size of sram in bytes
+    fn get_sram_size(&self) -> usize;
+
+    /// Returns all bytes currently in SRAM, ordered from lowest to highest address
+    fn get_sram_bytes(&self) -> Vec<u8>;
+
+    /// Copy raw bytes to internal sram vector, overwrites any previously existing value!
+    /// 
+    /// Only for use when loading a save
+    fn copy_bytes_to_sram(&mut self, bytes: &[u8]);
+
+    /// Returns memory map mode number that is expected to be found in header
+    fn get_memory_map_mode(&self) -> u8;
+
+
+    /// Reset mapper to initial state
+    /// 
+    /// clears ram and rom completely
+    fn reset(&mut self);
+
     /// Try parse cartridge using this mapper mode
     /// 
     /// # Inputs
@@ -110,33 +138,5 @@ pub trait Mappermode {
 
         Ok(metadata)
     }
-
-    /// Copy raw bytes to internal rom vector
-    fn copy_bytes_to_rom(&mut self, bytes: &[u8]);
-
-    fn get_rom_size(&self) -> usize;
-
-    /// Set size of ram where size indicates `1 << size` kB of ram
-    fn set_ram_size(&mut self, size: u8);
-
-    /// Returns size of sram in bytes
-    fn get_sram_size(&self) -> usize;
-
-    /// Returns all bytes currently in SRAM, ordered from lowest to highest address
-    fn get_sram_bytes(&self) -> Vec<u8>;
-
-    /// Copy raw bytes to internal sram vector, overwrites any previously existing value!
-    /// 
-    /// Only for use when loading a save
-    fn copy_bytes_to_sram(&mut self, bytes: &[u8]);
-
-    /// Returns memory map mode number that is expected to be found in header
-    fn get_memory_map_mode(&self) -> u8;
-
-
-    /// Reset mapper to initial state
-    /// 
-    /// clears ram and rom completely
-    fn reset(&mut self);
 
 }
