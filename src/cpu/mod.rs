@@ -91,4 +91,40 @@ impl Cpu {
             false => 0,
         }
     }
+
+    /// Returns accumulator value as either 16 bit or 8 bits depending on accumulator 8 bit flag. 
+    /// 
+    /// 8 bit value is actually just 16 bit value ANDed with `0xF`
+    pub fn get_acc(&self) -> u16 {
+        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+            true => self.acc & 0xF,
+            false => self.acc,
+        }
+    }
+
+    /// Set x, ANDS `val` with `0xF` if 8 bit mode for accumulator register is enabled
+    pub fn set_acc(&mut self, val: u16) {
+        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+            true => self.acc = val & 0xF,
+            false => self.acc = val,
+        }
+    }
+
+    /// Returns x register value as either 16 bit or 8 bits depending on x register 8 bit flag. 
+    /// 
+    /// 8 bit value is actually just 16 bit value ANDed with `0xF`
+    pub fn get_x(&self) -> u16 {
+        match self.status.contains(ProcessorStatusFlags::Xreg8bit) {
+            true => self.x & 0xF,
+            false => self.x,
+        }
+    }
+
+    /// Set x, ANDS `val` with `0xF` if 8 bit mode for x register is enabled
+    pub fn set_x(&mut self, val: u16) {
+        match self.status.contains(ProcessorStatusFlags::Xreg8bit) {
+            true => self.x = val & 0xF,
+            false => self.x = val,
+        }
+    }
 }

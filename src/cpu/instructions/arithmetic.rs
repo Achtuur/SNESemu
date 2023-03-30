@@ -4,26 +4,23 @@ impl Cpu {
 	
 	/// Add With Carry (DP Indexed Indirect,X)
 	pub fn exe_adc(&mut self, data: u16) {
-
-		match self.status.contains(ProcessorStatusFlags::Decimal) {
+		let sum = match self.status.contains(ProcessorStatusFlags::Decimal) {
 			// BCD addition
 			true => {
-				self.exe_adc_bcd(data);
+				self.exe_adc_bcd(data)
 			},
 			// Binary addition
 			false => {
-				self.exe_adc_bin(data);
+				self.exe_adc_bin(data)
 			}
-		}
+		};
+		self.set_acc(sum);
 	}
 
-	fn exe_adc_bcd(&mut self, data: u16) {
-		self.acc = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+	fn exe_adc_bcd(&mut self, data: u16) -> u16 {
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
 			//8 bit addition
 			true => {
-
-				
-
 				let data = data as u8;
 				let acc = self.acc as u8;
 
@@ -115,8 +112,8 @@ impl Cpu {
 		}
 	}
 
-	fn exe_adc_bin(&mut self, data: u16) {
-		self.acc = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+	fn exe_adc_bin(&mut self, data: u16) -> u16 {
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
 			// 8 bit addition
 			true => {		
 				// Transform data to u8 and perform addition
@@ -242,11 +239,21 @@ impl Cpu {
 	
 	/// Subtract with Borrow from Accumulator (DP Indexed Indirect,X)
 	pub fn exe_sbc(&mut self, data: u16) {
-		todo!()
+		let sum = match self.status.contains(ProcessorStatusFlags::Decimal) {
+			// BCD addition
+			true => {
+				self.exe_sbc_bcd(data)
+			},
+			// Binary addition
+			false => {
+				self.exe_sbc_bin(data)
+			}
+		};
+		self.set_acc(sum);
 	}
 
-	fn exe_sbc_bcd(&mut self, data: u16) {
-		self.acc = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+	fn exe_sbc_bcd(&mut self, data: u16) -> u16 {
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
 			//8 bit addition
 			true => {
 
@@ -345,8 +352,8 @@ impl Cpu {
 		}
 	}
 	
-	fn exe_sbc_bin(&mut self, data: u16) {
-		self.acc = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+	fn exe_sbc_bin(&mut self, data: u16) -> u16 {
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
 			// 8 bit addition
 			true => {		
 				// Transform data to u8 and perform addition

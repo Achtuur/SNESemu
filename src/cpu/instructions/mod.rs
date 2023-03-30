@@ -1,7 +1,18 @@
 use self::instructions::Instruction;
 
-mod arithmetic;
-mod instructions;
+pub mod arithmetic;
+pub mod block;
+pub mod branch;
+pub mod flag;
+pub mod interrupt;
+pub mod jump;
+pub mod loadstore;
+pub mod logical;
+pub mod other;
+pub mod stack;
+pub mod transfer;
+
+pub mod instructions;
 
 pub enum AddressingMode {
     /// Argument is implied (ie STX)
