@@ -1,25 +1,25 @@
-use bitflags::bitflags;
+use bitflags::{bitflags, BitFlags};
 
 bitflags! {
     #[derive(Debug, Clone, Copy)]
     /// Status flags for SNES CPU
     ///
-    /// Use `cpu.status.set(ProccerStatusFlags::<variant>, true|false)` to set/clear a flag and `cpu.status.contains(ProcessorStatusFlags::<variant>)` to check if flag is set
-    ///
-    /// Status flags can also be unions, so checking for example the negative and overflow flags at the same time can be done with `cpu.status.contains(ProcessorStatusFlags::Negative | ProcessorStatusFlags::Overflow)`
+    /// Status flags can also be unions, 
+    /// so checking for example the negative and overflow flags at the 
+    /// same time can be done with `cpu.status.contains(ProcessorStatusFlags::Negative | ProcessorStatusFlags::Overflow)`
     pub struct ProcessorStatusFlags: u16 {
-        /// Emulation mode
-        const Emulation = 0b10_0000_0000;
         /// Break (only in Emulation mode)
-        const Break = 0b01_0000_0000;
+        const Break = 0b10_0000_0000;
+        /// Emulation mode
+        const Emulation = 0b01_0000_0000;
         /// Negative
         const Negative = 0b00_1000_0000;
         /// Overflow
         const Overflow = 0b00_0100_0000;
         /// Accumulator register size (native mode only) (0 = 16 bits, 1 = 8 bits)
         const Accumulator8bit = 0b00_0010_0000;
-        /// X register size (native mode only) (0 = 16 bits, 1 = 8 bits)
-        const Xreg8bit = 0b00_0001_0000;
+        /// X&Y register size (native mode only) (0 = 16 bits, 1 = 8 bits)
+        const XYreg8bit = 0b00_0001_0000;
         /// Decimal
         const Decimal = 0b00_0000_1000;
         /// IRQ disable
@@ -37,6 +37,16 @@ impl ProcessorStatusFlags {
         ProcessorStatusFlags::from_bits(0).unwrap()
     }
 
+    pub fn set_bits(&mut self, bits: u8) {
+        let flag = ProcessorStatusFlags::from_bits(bits as u16).unwrap();
+        self.set_flag(flag);
+    }
+
+    pub fn clear_bits(&mut self, bits: u8) {
+        let flag = ProcessorStatusFlags::from_bits(bits as u16).unwrap();
+        self.clear_flag(flag);
+    }
+
     pub fn clear_all(&mut self) {
         *self.0.bits_mut() = 0;
     }
@@ -47,5 +57,10 @@ impl ProcessorStatusFlags {
 
     pub fn clear_flag(&mut self, flags: Self) {
         self.set(flags, false);
+    }
+
+    /// Return lower 8 bits of status flag (everything except emulation flag and break flag)
+    pub fn get_bits(&self) -> u8 {
+        self.bits() as u8
     }
 }

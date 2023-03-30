@@ -9,7 +9,7 @@ impl Cpu {
 	
 	/// Transfer Accumulator to Index Register Y (Implied)
 	pub fn exe_tay(&mut self) {
-		self.y = self.get_acc();
+		self.set_y(self.get_acc());
 	}
 	
 	/// Transfer 16-bit Accumulator to Direct Page Register (Implied)
@@ -49,17 +49,17 @@ impl Cpu {
 	
 	/// Transfer Index Register X to Index Register Y (Implied)
 	pub fn exe_txy(&mut self) {
-		self.y = self.get_x();
+		self.set_y(self.get_x());
 	}
 	
 	/// Transfer Index Register Y to Accumulator (Implied)
 	pub fn exe_tya(&mut self) {
-		self.set_acc(self.y);
+		self.set_acc(self.get_y());
 	}
 	
 	/// Transfer Index Register Y to Index Register X (Implied)
 	pub fn exe_tyx(&mut self) {
-		self.set_x(self.y)
+		self.set_x(self.get_y())
 	}
 	
 	

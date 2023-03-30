@@ -20,11 +20,6 @@ macro_rules! arc_mut {
 
 
 fn main() {
-    let mut flag = ProcessorStatusFlags::new();
-    flag.set(ProcessorStatusFlags::Overflow, true);
-    flag.set(ProcessorStatusFlags::Negative, true);
-    println!("flag: {0:?}", flag);
-    
     // let rom = include_bytes!("../resources/rom/Legend of Zelda, The - A Link to the Past.smc");
     let rom = include_bytes!("../resources/rom/Super Mario World.smc");
     let m = arc_mut!(Memory::new());
@@ -39,5 +34,4 @@ fn main() {
     cpu.set_memory(m.clone());
     ppu.set_memory(m.clone());
     apu.set_memory(m.clone());
-    
 }

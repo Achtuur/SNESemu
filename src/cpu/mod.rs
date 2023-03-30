@@ -115,7 +115,7 @@ impl Cpu {
     /// 
     /// 8 bit value is actually just 16 bit value ANDed with `0xF`
     pub fn get_x(&self) -> u16 {
-        match self.status.contains(ProcessorStatusFlags::Xreg8bit) {
+        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
             true => self.x & 0xF,
             false => self.x,
         }
@@ -123,9 +123,27 @@ impl Cpu {
 
     /// Set x, ANDS `val` with `0xF` if 8 bit mode for x register is enabled
     pub fn set_x(&mut self, val: u16) {
-        match self.status.contains(ProcessorStatusFlags::Xreg8bit) {
+        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
             true => self.x = val & 0xF,
             false => self.x = val,
+        }
+    }
+
+    /// Returns y register value as either 16 bit or 8 bits depending on y register 8 bit flag. 
+    /// 
+    /// 8 bit value is actually just 16 bit value ANDed with `0yF`
+    pub fn get_y(&self) -> u16 {
+        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+            true => self.y & 0xF,
+            false => self.y,
+        }
+    }
+
+    /// Set y, ANDS `val` with `0yF` if 8 bit mode for y register is enabled
+    pub fn set_y(&mut self, val: u16) {
+        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+            true => self.y = val & 0xF,
+            false => self.y = val,
         }
     }
 
