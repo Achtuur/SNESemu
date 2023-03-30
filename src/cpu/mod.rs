@@ -13,6 +13,10 @@ pub struct Cpu {
     /// (Points to the next available(unused) location on the stack.)
     sp: u16,
 
+    /// Program bank register
+    /// (Holds the bank address of the currently executing instruction)
+    pbr: u8,
+
     /// Program counter
     /// (Holds the address of the current instruction to execute.)
     pc: u16,
@@ -40,9 +44,6 @@ pub struct Cpu {
     /// 
     /// Any data that is read from memory is first stored in this register
     dbr: u8,
-    /// Program bank register
-    /// (Holds the bank address of all instruction fetches.)
-    pbr: u8,
 
     memory: Arc<Mutex<Memory>>,
 }
@@ -126,5 +127,44 @@ impl Cpu {
             true => self.x = val & 0xF,
             false => self.x = val,
         }
+    }
+
+    /// Push `val` onto stack, decrement stack pointer after
+    /// 
+    /// Locks `self.memory`
+    pub fn push_byte_stack(&mut self, byte: u8) {
+        self.memory.lock().unwrap().write(self.sp as u32, byte);
+        self.sp -= 1;
+    }
+
+    /// Pull single byte from stack, increments stack pointer after
+    /// 
+    /// Locks `self.memory`
+    pub fn pull_byte_stack(&mut self) -> u8 {
+        let byte = self.memory.lock().unwrap().read(self.sp as u32);
+        self.sp += 1;
+        byte
+    }
+
+    /// Push a long onto the stack, first pushes low bits, then high bits
+    /// 
+    /// if `sp = $1FFE` and `long = $#1234`, then `$1FFE = $#34` and `$1FFD = $#12`
+    /// 
+    /// Locks `self.memory`
+    pub fn push_long_stack(&mut self, long: u16) {
+        self.push_byte_stack(long as u8);
+        self.push_byte_stack((long >> 8) as u8);
+    }
+
+
+    /// Pulls long from stack, assumption is that high byte is stored after low byte of long (see [push_long_stack])
+    /// 
+    /// Locks `self.memory` by calling pull_byte_stack
+    /// 
+    /// It should be no problem if the lock is lost in between calls to [pull_byte_stack], as no other component of the SNES should read/write from stack or edit the stack pointer
+    pub fn pull_long_stack(&mut self) -> u16 {
+        let upper = self.pull_byte_stack() as u16;
+        let lower = self.pull_byte_stack() as u16;
+        (upper << 8) | lower
     }
 }

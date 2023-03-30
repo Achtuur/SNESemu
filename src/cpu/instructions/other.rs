@@ -4,7 +4,6 @@ impl Cpu {
 	
 	/// No Operation (Implied)
 	pub fn exe_nop(&mut self, data: u16) {
-		todo!()
 	}
 	
 	/// Stop Processor (Implied)
