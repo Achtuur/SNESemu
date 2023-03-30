@@ -1,45 +1,53 @@
-use crate::cpu::Cpu;
+use crate::cpu::{Cpu, processorstatusflag::ProcessorStatusFlags};
 
 impl Cpu {
 	
 	/// Push Effective Absolute Address (Stack (Absolute))
 	pub fn exe_pea(&mut self, data: u16) {
-		todo!()
+		self.push_long_stack(data);
 	}
 	
 	/// Push Effective Indirect Address (Stack (DP Indirect))
+	/// 
+	/// `data` here contains the address that value inside the dp indirect address
+	/// 
+	/// meaning memory should be read outside this function
 	pub fn exe_pei(&mut self, data: u16) {
-		todo!()
+		self.push_long_stack(data);
 	}
 	
 	/// Push Effective PC Relative Indirect Address (Stack (PC Relative Long))
 	pub fn exe_per(&mut self, data: u16) {
-		todo!()
+		let data = data.wrapping_add(self.pc);
+		self.push_long_stack(data);
 	}
 	
 	/// Push Accumulator (Stack (Push))
 	pub fn exe_pha(&mut self, data: u16) {
-		todo!()
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => self.push_byte_stack(self.acc as u8),
+			false => self.push_long_stack(self.acc),
+		}
 	}
 	
 	/// Push Data Bank Register (Stack (Push))
 	pub fn exe_phb(&mut self, data: u16) {
-		todo!()
+		self.push_byte_stack(self.dbr);
 	}
 	
 	/// Push Direct Page Register (Stack (Push))
 	pub fn exe_phd(&mut self, data: u16) {
-		todo!()
+		self.push_long_stack(self.dp);
 	}
 	
 	/// Push Program Bank Register (Stack (Push))
 	pub fn exe_phk(&mut self, data: u16) {
-		todo!()
+		self.push_byte_stack(self.pbr);
 	}
 	
 	/// Push Processor Status Register (Stack (Push))
 	pub fn exe_php(&mut self, data: u16) {
-		todo!()
+		self.push_byte_stack(self.status.bits())
 	}
 	
 	/// Push Index Register X (Stack (Push))
