@@ -128,5 +128,22 @@ impl Instruction {
             Mvn | Mvp  => BlockMove,
         }
     }
+
+    /// Returns true if this instruction writes back to memory during its execution
+    /// 
+    /// In that case, the instruction should get passed an address instead of the data
+    fn writes_back(&self) -> bool {
+        use Instruction::*;
+        match self {
+            IncAbs | IncAbsX | IncDP | IncDPX | 
+            DecAbs | DecAbsX | DecDP | DecDPX | 
+            AslAbs | AslAbsX | AslDP | AslDPX | 
+            LsrAbs | LsrAbsX | LsrDP | LsrDPX |
+            RorAbs | RorAbsX | RorDP | RorDPX |
+            RolAbs | RolAbsX | RolDP | RolDPX |
+            TrbAbs | TrbDP | TsbAbs | TsbDP => true,
+            _ => false,
+        }
+    }
 }
     

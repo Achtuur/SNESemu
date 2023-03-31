@@ -47,16 +47,6 @@ impl Cpu {
 		self.status.set_bits(data)
 	}
 	
-	/// Test and Reset Memory Bits Against Accumulator (Direct Page)
-	pub fn exe_trb(&mut self, data: u16) {
-		todo!()
-	}
-	
-	/// Test and Set Memory Bits Against Accumulator (Direct Page)
-	pub fn exe_tsb(&mut self, data: u16) {
-		todo!()
-	}
-	
 	/// Exchange Carry and Emulation Flags (Implied)
 	pub fn exe_xce(&mut self, data: u16) {
 		todo!()

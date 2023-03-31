@@ -6,7 +6,6 @@ use self::processorstatusflag::ProcessorStatusFlags;
 
 pub mod processorstatusflag;
 pub mod instructions;
-pub mod helpers;
 
 pub struct Cpu {
     // Registers
