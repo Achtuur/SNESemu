@@ -4,9 +4,6 @@ mod cpu;
 mod apu;
 
 use memory::Memory;
-
-use cpu::processorstatusflag::ProcessorStatusFlags;
-
 use crate::{cpu::Cpu, ppu::Ppu, apu::Apu};
 
 

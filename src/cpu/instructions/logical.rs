@@ -32,11 +32,6 @@ impl Cpu {
 		todo!()
 	}
 	
-	/// Logical Shift Memory or Accumulator Right (Direct Page)
-	pub fn exe_lsr(&mut self, data: u16) {
-		todo!()
-	}
-	
 	/// OR Accumulator with Memory (DP Indexed Indirect,X)
 	pub fn exe_ora(&mut self, data: u16) {
 		todo!()

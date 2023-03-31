@@ -6,6 +6,7 @@ use self::processorstatusflag::ProcessorStatusFlags;
 
 pub mod processorstatusflag;
 pub mod instructions;
+pub mod helpers;
 
 pub struct Cpu {
     // Registers
@@ -64,11 +65,6 @@ impl Cpu {
         }
     }
 
-    /// Give the cpu a reference to the memory that is shared between every device on the SNES
-    pub fn set_memory(&mut self, memory: Arc<Mutex<Memory>>) {
-        self.memory = memory;
-    }
-
     /// Initialize variables
     /// 
     /// Currently unused, could be removed as most initial values can be set in `Cpu::new()`
@@ -83,6 +79,22 @@ impl Cpu {
         // read data needed by instruction
 
         // execute instruction
+    }
+
+    /// Give the cpu a reference to the memory that is shared between every device on the SNES
+    pub fn set_memory(&mut self, memory: Arc<Mutex<Memory>>) {
+        self.memory = memory;
+    }
+
+    pub fn mem_read(&self, addr: u16) -> u8 {
+        // abs_addr = $DBAABB where $DB is cpu dbr register and $AABB are the bytes of addr
+        let abs_addr = (self.dbr as u32) << 16 | (addr as u32);
+        self.memory.lock().unwrap().read(abs_addr)
+    }
+
+    pub fn mem_write(&mut self, addr: u16, val: u8) {
+        let abs_addr = (self.dbr as u32) << 16 | (addr as u32);
+        self.memory.lock().unwrap().write(abs_addr, val);
     }
 
     /// Returns `0_u16` if carry flag is unset, `1_u16` if carry flag is set
@@ -103,17 +115,22 @@ impl Cpu {
         }
     }
 
-    /// Set x, ANDS `val` with `0xF` if 8 bit mode for accumulator register is enabled
+    /// Set accumulator, sets lower bytes of accumulator to `val` if 8 bit mode for accumulator register is enabled,
+    /// else set accumulator to `val`
     pub fn set_acc(&mut self, val: u16) {
         match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-            true => self.acc = val & 0xF,
+            true => self.acc = (self.acc & 0xF0) | (val & 0xF),
             false => self.acc = val,
         }
     }
 
     /// Call this function after setting accumulator to set negative and zero flags. Takes into account 16/8 bit mode
     pub fn set_acc_nz_flag(&mut self) {
-
+        self.status.set(ProcessorStatusFlags::Zero, self.acc == 0);
+        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+            true => self.status.set(ProcessorStatusFlags::Negative, (self.acc as i8) < 0),
+            false => self.status.set(ProcessorStatusFlags::Negative, (self.acc as i16) < 0),
+        }
     }
 
     /// Returns x register value as either 16 bit or 8 bits depending on x register 8 bit flag. 
@@ -134,14 +151,12 @@ impl Cpu {
         }
     }
 
+    /// Call this function after setting x register to set negative and zero flags. Takes into account 16/8 bit mode
     pub fn set_x_nz_flag(&mut self) {
+        self.status.set(ProcessorStatusFlags::Zero, self.x == 0);
         match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
-			true => {
-				
-			},
-			false => {
-				
-			},
+			true => self.status.set(ProcessorStatusFlags::Negative, (self.x as i8) < 0),
+            false => self.status.set(ProcessorStatusFlags::Negative, (self.x as i16) < 0),
 		}
     }
 
@@ -161,6 +176,15 @@ impl Cpu {
             true => self.y = val & 0xF,
             false => self.y = val,
         }
+    }
+
+    /// Call this function after setting y register to set negative and zero flags. Takes into account 16/8 bit mode
+    pub fn set_y_nz_flag(&mut self) {
+        self.status.set(ProcessorStatusFlags::Zero, self.y == 0);
+        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+			true => self.status.set(ProcessorStatusFlags::Negative, (self.y as i8) < 0),
+            false => self.status.set(ProcessorStatusFlags::Negative, (self.y as i16) < 0),
+		}
     }
 
     /// Push `val` onto stack, decrement stack pointer after

@@ -15,6 +15,7 @@ impl Cpu {
 			}
 		};
 		self.set_acc(sum);
+		self.set_acc_nz_flag();
 	}
 
 	fn exe_adc_bcd(&mut self, data: u16) -> u16 {
@@ -42,21 +43,8 @@ impl Cpu {
 
 				let sum_bcd = (upper_nybble << 4) + lower_nybble;
 
-				self.status.clear_flag(
-					ProcessorStatusFlags::Overflow |
-					ProcessorStatusFlags::Negative |
-					ProcessorStatusFlags::Zero
-				);
-
-
-				if sum_bcd == 0 {
-					self.status.set_flag(ProcessorStatusFlags::Zero);
-				}
-
-				// If first bit is set
-				if (sum_bcd as i8) < 0 {
-					self.status.set_flag(ProcessorStatusFlags::Negative);
-				}
+				// Overflow is unreliable with bcd, so just always disable
+				self.status.clear_flag(ProcessorStatusFlags::Overflow);
 
 				sum_bcd as u16
 			},
@@ -92,20 +80,8 @@ impl Cpu {
 				
 				let sum_bcd = (nybbles[3] << 12) | (nybbles[2] << 8) | (nybbles[1] << 4) | nybbles[0];
 
-				self.status.clear_flag(
-					ProcessorStatusFlags::Overflow |
-					ProcessorStatusFlags::Negative |
-					ProcessorStatusFlags::Zero
-				);
-
-				if sum_bcd == 0 {
-					self.status.set_flag(ProcessorStatusFlags::Zero);
-				}
-
-				// If first bit is set
-				if (sum_bcd as i8) < 0 {
-					self.status.set_flag(ProcessorStatusFlags::Negative);
-				}
+				// Overflow is unreliable with bcd, so just always disable
+				self.status.clear_flag(ProcessorStatusFlags::Overflow);
 
 				sum_bcd as u16
 			}
@@ -113,136 +89,121 @@ impl Cpu {
 	}
 
 	fn exe_adc_bin(&mut self, data: u16) -> u16 {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			// 8 bit addition
-			true => {		
-				// Transform data to u8 and perform addition
-				let data = data as u8;
-				let acc = self.acc as u8;
-				let sum = acc.wrapping_add(data).wrapping_add(self.carry() as u8);
+		let sum = self.get_acc().wrapping_add(data).wrapping_add(self.carry());
+		
+		// If acc > sum, then sum wraps around u8/u16 limit, meaning carry should be propogated
+		self.status.set(ProcessorStatusFlags::Carry, self.get_acc() > sum);
 
-				// Check flags
-				self.status.clear_flag(
-					ProcessorStatusFlags::Carry | 
-					ProcessorStatusFlags::Overflow |
-					ProcessorStatusFlags::Negative |
-					ProcessorStatusFlags::Zero
-				);
+		// amount of bits to shift left to find if number is negative
+		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			//8 bit
+			true => 7,
+			//16 bit
+			false => 15,
+		};
 
-				// Acc can only be larger than sum in the case of overflow
-				if acc > sum {
-					self.status.set_flag(ProcessorStatusFlags::Carry)
-				}
+		self.status.set(
+			ProcessorStatusFlags::Overflow, 
+			(self.get_acc() >> b) == 1 && (data >> b) == 1 && (sum >> b) == 0 || 
+				(self.get_acc() >> b) == 0 && (data >> b) == 0 && (sum >> b) == 1
+		);
 
-				if sum == 0 {
-					self.status.set_flag(ProcessorStatusFlags::Zero);
-				}
-
-				// If first bit is set
-				if (sum as i8) < 0 {
-					self.status.set_flag(ProcessorStatusFlags::Negative);
-				}
-
-				let acc_i8 = acc as i8;
-				let data_i8 = data as i8;
-				let sum_i8 = sum as i8;		
-
-				// If sign of accumulator and data match and dont match sign of sum, there is overflow
-				if acc_i8 < 0 && data_i8 < 0 && sum_i8 >= 0 || acc_i8 > 0 && data_i8 > 0 && sum_i8 <= 0 {
-					self.status.set_flag(ProcessorStatusFlags::Overflow);
-				}
-				sum as u16
-			},
-			// 16 bit addition
-			false => {
-				let sum = self.acc.wrapping_add(data).wrapping_add(self.carry());
-
-				// Check flags
-				self.status.clear_flag(
-					ProcessorStatusFlags::Carry | 
-					ProcessorStatusFlags::Overflow |
-					ProcessorStatusFlags::Negative |
-					ProcessorStatusFlags::Zero
-				);
-
-				// Acc can only be larger than sum in the case of overflow
-				if self.acc > sum {
-					self.status.set_flag(ProcessorStatusFlags::Carry)
-				}
-
-				if sum == 0 {
-					self.status.set_flag(ProcessorStatusFlags::Zero);
-				}
-
-				// If first bit is set
-				if (sum as i16) < 0 {
-					self.status.set_flag(ProcessorStatusFlags::Negative);
-				}
-
-				let acc_i16 = self.acc as i16;
-				let data_i16 = data as i16;
-				let sum_i16 = sum as i16;
-
-				// If sign of accumulator and data match and dont match sign of sum, there is overflow
-				if acc_i16 < 0 && data_i16 < 0 && sum_i16 >= 0 || acc_i16 > 0 && data_i16 > 0 && sum_i16 <= 0 {
-					self.status.set_flag(ProcessorStatusFlags::Overflow);
-				}
-				sum
-			}
-		}
+		sum
 	}
 	
 	/// Arithmetic Shift Left (Direct Page)
-	pub fn exe_asl(&mut self, data: u16) {
-		todo!()
+	pub fn exe_asl(&mut self, addr: u16) {
+		let mut val = self.mem_read(addr);
+		self.status.set(ProcessorStatusFlags::Carry, (val >> 7) == 1);
+		val <<= 1;
+		self.status.set(ProcessorStatusFlags::Negative, val as i8 <= 0);
+		self.status.set(ProcessorStatusFlags::Zero, val == 0);
+		self.mem_write(addr, val);
+	}
+
+	/// Arithmetic Shift Left (Accumulator)
+	/// 
+	/// the asla name was made up by me to differentiate it from asl
+	pub fn exe_asla(&mut self) {
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => self.status.set(ProcessorStatusFlags::Carry, (self.acc >> 7) == 1),
+			false => self.status.set(ProcessorStatusFlags::Carry, (self.acc >> 15) == 1)
+		}
+		self.set_acc(self.get_acc() << 1);
+		self.set_acc_nz_flag();
 	}
 	
 	/// Decrement (Accumulator)
 	pub fn exe_dea(&mut self, data: u16) {
-		todo!()
+		self.set_acc(self.get_acc().wrapping_sub(1));
+		self.set_acc_nz_flag();
 	}
 	
-	/// Decrement (Direct Page) (illegal?)
-	pub fn exe_dec(&mut self, data: u16) {
-		todo!()
+	/// Decrement (Direct Page)
+	pub fn exe_dec(&mut self, addr: u16) {
+		let mut val = self.mem_read(addr);
+		val = val.wrapping_sub(1);
+		self.status.set(ProcessorStatusFlags::Zero, val == 0);
+		self.status.set(ProcessorStatusFlags::Negative, (val as i8) < 0);
+		self.mem_write(addr, val);
 	}
 	
 	/// Decrement Index Register X (Implied)
 	pub fn exe_dex(&mut self, data: u16) {
-		todo!()
+		self.set_x(self.get_x().wrapping_sub(1));
+		self.set_x_nz_flag();
 	}
 	
 	/// Decrement Index Register Y (Implied)
 	pub fn exe_dey(&mut self, data: u16) {
-		todo!()
+		self.set_y(self.get_y().wrapping_sub(1));
+		self.set_y_nz_flag();
 	}
 	
 	/// Increment (Accumulator)
 	pub fn exe_ina(&mut self, data: u16) {
-		self.acc = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => {
-				let acc = (self.acc as u8).wrapping_add(1);
-				
-			}
-			false => {
-
-			}
-		}
+		self.set_acc(self.get_acc().wrapping_add(1));
+		self.set_acc_nz_flag()
 	}
 	
 	/// Increment (Direct Page)
-	pub fn exe_inc(&mut self, data: u16) {
-		todo!()
+	pub fn exe_inc(&mut self, addr: u16) {
+		let mut val = self.mem_read(addr);
+		val = val.wrapping_add(1);
+		self.status.set(ProcessorStatusFlags::Zero, val == 0);
+		self.status.set(ProcessorStatusFlags::Negative, (val as i8) < 0);
+		self.mem_write(addr, val);
 	}
 	
 	/// Increment Index Register X (Implied)
 	pub fn exe_inx(&mut self, data: u16) {
-		todo!()
+		self.set_x(self.get_x().wrapping_add(1));
+		self.set_x_nz_flag();
 	}
 	
 	/// Increment Index Register Y (Implied)
 	pub fn exe_iny(&mut self, data: u16) {
-		todo!()
+		self.set_y(self.get_y().wrapping_add(1));
+		self.set_y_nz_flag();
+	}
+
+	/// Logical Shift Memory or Accumulator Right (Direct Page)
+	pub fn exe_lsr(&mut self, addr: u16) {
+		let mut val = self.mem_read(addr);
+		self.status.set(ProcessorStatusFlags::Carry, (val & 0x01) == 1);
+		val >>= 1;
+		self.status.set(ProcessorStatusFlags::Negative, val as i8 <= 0);
+		self.status.set(ProcessorStatusFlags::Zero, val == 0);
+		self.mem_write(addr, val);
+	}
+
+	pub fn exe_lsra(&mut self) {
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => self.status.set(ProcessorStatusFlags::Carry, (self.acc & 0x1) == 1),
+			false => self.status.set(ProcessorStatusFlags::Carry, (self.acc & 0x1) == 1)
+		}
+		self.set_acc(self.get_acc() >> 1);
+		self.set_acc_nz_flag();
 	}
 	
 	/// Subtract with Borrow from Accumulator (DP Indexed Indirect,X)
@@ -263,9 +224,7 @@ impl Cpu {
 	fn exe_sbc_bcd(&mut self, data: u16) -> u16 {
 		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
 			//8 bit addition
-			true => {
-
-				
+			true => {				
 				let data = data as u8;
 				let acc = self.acc as u8;
 				
@@ -361,83 +320,27 @@ impl Cpu {
 	}
 	
 	fn exe_sbc_bin(&mut self, data: u16) -> u16 {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			// 8 bit addition
-			true => {		
-				// Transform data to u8 and perform addition
-				let data = data as u8;
-				let acc = self.acc as u8;
-				let sum = acc.wrapping_sub(data).wrapping_sub(1).wrapping_add(self.carry() as u8);
 
-				// Check flags
-				self.status.clear_flag(
-					ProcessorStatusFlags::Carry | 
-					ProcessorStatusFlags::Overflow |
-					ProcessorStatusFlags::Negative |
-					ProcessorStatusFlags::Zero
-				);
+		let sum = self.get_acc().wrapping_sub(data).wrapping_sub(1).wrapping_add(self.carry());
+		
+		// If acc < sum, then sum wraps around 0, meaning carry should be propogated
+		self.status.set(ProcessorStatusFlags::Carry, self.get_acc() < sum);
 
-				// Acc can only be larger than sum in the case of overflow
-				if acc < sum {
-					self.status.set_flag(ProcessorStatusFlags::Carry)
-				}
+		// amount of bits to shift left to find if number is negative
+		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			//8 bit
+			true => 7,
+			//16 bit
+			false => 15,
+		};
 
-				if sum == 0 {
-					self.status.set_flag(ProcessorStatusFlags::Zero);
-				}
+		self.status.set(
+			ProcessorStatusFlags::Overflow, 
+			(self.get_acc() >> b) == 1 && (data >> b) == 0 && (sum >> b) == 0 || 
+				(self.get_acc() >> b) == 0 && (data >> b) == 1 && (sum >> b) == 1
+		);
 
-				// If first bit is set
-				if (sum as i8) < 0 {
-					self.status.set_flag(ProcessorStatusFlags::Negative);
-				}
-
-				let acc_i8 = acc as i8;
-				let data_i8 = data as i8;
-				let sum_i8 = sum as i8;		
-
-				// If sign of accumulator and data match and dont match sign of sum, there is overflow
-				if acc_i8 < 0 && data_i8 > 0 && sum_i8 >= 0 || acc_i8 > 0 && data_i8 < 0 && sum_i8 <= 0 {
-					self.status.set_flag(ProcessorStatusFlags::Overflow);
-				}
-				sum as u16
-			},
-			// 16 bit addition
-			false => {
-				let sum = self.acc.wrapping_sub(data).wrapping_sub(1).wrapping_add(self.carry());
-
-				// Check flags
-				self.status.clear_flag(
-					ProcessorStatusFlags::Carry | 
-					ProcessorStatusFlags::Overflow |
-					ProcessorStatusFlags::Negative |
-					ProcessorStatusFlags::Zero
-				);
-
-				// Acc can only be larger than sum in the case of overflow
-				if self.acc < sum {
-					self.status.set_flag(ProcessorStatusFlags::Carry)
-				}
-
-				if sum == 0 {
-					self.status.set_flag(ProcessorStatusFlags::Zero);
-				}
-
-				// If first bit is set
-				if (sum as i16) < 0 {
-					self.status.set_flag(ProcessorStatusFlags::Negative);
-				}
-
-				let acc_i16 = self.acc as i16;
-				let data_i16 = data as i16;
-				let sum_i16 = sum as i16;
-
-				// If sign of accumulator and data match and dont match sign of sum, there is overflow
-				if acc_i16 < 0 && data_i16 > 0 && sum_i16 >= 0 || acc_i16 > 0 && data_i16 < 0 && sum_i16 <= 0 {
-					self.status.set_flag(ProcessorStatusFlags::Overflow);
-				}
-				sum
-			}
-		}
+		sum
 	}
 	
 }
