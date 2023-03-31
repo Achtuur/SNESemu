@@ -111,6 +111,11 @@ impl Cpu {
         }
     }
 
+    /// Call this function after setting accumulator to set negative and zero flags. Takes into account 16/8 bit mode
+    pub fn set_acc_nz_flag(&mut self) {
+
+    }
+
     /// Returns x register value as either 16 bit or 8 bits depending on x register 8 bit flag. 
     /// 
     /// 8 bit value is actually just 16 bit value ANDed with `0xF`
@@ -127,6 +132,17 @@ impl Cpu {
             true => self.x = val & 0xF,
             false => self.x = val,
         }
+    }
+
+    pub fn set_x_nz_flag(&mut self) {
+        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+			true => {
+				
+			},
+			false => {
+				
+			},
+		}
     }
 
     /// Returns y register value as either 16 bit or 8 bits depending on y register 8 bit flag. 

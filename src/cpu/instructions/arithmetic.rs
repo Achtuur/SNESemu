@@ -219,7 +219,15 @@ impl Cpu {
 	
 	/// Increment (Accumulator)
 	pub fn exe_ina(&mut self, data: u16) {
-		todo!()
+		self.acc = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => {
+				let acc = (self.acc as u8).wrapping_add(1);
+				
+			}
+			false => {
+
+			}
+		}
 	}
 	
 	/// Increment (Direct Page)
