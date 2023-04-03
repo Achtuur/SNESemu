@@ -24,7 +24,7 @@ impl ExHiROM {
 }
 
 impl Mappermode for ExHiROM {
-    fn read(&self, long_addr: u32) -> u8 {
+    fn read(&self, long_addr: u32) -> Option<u8> {
         todo!()
     }
 

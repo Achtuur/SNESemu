@@ -46,24 +46,29 @@ impl LoROM {
         }
     }
     
-    pub fn read_sram(&self, long_addr: u32) -> u8 {
-        let i = self.sram_index_from_long_addr(long_addr);
-        self.sram[i as usize]
+    /// Read a byte from SRAM addressing range
+    pub fn read_sram(&self, long_addr: u32) -> Option<u8> {
+        if let Some(i) = self.sram_index_from_long_addr(long_addr) {
+            return Some(self.sram[i as usize]);
+        }
+        None
     }
     
+    /// Write a byte to SRAM addressing range
     pub fn write_sram(&mut self, long_addr: u32, value: u8) {
-        let i = self.sram_index_from_long_addr(long_addr);
-        self.sram[i as usize] = value;
+        if let Some(i) = self.sram_index_from_long_addr(long_addr) {
+            self.sram[i as usize] = value;
+        }
     }
     
     /// Returns index for internal sram vector based on `long_addr`
-    fn sram_index_from_long_addr(&self, long_addr: u32) -> usize {
+    fn sram_index_from_long_addr(&self, long_addr: u32) -> Option<usize> {
         let (bank, hhll) = separate_bank_hhll_addr(long_addr);
         
         let bank_i = match bank {
             0x70..=0x7D => bank - 0x70,
             0xF0..=0xFF => bank - 0xF0,
-            _ => unreachable!()
+            _ => return None,
         } as usize;
         
         // Mirror bank index if needed
@@ -73,10 +78,11 @@ impl LoROM {
         // Mirror hhll if needed (only applies to sram size of 2kB)
         let hhll_i = hhll as usize % self.get_sram_size();
         
-        bank_i * SRAM_BANK_SIZE + hhll_i
+        let i = bank_i * SRAM_BANK_SIZE + hhll_i;
+        Some(i)
     }
     
-    pub fn read_rom(&self, long_addr: u32) -> u8 {
+    pub fn read_rom(&self, long_addr: u32) -> Option<u8> {
         // get $BB and $HHLL as separate numbers, to make range checking a bit easier
         let (bank, hi_lo_byte) = separate_bank_hhll_addr(long_addr);
         
@@ -84,7 +90,7 @@ impl LoROM {
         let bank_i = match bank {
             0x00..=0x7E => bank,
             0x80..=0xFF => bank - 0x80,
-            _ => panic!("Bank out of range when reading memory with LoROM")
+            _ => return None,
         } as usize;
         
         let bank_i = bank_i % self.rom_banks;
@@ -98,13 +104,13 @@ impl LoROM {
         let i = bank_i * ROM_BANK_SIZE + hi_lo_byte_i;
         
         // println!("${:#06X?} = rom[{:?}] = #{:#04X?}", long_addr, i, self.rom[i as usize]);
-        self.rom[i as usize]
+        Some(self.rom[i as usize])
     }
 }
 
 impl Mappermode for LoROM {
     
-    fn read(&self, long_addr: u32) -> u8 {
+    fn read(&self, long_addr: u32) -> Option<u8> {
         let (bank, hhll) = separate_bank_hhll_addr(long_addr);
         match (bank, hhll) {
             // SRAM
@@ -115,7 +121,7 @@ impl Mappermode for LoROM {
             (0x80..=0xFF, 0x8000..=0xFFFF) | // Actual rom in upper Q3, Q4
             (0xC0..=0xF0, 0x0000..=0x7FFF) => self.read_rom(long_addr),
             
-            _ => panic!("Invalid memory address read in LoROM")
+            _ => None
         }
     }
     
@@ -128,9 +134,9 @@ impl Mappermode for LoROM {
             // ROM
             (0x00..=0x7D, 0x8000..=0xFFFF) | // upper Q1, Q2 mirrors
             (0x80..=0xFF, 0x8000..=0xFFFF) | // Actual rom in upper Q3, Q4
-            (0xC0..=0xF0, 0x0000..=0x7FFF) =>  panic!("Attempting to write to read-only ROM (LoROM)"),
+            (0xC0..=0xF0, 0x0000..=0x7FFF) =>  {}
             
-            _ => panic!("Invalid memory address read in LoROM")
+            _ => {}
         }
     }
     
