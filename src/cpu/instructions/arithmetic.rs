@@ -113,12 +113,22 @@ impl Cpu {
 	
 	/// Arithmetic Shift Left (Direct Page)
 	pub fn exe_asl(&mut self, addr: u16) {
-		let mut val = self.mem_read(addr);
-		self.status.set(ProcessorStatusFlags::Carry, (val >> 7) == 1);
+		self.mem_read(addr);
+		let mut val = self.mdr;
+
+		// Amount of bits to shift right to get highest bit
+		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => 7,
+			false => 15,
+		};
+
+		self.status.set(ProcessorStatusFlags::Carry, (val >> b) == 1);
 		val <<= 1;
-		self.status.set(ProcessorStatusFlags::Negative, val as i8 <= 0);
+		self.status.set(ProcessorStatusFlags::Negative, (val >> b) == 1);
 		self.status.set(ProcessorStatusFlags::Zero, val == 0);
-		self.mem_write(addr, val);
+
+		self.mdr = val;
+		self.mem_write(addr);
 	}
 
 	/// Arithmetic Shift Left (Accumulator)
@@ -141,11 +151,21 @@ impl Cpu {
 	
 	/// Decrement (Direct Page)
 	pub fn exe_dec(&mut self, addr: u16) {
-		let mut val = self.mem_read(addr);
+		self.mem_read(addr);
+		let mut val = self.mdr;
+
+		// Amount of bits to shift right to get highest bit
+		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => 7,
+			false => 15,
+		};
+
 		val = val.wrapping_sub(1);
 		self.status.set(ProcessorStatusFlags::Zero, val == 0);
-		self.status.set(ProcessorStatusFlags::Negative, (val as i8) < 0);
-		self.mem_write(addr, val);
+		self.status.set(ProcessorStatusFlags::Negative, (val >> b) == 1);
+
+		self.mdr = val;
+		self.mem_write(addr);
 	}
 	
 	/// Decrement Index Register X (Implied)
@@ -168,11 +188,22 @@ impl Cpu {
 	
 	/// Increment (Direct Page)
 	pub fn exe_inc(&mut self, addr: u16) {
-		let mut val = self.mem_read(addr);
+		self.mem_read(addr);
+		let mut val = self.mdr;
+
+		// Amount of bits to shift right to get highest bit
+		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => 7,
+			false => 15,
+		};
+
 		val = val.wrapping_add(1);
+
 		self.status.set(ProcessorStatusFlags::Zero, val == 0);
-		self.status.set(ProcessorStatusFlags::Negative, (val as i8) < 0);
-		self.mem_write(addr, val);
+		self.status.set(ProcessorStatusFlags::Negative, (val >> b) == 1);
+
+		self.mdr = val;
+		self.mem_write(addr);
 	}
 	
 	/// Increment Index Register X (Implied)
@@ -189,19 +220,26 @@ impl Cpu {
 
 	/// Logical Shift Memory or Accumulator Right (Direct Page)
 	pub fn exe_lsr(&mut self, addr: u16) {
-		let mut val = self.mem_read(addr);
+		self.mem_read(addr);
+		let mut val = self.mdr;
+
+		// Amount of bits to shift right to get highest bit
+		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => 7,
+			false => 15,
+		};
+
 		self.status.set(ProcessorStatusFlags::Carry, (val & 0x01) == 1);
 		val >>= 1;
-		self.status.set(ProcessorStatusFlags::Negative, val as i8 <= 0);
+		self.status.set(ProcessorStatusFlags::Negative, (val >> b) == 1);
 		self.status.set(ProcessorStatusFlags::Zero, val == 0);
-		self.mem_write(addr, val);
+
+		self.mdr = val;
+		self.mem_write(addr);
 	}
 
 	pub fn exe_lsra(&mut self) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => self.status.set(ProcessorStatusFlags::Carry, (self.acc & 0x1) == 1),
-			false => self.status.set(ProcessorStatusFlags::Carry, (self.acc & 0x1) == 1)
-		}
+		self.status.set(ProcessorStatusFlags::Carry, (self.acc & 0x1) == 1);
 		self.set_acc(self.get_acc() >> 1);
 		self.set_acc_nz_flag();
 	}

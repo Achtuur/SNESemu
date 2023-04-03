@@ -95,16 +95,20 @@ impl Cpu {
         self.memory = memory;
     }
 
+    /// Read from memory using a 24 bit address, result is stored in `self.mdr`
     pub fn mem_read_long(&mut self, long_addr: u32) {
         if let Some(byte) = self.memory.lock().unwrap().read(long_addr) {
             self.mdr = byte;
         }
     }
 
+    /// Write byte in `self.mdr` to 24 bit address
     pub fn mem_write_long(&self, long_addr: u32) {
         self.memory.lock().unwrap().write(long_addr, self.mdr);
     }
 
+    /// Read from memory using a 16 bit address, the final address is `$DDHHLL` where `$DD` is equal to `self.dbr` and `$HHLL` is equal to `addr`.
+    /// Result is stored in `self.mdr`
     pub fn mem_read(&mut self, addr: u16) {
         // abs_addr = $DBAABB where $DB is cpu dbr register and $AABB are the bytes of addr
         let long_addr = (self.dbr as u32) << 16 | (addr as u32);
@@ -113,6 +117,8 @@ impl Cpu {
         }
     }
 
+    /// Write to memory using a 16 bit address, the final address is `$DDHHLL` where `$DD` is equal to `self.dbr` and `$HHLL` is equal to `addr`.
+    /// The value in `self.mdr` is written to memory
     pub fn mem_write(&mut self, addr: u16) {
         let long_addr = (self.dbr as u32) << 16 | (addr as u32);
         self.memory.lock().unwrap().write(long_addr, self.mdr);

@@ -68,48 +68,76 @@ impl Cpu {
 	
 	/// Rotate Memory or Accumulator Left (Direct Page)
 	pub fn exe_rol(&mut self, addr: u16) {
-		let mut val = self.mem_read(addr);
-		let hb = val >> 7;
+		self.mem_read(addr);
+		let mut val = self.mdr;
+
+		// Amount of bits to shift right to get highest bit
+		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => 7,
+			false => 15,
+		};
+		
+		let hb = val >> b;
 		let c = self.carry() as u8;
 		val = (val << 1) | c;
 		// set carry flag to old high bit
 		self.status.set(ProcessorStatusFlags::Carry, hb == 1);
 		self.status.set(ProcessorStatusFlags::Zero, val == 0);
-		self.status.set(ProcessorStatusFlags::Negative, (val as i8) < 0);
+		self.status.set(ProcessorStatusFlags::Negative, (val >> b) == 1);
+
+		self.mdr = val;
+		self.mem_write(addr);
 	}
 	
 	/// Rotate Memory or Accumulator Right (Direct Page)
 	pub fn exe_ror(&mut self, addr: u16) {
-		let mut val = self.mem_read(addr);
+		self.mem_read(addr);
+		let mut val = self.mdr;
+
+		// Amount of bits to shift right to get highest bit
+		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => 7,
+			false => 15,
+		};
+
 		let lb = val & 0x01;
 		let c = self.carry() as u8;
-		val = (val >> 1) | (c << 7);
+		val = (val >> 1) | (c << b);
 		// set carry flag to old low bit
 		self.status.set(ProcessorStatusFlags::Carry, lb == 1);
 		self.status.set(ProcessorStatusFlags::Zero, val == 0);
-		self.status.set(ProcessorStatusFlags::Negative, (val as i8) < 0);
+		self.status.set(ProcessorStatusFlags::Negative, (val >> b) == 1);
+
+		self.mdr = val;
+		self.mem_write(addr);
 	}
 
 	/// Test and Reset Memory Bits Against Accumulator (Direct Page)
 	pub fn exe_trb(&mut self, addr: u16) {
-		let mut val = self.mem_read(addr);
+		self.mem_read(addr);
+		let mut val = self.mdr;
+
 		let and = self.get_acc() as u8 & val;
 		self.status.set(ProcessorStatusFlags::Zero, and == 0);
 
 		// set bits to 0 in val that are 1 in and
 		val &= !and;
-		self.mem_write(addr, val);
+
+		self.mdr = val;
+		self.mem_write(addr);
 	}
 	
 	/// Test and Set Memory Bits Against Accumulator (Direct Page)
 	pub fn exe_tsb(&mut self, addr: u16) {
-		let mut val = self.mem_read(addr);
+		self.mem_read(addr);
+		let mut val = self.mdr;
 		let and = self.get_acc() as u8 & val;
 		self.status.set(ProcessorStatusFlags::Zero, and == 0);
 
 		// set bits to 1 in val that are 1 in and
 		val |= and;
-		self.mem_write(addr, val);
+		self.mdr = val;
+		self.mem_write(addr);
 	}
 	
 	
