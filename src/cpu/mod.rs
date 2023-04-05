@@ -2,10 +2,11 @@ use std::sync::{Arc, Mutex};
 
 use crate::memory::Memory;
 
-use self::processorstatusflag::ProcessorStatusFlags;
+use self::{processorstatusflag::ProcessorStatusFlags, instructions::instructions::Instruction};
 
 pub mod processorstatusflag;
 pub mod instructions;
+mod execute;
 
 pub struct Cpu {
     // Registers
@@ -61,7 +62,7 @@ impl Cpu {
     pub fn new() -> Self {
         Cpu {
             sp: 0,
-            pc: 0, //todo -> set to correct init value
+            pc: 0xFFFC, //todo -> set to correct init value
             acc: 0,
             status: ProcessorStatusFlags::from_bits(0).unwrap(),
             memory: Arc::new(Mutex::new(Memory::new())),
@@ -84,10 +85,22 @@ impl Cpu {
     // This function is called every 'clock cycle'
     pub fn tick(&mut self) {
         // read instruction
-
-        // read data needed by instruction
+        let op = self.mem_read(self.get_pc_addr());
+        self.pc += 1;
+        let instr = Instruction::from_op(op);
 
         // execute instruction
+        self.execute_instruction(instr);
+    }
+
+    /// Returns pc long address
+    pub fn get_pc_addr(&self) -> u32 {
+        ((self.pbr as u32) << 16) | self.pc as u32
+    }
+
+    /// Returns current bank as `$BB0000`, where `$BB == self.dbr`
+    pub fn get_bank(&self) -> u32 {
+        (self.dbr as u32) << 16
     }
 
     /// Give the cpu a reference to the memory that is shared between every device on the SNES
@@ -96,32 +109,32 @@ impl Cpu {
     }
 
     /// Read from memory using a 24 bit address, result is stored in `self.mdr`
-    pub fn mem_read_long(&mut self, long_addr: u32) {
-        if let Some(byte) = self.memory.lock().unwrap().read(long_addr) {
-            self.mdr = byte;
-        }
+    pub fn mem_read_long(&mut self, low_addr: u32, high_addr: u32) -> u16 {
+        let low_byte = self.mem_read(low_addr) as u16;
+        let high_byte = self.mem_read(high_addr) as u16; 
+        (high_byte << 8) | low_byte
     }
 
-    /// Write byte in `self.mdr` to 24 bit address
-    pub fn mem_write_long(&self, long_addr: u32) {
-        self.memory.lock().unwrap().write(long_addr, self.mdr);
+    /// Write 16 bit value to memory, low byte is written to low_addr and high byte is written to high_addr
+    pub fn mem_write_long(&mut self, low_addr: u32, high_addr: u32, val: u16) {
+        self.mem_write(low_addr, val as u8);
+        self.mem_write(high_addr, (val >> 8) as u8);
     }
 
-    /// Read from memory using a 16 bit address, the final address is `$DDHHLL` where `$DD` is equal to `self.dbr` and `$HHLL` is equal to `addr`.
-    /// Result is stored in `self.mdr`
-    pub fn mem_read(&mut self, addr: u16) {
-        // abs_addr = $DBAABB where $DB is cpu dbr register and $AABB are the bytes of addr
-        let long_addr = (self.dbr as u32) << 16 | (addr as u32);
-        if let Some(byte) = self.memory.lock().unwrap().read(long_addr) {
+    /// Read from memory using a 24 bit address,
+    /// result is stored in `self.mdr` and returned.
+    pub fn mem_read(&mut self, addr: u32) -> u8 {
+        if let Some(byte) = self.memory.lock().unwrap().read(addr) {
             self.mdr = byte;
         }
+        self.mdr
     }
 
     /// Write to memory using a 16 bit address, the final address is `$DDHHLL` where `$DD` is equal to `self.dbr` and `$HHLL` is equal to `addr`.
-    /// The value in `self.mdr` is written to memory
-    pub fn mem_write(&mut self, addr: u16) {
-        let long_addr = (self.dbr as u32) << 16 | (addr as u32);
-        self.memory.lock().unwrap().write(long_addr, self.mdr);
+    /// `byte` is passed to `self.mdr` and is written to memory
+    pub fn mem_write(&mut self, addr: u32, byte: u8) {
+        self.mdr = byte;
+        self.memory.lock().unwrap().write(addr, self.mdr);
     }
 
     /// Returns `0_u16` if carry flag is unset, `1_u16` if carry flag is set
@@ -218,8 +231,7 @@ impl Cpu {
     /// 
     /// Locks `self.memory`
     pub fn push_byte_stack(&mut self, byte: u8) {
-        self.mdr = byte;
-        self.mem_write_long(self.sp as u32);
+        self.mem_write(self.sp as u32, byte);
         self.sp -= 1;
     }
 
@@ -228,32 +240,30 @@ impl Cpu {
     /// 
     /// Locks `self.memory`
     pub fn pull_byte_stack(&mut self) -> u8 {
-        self.mem_read_long(self.sp as u32);
+        self.mem_read(self.sp as u32);
         self.sp += 1;
         self.mdr
     }
 
-    /// Push a long onto the stack, first pushes low bits, then high bits
+    /// Push a long onto the stack, first pushes high byte, then low byte
     /// 
-    /// if `sp = $1FFE` and `long = $#1234`, then `$1FFE = $#34` and `$1FFD = $#12`
+    /// if `sp = $1FFE` and `long = $#1234`, then `$1FFE = $#12` and `$1FFD = $#34`
     /// 
     /// Locks `self.memory`
     pub fn push_long_stack(&mut self, long: u16) {
-        self.push_byte_stack(long as u8);
         self.push_byte_stack((long >> 8) as u8);
+        self.push_byte_stack(long as u8);
     }
 
 
-    /// Pulls long from stack, assumption is that high byte is stored after low byte of long (see [push_long_stack])
+    /// Pulls long from stack, assumption is that high byte is stored before low byte of long (see [push_long_stack])
     /// 
     /// Locks `self.memory` by calling pull_byte_stack
     /// 
     /// It should be no problem if the lock is lost in between calls to [pull_byte_stack], as no other component of the SNES should read/write from stack or edit the stack pointer
     pub fn pull_long_stack(&mut self) -> u16 {
-        self.pull_byte_stack();
-        let upper = self.mdr as u16;
-        self.pull_byte_stack();
-        let lower = self.mdr as u16;
+        let lower = self.pull_byte_stack() as u16;
+        let upper = self.pull_byte_stack() as u16;
         (upper << 8) | lower
     }
 }

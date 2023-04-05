@@ -112,23 +112,25 @@ impl Cpu {
 	}
 	
 	/// Arithmetic Shift Left (Direct Page)
-	pub fn exe_asl(&mut self, addr: u16) {
-		self.mem_read(addr);
-		let mut val = self.mdr;
-
-		// Amount of bits to shift right to get highest bit
-		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => 7,
-			false => 15,
-		};
-
-		self.status.set(ProcessorStatusFlags::Carry, (val >> b) == 1);
-		val <<= 1;
-		self.status.set(ProcessorStatusFlags::Negative, (val >> b) == 1);
-		self.status.set(ProcessorStatusFlags::Zero, val == 0);
-
-		self.mdr = val;
-		self.mem_write(addr);
+	pub fn exe_asl(&mut self, low_addr: u32, high_addr: u32) {
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => {
+				let mut val = self.mem_read(low_addr);
+				self.status.set(ProcessorStatusFlags::Carry, (val >> 7) == 1);
+				val >>= 1;
+				self.status.set(ProcessorStatusFlags::Zero, val == 0);
+				self.status.set(ProcessorStatusFlags::Negative, (val >> 7) == 1);
+				self.mem_write(low_addr, val);
+			},
+			false => {
+				let mut val = self.mem_read_long(low_addr, high_addr);
+				self.status.set(ProcessorStatusFlags::Carry, (val >> 15) == 1);
+				val >>= 1;
+				self.status.set(ProcessorStatusFlags::Zero, val == 0);
+				self.status.set(ProcessorStatusFlags::Negative, (val >> 15) == 1);
+				self.mem_write_long(low_addr, high_addr, val);
+			}
+		}
 	}
 
 	/// Arithmetic Shift Left (Accumulator)
@@ -144,98 +146,97 @@ impl Cpu {
 	}
 	
 	/// Decrement (Accumulator)
-	pub fn exe_dea(&mut self, data: u16) {
+	pub fn exe_dea(&mut self) {
 		self.set_acc(self.get_acc().wrapping_sub(1));
 		self.set_acc_nz_flag();
 	}
 	
 	/// Decrement (Direct Page)
-	pub fn exe_dec(&mut self, addr: u16) {
-		self.mem_read(addr);
-		let mut val = self.mdr;
-
-		// Amount of bits to shift right to get highest bit
-		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => 7,
-			false => 15,
-		};
-
-		val = val.wrapping_sub(1);
-		self.status.set(ProcessorStatusFlags::Zero, val == 0);
-		self.status.set(ProcessorStatusFlags::Negative, (val >> b) == 1);
-
-		self.mdr = val;
-		self.mem_write(addr);
+	pub fn exe_dec(&mut self, low_addr: u32, high_addr: u32) {
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => {
+				let val = self.mem_read(low_addr).wrapping_sub(1);
+				self.status.set(ProcessorStatusFlags::Zero, val == 0);
+				self.status.set(ProcessorStatusFlags::Negative, (val >> 7) == 1);
+				self.mem_write(low_addr, val);
+			},
+			false => {
+				let val = self.mem_read_long(low_addr, high_addr).wrapping_sub(1);
+				self.status.set(ProcessorStatusFlags::Zero, val == 0);
+				self.status.set(ProcessorStatusFlags::Negative, (val >> 15) == 1);
+				self.mem_write_long(low_addr, high_addr, val);
+			}
+		}
 	}
 	
 	/// Decrement Index Register X (Implied)
-	pub fn exe_dex(&mut self, data: u16) {
+	pub fn exe_dex(&mut self) {
 		self.set_x(self.get_x().wrapping_sub(1));
 		self.set_x_nz_flag();
 	}
 	
 	/// Decrement Index Register Y (Implied)
-	pub fn exe_dey(&mut self, data: u16) {
+	pub fn exe_dey(&mut self) {
 		self.set_y(self.get_y().wrapping_sub(1));
 		self.set_y_nz_flag();
 	}
 	
 	/// Increment (Accumulator)
-	pub fn exe_ina(&mut self, data: u16) {
+	pub fn exe_ina(&mut self) {
 		self.set_acc(self.get_acc().wrapping_add(1));
 		self.set_acc_nz_flag()
 	}
 	
 	/// Increment (Direct Page)
-	pub fn exe_inc(&mut self, addr: u16) {
-		self.mem_read(addr);
-		let mut val = self.mdr;
-
-		// Amount of bits to shift right to get highest bit
-		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => 7,
-			false => 15,
-		};
-
-		val = val.wrapping_add(1);
-
-		self.status.set(ProcessorStatusFlags::Zero, val == 0);
-		self.status.set(ProcessorStatusFlags::Negative, (val >> b) == 1);
-
-		self.mdr = val;
-		self.mem_write(addr);
+	pub fn exe_inc(&mut self, low_addr: u32, high_addr: u32) {
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => {
+				let val = self.mem_read(low_addr).wrapping_sub(1);
+				self.status.set(ProcessorStatusFlags::Zero, val == 0);
+				self.status.set(ProcessorStatusFlags::Negative, (val >> 7) == 1);
+				self.mem_write(low_addr, val);
+			},
+			false => {
+				let val = self.mem_read_long(low_addr, high_addr).wrapping_sub(1);
+				self.status.set(ProcessorStatusFlags::Zero, val == 0);
+				self.status.set(ProcessorStatusFlags::Negative, (val >> 15) == 1);
+				self.mem_write_long(low_addr, high_addr, val);
+			}
+		}
 	}
 	
 	/// Increment Index Register X (Implied)
-	pub fn exe_inx(&mut self, data: u16) {
+	pub fn exe_inx(&mut self) {
 		self.set_x(self.get_x().wrapping_add(1));
 		self.set_x_nz_flag();
 	}
 	
 	/// Increment Index Register Y (Implied)
-	pub fn exe_iny(&mut self, data: u16) {
+	pub fn exe_iny(&mut self) {
 		self.set_y(self.get_y().wrapping_add(1));
 		self.set_y_nz_flag();
 	}
 
 	/// Logical Shift Memory or Accumulator Right (Direct Page)
-	pub fn exe_lsr(&mut self, addr: u16) {
-		self.mem_read(addr);
-		let mut val = self.mdr;
-
-		// Amount of bits to shift right to get highest bit
-		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => 7,
-			false => 15,
-		};
-
-		self.status.set(ProcessorStatusFlags::Carry, (val & 0x01) == 1);
-		val >>= 1;
-		self.status.set(ProcessorStatusFlags::Negative, (val >> b) == 1);
-		self.status.set(ProcessorStatusFlags::Zero, val == 0);
-
-		self.mdr = val;
-		self.mem_write(addr);
+	pub fn exe_lsr(&mut self, low_addr: u32, high_addr: u32) {
+		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+			true => {
+				let mut val = self.mem_read(low_addr);
+				self.status.set(ProcessorStatusFlags::Carry, (val & 0x01) == 1);
+				val <<= 1;
+				self.status.set(ProcessorStatusFlags::Zero, val == 0);
+				self.status.set(ProcessorStatusFlags::Negative, (val >> 7) == 1);
+				self.mem_write(low_addr, val);
+			},
+			false => {
+				let mut val = self.mem_read_long(low_addr, high_addr);
+				self.status.set(ProcessorStatusFlags::Carry, (val & 0x01) == 1);
+				val <<= 1;
+				self.status.set(ProcessorStatusFlags::Zero, val == 0);
+				self.status.set(ProcessorStatusFlags::Negative, (val >> 15) == 1);
+				self.mem_write_long(low_addr, high_addr, val);
+			}
+		}
 	}
 
 	pub fn exe_lsra(&mut self) {
