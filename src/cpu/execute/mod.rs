@@ -1,17 +1,37 @@
 pub mod instrdata;
 
 
-use super::{instructions::instructions::Instruction, Cpu};
+use super::{instructions::instructions::Instruction, Cpu, CpuError};
 
 impl Cpu {
+
+    pub fn execute_nmi(&mut self) -> Result<(), CpuError> {
+        self.exe_interrupt(0x00FFEA);
+        Ok(())
+    }
+
+    pub fn execute_irq(&mut self) -> Result<(), CpuError> {
+        self.exe_interrupt(0x00FFEE);
+        Ok(())
+    }
+
     /// Executes `instr`, increments PC and adds to cycle wait time
-    pub fn execute_instruction(&mut self, instr: Instruction) {
+    pub fn execute_instruction(&mut self, instr: Instruction) -> Result<(), CpuError> {
+        self.execute_op(&instr);
+
+        self.wait_cycles = instr.get_cycle_time();
+
+        self.pc = self.pc.wrapping_add(instr.get_length() as u16);
+
+        Ok(())
+    }
+
+    fn execute_op(&mut self, instr: &Instruction) {
         use Instruction::*;
         let instr_data = self.get_instruction_data(&instr);
         let data = instr_data.data;
         let low_addr = instr_data.low_addr;
         let high_addr = instr_data.high_addr;
-        let bank_addr = instr_data.long_addr;
 
         match instr {
             AdcAbs | AdcAbsLong | AdcAbsX | AdcAbsXLong | AdcAbsY | AdcDP |
@@ -167,6 +187,5 @@ impl Cpu {
             Xce => self.exe_xce(data),
 
         }
-        self.pc = self.pc.wrapping_add(instr.get_length() as u16);
     }
 }

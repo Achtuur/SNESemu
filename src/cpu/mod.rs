@@ -8,6 +8,10 @@ pub mod processorstatusflag;
 pub mod instructions;
 mod execute;
 
+pub enum CpuError {
+    PlaceHolder,
+}
+
 pub struct Cpu {
     // Registers
     /// Stack pointer
@@ -53,9 +57,12 @@ pub struct Cpu {
     /// When `Cpu::mem_write(addr)` is called, the byte in `mdr` will be written to the address specified by `addr`
     mdr: u8,
 
-
     /// Reference to global Memory mutex that is also used by ppu and apu
     memory: Arc<Mutex<Memory>>,
+
+    /// Amount of cycles to wait before next instruction is called (simulates instructions taking x cycles)
+    wait_cycles: usize,
+
 }
 
 impl Cpu {
@@ -72,6 +79,7 @@ impl Cpu {
             dbr: 0,
             pbr: 0,
             mdr: 0,
+            wait_cycles: 0,
         }
     }
 
@@ -83,14 +91,28 @@ impl Cpu {
     }
 
     // This function is called every 'clock cycle'
-    pub fn tick(&mut self) {
-        // read instruction
-        let op = self.mem_read(self.get_pc_addr());
-        self.pc += 1;
-        let instr = Instruction::from_op(op);
+    pub fn tick(&mut self, nmi_pending: bool, irq_pending: bool) -> Result<(), CpuError> {
+        if self.wait_cycles > 0 {
+            self.wait_cycles -= 1;
+        }
 
-        // execute instruction
-        self.execute_instruction(instr);
+        // NMI pending -> execute NMI
+        if nmi_pending {
+            return self.execute_nmi();
+        }
+        // IRQ pending and IRQ not disabled -> execute IRQ
+        else if irq_pending && !self.status.contains(ProcessorStatusFlags::IRQdisable) {
+            return self.execute_irq();
+        }
+        // IRQ pending and irq disabled AND WAI flag on -> execute instruction as normal
+        else if irq_pending && self.status.contains(ProcessorStatusFlags::IRQdisable | ProcessorStatusFlags::WaitForInterrupt) {
+            self.status.clear_flag(ProcessorStatusFlags::WaitForInterrupt);
+        }
+
+        // read & execute instruction
+        let op = self.mem_read(self.get_pc_addr());
+        let instr = Instruction::from_op(op);
+        self.execute_instruction(instr)
     }
 
     /// Returns pc long address

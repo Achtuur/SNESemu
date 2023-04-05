@@ -8,6 +8,8 @@ bitflags! {
     /// so checking for example the negative and overflow flags at the 
     /// same time can be done with `cpu.status.contains(ProcessorStatusFlags::Negative | ProcessorStatusFlags::Overflow)`
     pub struct ProcessorStatusFlags: u16 {
+        /// Flag to check if WAI was called (not actually in snes!)
+        const WaitForInterrupt = 0b100_0000_0000;
         /// Break (only in Emulation mode)
         const Break = 0b10_0000_0000;
         /// Emulation mode
