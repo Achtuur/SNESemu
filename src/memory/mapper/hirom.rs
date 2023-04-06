@@ -44,18 +44,23 @@ impl HiROM {
         }
     }
 
-    pub fn read_sram(&self, long_addr: u32) -> u8 {
-        let i = self.sram_index_from_long_addr(long_addr);
-        self.sram[i as usize]
+    /// Read a byte from SRAM addressing range
+    pub fn read_sram(&self, long_addr: u32) -> Option<u8> {
+        if let Some(i) = self.sram_index_from_long_addr(long_addr) {
+            return Some(self.sram[i as usize]);
+        }
+        None
     }
     
+    /// Write a byte to SRAM addressing range
     pub fn write_sram(&mut self, long_addr: u32, value: u8) {
-        let i = self.sram_index_from_long_addr(long_addr);
-        self.sram[i as usize] = value;
+        if let Some(i) = self.sram_index_from_long_addr(long_addr) {
+            self.sram[i as usize] = value;
+        }
     }
     
     /// Returns index for internal sram vector based on `long_addr`
-    fn sram_index_from_long_addr(&self, long_addr: u32) -> usize {
+    fn sram_index_from_long_addr(&self, long_addr: u32) -> Option<usize> {
         let (bank, hhll) = separate_bank_hhll_addr(long_addr);
         
         let bank_i = match bank {
@@ -72,10 +77,11 @@ impl HiROM {
         // With HiROM, hhll cannot be mirrored, but it's kept in just in case :)
         let hhll_i = hhll as usize % self.get_sram_size();
         
-        bank_i * SRAM_BANK_SIZE + hhll_i
+        let i = bank_i * SRAM_BANK_SIZE + hhll_i;
+        Some(i)
     }
 
-    pub fn read_rom(&self, long_addr: u32) -> u8 {
+    pub fn read_rom(&self, long_addr: u32) -> Option<u8> {
         // get $BB and $HHLL as separate numbers, to make range checking a bit easier
         let (bank, hi_lo_byte) = separate_bank_hhll_addr(long_addr);
 
@@ -84,7 +90,7 @@ impl HiROM {
             0x00..=0x3F => bank,
             0x80..=0xBF => bank - 0x80,
             0xC0..=0xFF => bank - 0xC0,
-            _ => panic!("Bank out of range when reading memory with HiROM")
+            _ => return None,
         };
 
         let bank_i = bank_i as usize % self.rom_banks;
@@ -95,13 +101,13 @@ impl HiROM {
         // calculate final index using bank index and hhll index
         let i = bank_i * ROM_BANK_SIZE + hi_lo_byte_i;
 
-        self.rom[i as usize]
+        Some(self.rom[i as usize])
     }
 }
 
 impl Mappermode for HiROM {
 
-    fn read(&self, long_addr: u32) -> u8 {
+    fn read(&self, long_addr: u32) -> Option<u8> {
         let (bank, hhll) = separate_bank_hhll_addr(long_addr);
         match (bank, hhll) {
 
@@ -113,7 +119,7 @@ impl Mappermode for HiROM {
             (0x00..=0x3F | 0x80..=0xBF, 0x8000..=0xFFFF) // mirrors
             => self.read_rom(long_addr),
 
-            _ => panic!("Invalid memory address read in HiROM")
+            _ => None
         }
     }
 
@@ -127,9 +133,9 @@ impl Mappermode for HiROM {
             // ROM
             (0xC0..=0xFF, 0x0000..=0xFFFF) | // main rom (banks from $C0 to $FF)
             (0x00..=0x3F | 0x80..=0xBF, 0x8000..=0xFFFF) // mirrors
-            => panic!("Attempting to write to ROM (HiROM)"),
+            => {},
 
-            _ => panic!("Invalid memory address read in HiROM")
+            _ => {},
         }
     }
 

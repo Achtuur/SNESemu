@@ -7,3 +7,14 @@ edition = "2021"
 
 [dependencies]
 bitflags = "2.0.2"
+
+[profile.release]
+opt-level = 3
+strip = "debuginfo"
+
+[profile.dev]
+opt-level = 0
+
+
+[profile.test]
+opt-level = 0

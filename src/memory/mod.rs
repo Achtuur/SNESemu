@@ -85,7 +85,6 @@ impl Memory {
                 Ok(())
             },
             Err(e) => {
-                println!("{:?}", e);
                 mapper.reset();
                 Err(e) 
             },
@@ -93,7 +92,8 @@ impl Memory {
     }
 
 
-    pub fn read(&self, long_addr: u32) -> u8 {
+    /// Read a byte from memory using a 24 bit address, 
+    pub fn read(&self, long_addr: u32) -> Option<u8> {
         let (bank, hhll) = separate_bank_hhll_addr(long_addr);
 
         match (bank, hhll) {
@@ -149,6 +149,9 @@ impl Memory {
         }
     }
 
+    /// Get all bytes from sram
+    /// 
+    /// Can be used to perform save games
     pub fn get_sram_bytes(&self) -> Vec<u8> {
         self.mapper.get_sram_bytes()
     }
@@ -156,6 +159,8 @@ impl Memory {
 
 
 /// Separates long address `$BBHHLL` as tuple `($BB, $HHLL)`
+/// 
+/// Any bit above the 24th in `long_addr` is ignored
 fn separate_bank_hhll_addr(long_addr: u32) -> (u8, u16) {
     let bank: u8 = ((long_addr & 0xFF0000) >> 16) as u8;
     let hi_lo_byte: u16 = (long_addr & 0x00FFFF) as u16;

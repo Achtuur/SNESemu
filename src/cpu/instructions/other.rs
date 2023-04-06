@@ -4,28 +4,22 @@ impl Cpu {
 	
 	/// No Operation (Implied)
 	pub fn exe_nop(&mut self, data: u16) {
-		todo!()
+		//NOP
 	}
 	
 	/// Stop Processor (Implied)
 	pub fn exe_stp(&mut self, data: u16) {
-		todo!()
+		// NOT IMPLEMENTED ON PURPOSE
 	}
 	
 	/// <em>Reserved for Future Expansion</em> ()
 	pub fn exe_wdm(&mut self, data: u16) {
-		todo!()
-	}
-	
-	/// Exchange B and A 8-bit Accumulators (Implied)
+		//NOP
+	}	
+
+	/// Exchange lower and upper byte of accumulator, always does 16 bit (Implied)
 	pub fn exe_xba(&mut self, data: u16) {
-		todo!()
+		self.acc = (self.acc & 0xFF00) >> 8 | (self.acc & 0x00FF) << 8;
 	}
-	
-	/// Exchange Carry and Emulation Flags (Implied)
-	pub fn exe_xce(&mut self, data: u16) {
-		todo!()
-	}
-	
 	
 }
