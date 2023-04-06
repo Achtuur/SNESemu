@@ -1,516 +1,1542 @@
 pub enum Instruction {
-    /// Add With Carry (DP Indexed Indirect,X)
-    AdcDPIX,
-    /// Add With Carry (Stack Relative)
-    AdcSR,
-    /// Add With Carry (Direct Page)
-    AdcDP,
-    /// Add With Carry (DP Indirect Long)
-    AdcDPLong,
-    /// Add With Carry (Immediate)
-    AdcImm,
-    /// Add With Carry (Absolute)
-    AdcAbs,
-    /// Add With Carry (Absolute Long)
-    AdcAbsLong,
-    /// Add With Carry (DP Indirect Indexed, Y)
-    AdcDPIY,
-    /// Add With Carry (DP Indirect)
-    AdcDPI,
-    /// Add With Carry (SR Indirect Indexed,Y)
-    AdcSRY,
-    /// Add With Carry (DP Indexed,X)
-    AdcDPX,
-    /// Add With Carry (DP Indirect Long Indexed, Y)
-    AdcDPIYLong,
-    /// Add With Carry (Absolute Indexed,Y)
-    AdcAbsY,
-    /// Add With Carry (Absolute Indexed,X)
-    AdcAbsX,
-    /// Add With Carry (Absolute Long Indexed,X)
-    AdcAbsXLong,
-    /// AND Accumulator with Memory (DP Indexed Indirect,X)
-    AndDPIX,
-    /// AND Accumulator with Memory (Stack Relative)
-    AndSR,
-    /// AND Accumulator with Memory (Direct Page)
-    AndDP,
-    /// AND Accumulator with Memory (DP Indirect Long)
-    AndDPLong,
-    /// AND Accumulator with Memory (Immediate)
-    AndImm,
-    /// AND Accumulator with Memory (Absolute)
-    AndAbs,
-    /// AND Accumulator with Memory (Absolute Long)
-    AndAbsLong,
-    /// AND Accumulator with Memory (DP Indirect Indexed, Y)
-    AndDPIY,
-    /// AND Accumulator with Memory (DP Indirect)
-    AndDPI,
-    /// AND Accumulator with Memory (SR Indirect Indexed,Y)
-    AndSRY,
-    /// AND Accumulator with Memory (DP Indexed,X)
-    AndDPX,
-    /// AND Accumulator with Memory (DP Indirect Long Indexed, Y)
-    AndDPIYLong,
-    /// AND Accumulator with Memory (Absolute Indexed,Y)
-    AndAbsY,
-    /// AND Accumulator with Memory (Absolute Indexed,X)
-    AndAbsX,
-    /// AND Accumulator with Memory (Absolute Long Indexed,X)
-    AndAbsXLong,
-    /// Arithmetic Shift Left (Direct Page)
-    AslDP,
-    /// Arithmetic Shift Left (Accumulator)
-    Asl,
-    /// Arithmetic Shift Left (Absolute)
-    AslAbs,
-    /// Arithmetic Shift Left (DP Indexed,X)
-    AslDPX,
-    /// Arithmetic Shift Left (Absolute Indexed,X)
-    AslAbsX,
-    /// Branch if Carry Clear (Program Counter Relative)
-    Blt,
-    /// Branch if Carry Set (Program Counter Relative)
-    Bge,
-    /// Branch if Equal (Program Counter Relative)
-    Beq,
-    /// Test Bits (Direct Page)
-    BitDP,
-    /// Test Bits (Absolute)
-    BitAbs,
-    /// Test Bits (DP Indexed,X)
-    BitDPX,
-    /// Test Bits (Absolute Indexed,X)
-    BitAbsX,
-    /// Test Bits (Immediate)
-    BitImm,
-    /// Branch if Minus (Program Counter Relative)
-    Bmi,
-    /// Branch if Not Equal (Program Counter Relative)
-    Bne,
-    /// Branch if Plus (Program Counter Relative)
-    Bpl,
-    /// Branch Always (Program Counter Relative)
-    Bra,
-    /// Break (Stack/Interrupt)
-    Brk,
-    /// Branch Long Always (Program Counter Relative Long)
-    Brl,
-    /// Branch if Overflow Clear (Program Counter Relative)
-    Bvc,
-    /// Branch if Overflow Set (Program Counter Relative)
-    Bvs,
-    /// Clear Carry (Implied)
-    Clc,
-    /// Clear Decimal Mode Flag (Implied)
-    Cld,
-    /// Clear Interrupt Disable Flag (Implied)
-    Cli,
-    /// Clear Overflow Flag (Implied)
-    Clv,
-    /// Compare Accumulator with Memory (DP Indexed Indirect,X)
-    CmpDPIX,
-    /// Compare Accumulator with Memory (Stack Relative)
-    CmpSR,
-    /// Compare Accumulator with Memory (Direct Page)
-    CmpDP,
-    /// Compare Accumulator with Memory (DP Indirect Long)
-    CmpDPLong,
-    /// Compare Accumulator with Memory (Immediate)
-    CmpImm,
-    /// Compare Accumulator with Memory (Absolute)
-    CmpAbs,
-    /// Compare Accumulator with Memory (Absolute Long)
-    CmpAbsLong,
-    /// Compare Accumulator with Memory (DP Indirect Indexed, Y)
-    CmpDPIY,
-    /// Compare Accumulator with Memory (DP Indirect)
-    CmpDPI,
-    /// Compare Accumulator with Memory (SR Indirect Indexed,Y)
-    CmpSRY,
-    /// Compare Accumulator with Memory (DP Indexed,X)
-    CmpDPX,
-    /// Compare Accumulator with Memory (DP Indirect Long Indexed, Y)
-    CmpDPIYLong,
-    /// Compare Accumulator with Memory (Absolute Indexed,Y)
-    CmpAbsY,
-    /// Compare Accumulator with Memory (Absolute Indexed,X)
-    CmpAbsX,
-    /// Compare Accumulator with Memory (Absolute Long Indexed,X)
-    CmpAbsXLong,
-    /// Co-Processor (Stack/Interrupt)
-    Cop,
-    /// Compare Index Register X with Memory (Immediate)
-    CpxImm,
-    /// Compare Index Register X with Memory (Direct Page)
-    CpxDP,
-    /// Compare Index Register X with Memory (Absolute)
-    CpxAbs,
-    /// Compare Index Register Y with Memory (Immediate)
-    CpyImm,
-    /// Compare Index Register Y with Memory (Direct Page)
-    CpyDP,
-    /// Compare Index Register Y with Memory (Absolute)
-    CpyAbs,
-    /// Decrement (Accumulator)
-    Dea,
-    /// Decrement (Direct Page)
-    DecDP,
-    /// Decrement (Absolute)
-    DecAbs,
-    /// Decrement (DP Indexed,X)
-    DecDPX,
-    /// Decrement (Absolute Indexed,X)
-    DecAbsX,
-    /// Decrement Index Register X (Implied)
-    Dex,
-    /// Decrement Index Register Y (Implied)
-    Dey,
-    /// Exclusive-OR Accumulator with Memory (DP Indexed Indirect,X)
-    EorDPIX,
-    /// Exclusive-OR Accumulator with Memory (Stack Relative)
-    EorSR,
-    /// Exclusive-OR Accumulator with Memory (Direct Page)
-    EorDP,
-    /// Exclusive-OR Accumulator with Memory (DP Indirect Long)
-    EorDPLong,
-    /// Exclusive-OR Accumulator with Memory (Immediate)
-    EorImm,
-    /// Exclusive-OR Accumulator with Memory (Absolute)
-    EorAbs,
-    /// Exclusive-OR Accumulator with Memory (Absolute Long)
-    EorAbsLong,
-    /// Exclusive-OR Accumulator with Memory (DP Indirect Indexed, Y)
-    EorDPIY,
-    /// Exclusive-OR Accumulator with Memory (DP Indirect)
-    EorDPI,
-    /// Exclusive-OR Accumulator with Memory (SR Indirect Indexed,Y)
-    EorSRY,
-    /// Exclusive-OR Accumulator with Memory (DP Indexed,X)
-    EorDPX,
-    /// Exclusive-OR Accumulator with Memory (DP Indirect Long Indexed, Y)
-    EorDPIYLong,
-    /// Exclusive-OR Accumulator with Memory (Absolute Indexed,Y)
-    EorAbsY,
-    /// Exclusive-OR Accumulator with Memory (Absolute Indexed,X)
-    EorAbsX,
-    /// Exclusive-OR Accumulator with Memory (Absolute Long Indexed,X)
-    EorAbsXLong,
-    /// Increment (Accumulator)
-    Ina,
-    /// Increment (Direct Page)
-    IncDP,
-    /// Increment (Absolute)
-    IncAbs,
-    /// Increment (DP Indexed,X)
-    IncDPX,
-    /// Increment (Absolute Indexed,X)
-    IncAbsX,
-    /// Increment Index Register X (Implied)
-    Inx,
-    /// Increment Index Register Y (Implied)
-    Iny,
-    /// Jump (Absolute)
-    JmpAbs,
-    /// Jump (Absolute Long)
-    JmlAbsLong,
-    /// Jump (Absolute Indirect)
-    JmpIndirect,
-    /// Jump (Absolute Indexed Indirect)
-    JmpAbsIX,
-    /// Jump (Absolute Indirect Long)
-    Jml,
-    /// Jump to Subroutine (Absolute)
-    JsrAbs,
-    /// Jump to Subroutine (Absolute Long)
-    JslAbsLong,
-    /// Jump to Subroutine (Absolute Indexed Indirect)
-    JsrAbsIX,
-    /// Load Accumulator from Memory (DP Indexed Indirect,X)
-    LdaDPIX,
-    /// Load Accumulator from Memory (Stack Relative)
-    LdaSR,
-    /// Load Accumulator from Memory (Direct Page)
-    LdaDP,
-    /// Load Accumulator from Memory (DP Indirect Long)
-    LdaDPLong,
-    /// Load Accumulator from Memory (Immediate)
-    LdaImm,
-    /// Load Accumulator from Memory (Absolute)
-    LdaAbs,
-    /// Load Accumulator from Memory (Absolute Long)
-    LdaAbsLong,
-    /// Load Accumulator from Memory (DP Indirect Indexed, Y)
-    LdaDPIY,
-    /// Load Accumulator from Memory (DP Indirect)
-    LdaDPI,
-    /// Load Accumulator from Memory (SR Indirect Indexed,Y)
-    LdaSRY,
-    /// Load Accumulator from Memory (DP Indexed,X)
-    LdaDPX,
-    /// Load Accumulator from Memory (DP Indirect Long Indexed, Y)
-    LdaDPIYLong,
-    /// Load Accumulator from Memory (Absolute Indexed,Y)
-    LdaAbsY,
-    /// Load Accumulator from Memory (Absolute Indexed,X)
-    LdaAbsX,
-    /// Load Accumulator from Memory (Absolute Long Indexed,X)
-    LdaAbsXLong,
-    /// Load Index Register X from Memory (Immediate)
-    LdxImm,
-    /// Load Index Register X from Memory (Direct Page)
-    LdxDP,
-    /// Load Index Register X from Memory (Absolute)
-    LdxAbs,
-    /// Load Index Register X from Memory (DP Indexed,Y)
-    LdxDPY,
-    /// Load Index Register X from Memory (Absolute Indexed,Y)
-    LdxAbsY,
-    /// Load Index Register Y from Memory (Immediate)
-    LdyImm,
-    /// Load Index Register Y from Memory (Direct Page)
-    LdyDP,
-    /// Load Index Register Y from Memory (Absolute)
-    LdyAbs,
-    /// Load Index Register Y from Memory (DP Indexed,X)
-    LdyDPX,
-    /// Load Index Register Y from Memory (Absolute Indexed,X)
-    LdyAbsX,
-    /// Logical Shift Memory or Accumulator Right (Direct Page)
-    LsrDP,
-    /// Logical Shift Memory or Accumulator Right (Accumulator)
-    Lsr,
-    /// Logical Shift Memory or Accumulator Right (Absolute)
-    LsrAbs,
-    /// Logical Shift Memory or Accumulator Right (DP Indexed,X)
-    LsrDPX,
-    /// Logical Shift Memory or Accumulator Right (Absolute Indexed,X)
-    LsrAbsX,
-    /// Block Move Negative (Block Move)
-    Mvn,
-    /// Block Move Positive (Block Move)
-    Mvp,
-    /// No Operation (Implied)
-    Nop,
-    /// OR Accumulator with Memory (DP Indexed Indirect,X)
-    OraDPIX,
-    /// OR Accumulator with Memory (Stack Relative)
-    OraSR,
-    /// OR Accumulator with Memory (Direct Page)
-    OraDP,
-    /// OR Accumulator with Memory (DP Indirect Long)
-    OraDPLong,
-    /// OR Accumulator with Memory (Immediate)
-    OraImm,
-    /// OR Accumulator with Memory (Absolute)
-    OraAbs,
-    /// OR Accumulator with Memory (Absolute Long)
-    OraAbsLong,
-    /// OR Accumulator with Memory (DP Indirect Indexed, Y)
-    OraDPIY,
-    /// OR Accumulator with Memory (DP Indirect)
-    OraDPI,
-    /// OR Accumulator with Memory (SR Indirect Indexed,Y)
-    OraSRY,
-    /// OR Accumulator with Memory (DP Indexed,X)
-    OraDPX,
-    /// OR Accumulator with Memory (DP Indirect Long Indexed, Y)
-    OraDPIYLong,
-    /// OR Accumulator with Memory (Absolute Indexed,Y)
-    OraAbsY,
-    /// OR Accumulator with Memory (Absolute Indexed,X)
-    OraAbsX,
-    /// OR Accumulator with Memory (Absolute Long Indexed,X)
-    OraAbsXLong,
-    /// Push Effective Absolute Address (Stack (Absolute))
-    Pea,
-    /// Push Effective Indirect Address (Stack (DP Indirect))
-    Pei,
-    /// Push Effective PC Relative Indirect Address (Stack (PC Relative Long))
-    Per,
-    /// Push Accumulator (Stack (Push))
-    Pha,
-    /// Push Data Bank Register (Stack (Push))
-    Phb,
-    /// Push Direct Page Register (Stack (Push))
-    Phd,
-    /// Push Program Bank Register (Stack (Push))
-    Phk,
-    /// Push Processor Status Register (Stack (Push))
-    Php,
-    /// Push Index Register X (Stack (Push))
-    Phx,
-    /// Push Index Register Y (Stack (Push))
-    Phy,
-    /// Pull Accumulator (Stack (Pull))
-    Pla,
-    /// Pull Data Bank Register (Stack (Pull))
-    Plb,
-    /// Pull Direct Page Register (Stack (Pull))
-    Pld,
-    /// Pull Processor Status Register (Stack (Pull))
-    Plp,
-    /// Pull Index Register X (Stack (Pull))
-    Plx,
-    /// Pull Index Register Y (Stack (Pull))
-    Ply,
-    /// Reset Processor Status Bits (Immediate)
-    RepImm,
-    /// Rotate Memory or Accumulator Left (Direct Page)
-    RolDP,
-    /// Rotate Memory or Accumulator Left (Accumulator)
-    Rol,
-    /// Rotate Memory or Accumulator Left (Absolute)
-    RolAbs,
-    /// Rotate Memory or Accumulator Left (DP Indexed,X)
-    RolDPX,
-    /// Rotate Memory or Accumulator Left (Absolute Indexed,X)
-    RolAbsX,
-    /// Rotate Memory or Accumulator Right (Direct Page)
-    RorDP,
-    /// Rotate Memory or Accumulator Right (Accumulator)
-    Ror,
-    /// Rotate Memory or Accumulator Right (Absolute)
-    RorAbs,
-    /// Rotate Memory or Accumulator Right (DP Indexed,X)
-    RorDPX,
-    /// Rotate Memory or Accumulator Right (Absolute Indexed,X)
-    RorAbsX,
-    /// Return from Interrupt (Stack (RTI))
-    Rti,
-    /// Return from Subroutine Long (Stack (RTL))
-    Rtl,
-    /// Return from Subroutine (Stack (RTS))
-    Rts,
-    /// Subtract with Borrow from Accumulator (DP Indexed Indirect,X)
-    SbcDPIX,
-    /// Subtract with Borrow from Accumulator (Stack Relative)
-    SbcSR,
-    /// Subtract with Borrow from Accumulator (Direct Page)
-    SbcDP,
-    /// Subtract with Borrow from Accumulator (DP Indirect Long)
-    SbcDPLong,
-    /// Subtract with Borrow from Accumulator (Immediate)
-    SbcImm,
-    /// Subtract with Borrow from Accumulator (Absolute)
-    SbcAbs,
-    /// Subtract with Borrow from Accumulator (Absolute Long)
-    SbcAbsLong,
-    /// Subtract with Borrow from Accumulator (DP Indirect Indexed, Y)
-    SbcDPIY,
-    /// Subtract with Borrow from Accumulator (DP Indirect)
-    SbcDPI,
-    /// Subtract with Borrow from Accumulator (SR Indirect Indexed,Y)
-    SbcSRY,
-    /// Subtract with Borrow from Accumulator (DP Indexed,X)
-    SbcDPX,
-    /// Subtract with Borrow from Accumulator (DP Indirect Long Indexed, Y)
-    SbcDPIYLong,
-    /// Subtract with Borrow from Accumulator (Absolute Indexed,Y)
-    SbcAbsY,
-    /// Subtract with Borrow from Accumulator (Absolute Indexed,X)
-    SbcAbsX,
-    /// Subtract with Borrow from Accumulator (Absolute Long Indexed,X)
-    SbcAbsXLong,
-    /// Set Carry Flag (Implied)
-    Sec,
-    /// Set Decimal Flag (Implied)
-    Sed,
-    /// Set Interrupt Disable Flag (Implied)
-    Sei,
-    /// Set Processor Status Bits (Immediate)
-    SepImm,
-    /// Store Accumulator to Memory (DP Indexed Indirect,X)
-    StaDPIX,
-    /// Store Accumulator to Memory (Stack Relative)
-    StaSR,
-    /// Store Accumulator to Memory (Direct Page)
-    StaDP,
-    /// Store Accumulator to Memory (DP Indirect Long)
-    StaDPLong,
-    /// Store Accumulator to Memory (Absolute)
-    StaAbs,
-    /// Store Accumulator to Memory (Absolute Long)
-    StaAbsLong,
-    /// Store Accumulator to Memory (DP Indirect Indexed, Y)
-    StaDPIY,
-    /// Store Accumulator to Memory (DP Indirect)
-    StaDPI,
-    /// Store Accumulator to Memory (SR Indirect Indexed,Y)
-    StaSRY,
-    /// Store Accumulator to Memory (DP Indexed,X)
-    StaDPX,
-    /// Store Accumulator to Memory (DP Indirect Long Indexed, Y)
-    StaDPIYLong,
-    /// Store Accumulator to Memory (Absolute Indexed,Y)
-    StaAbsY,
-    /// Store Accumulator to Memory (Absolute Indexed,X)
-    StaAbsX,
-    /// Store Accumulator to Memory (Absolute Long Indexed,X)
-    StaAbsXLong,
-    /// Stop Processor (Implied)
-    Stp,
-    /// Store Index Register X to Memory (Direct Page)
-    StxDP,
-    /// Store Index Register X to Memory (Absolute)
-    StxAbs,
-    /// Store Index Register X to Memory (DP Indexed,Y)
-    StxDPY,
-    /// Store Index Register Y to Memory (Direct Page)
-    StyDP,
-    /// Store Index Register Y to Memory (Absolute)
-    StyAbs,
-    /// Store Index Register Y to Memory (DP Indexed,X)
-    StyDPX,
-    /// Store Zero to Memory (Direct Page)
-    StzDP,
-    /// Store Zero to Memory (DP Indexed,X)
-    StzDPX,
-    /// Store Zero to Memory (Absolute)
-    StzAbs,
-    /// Store Zero to Memory (Absolute Indexed,X)
-    StzAbsX,
-    /// Transfer Accumulator to Index Register X (Implied)
-    Tax,
-    /// Transfer Accumulator to Index Register Y (Implied)
-    Tay,
-    /// Transfer 16-bit Accumulator to Direct Page Register (Implied)
-    Tcd,
-    /// Transfer 16-bit Accumulator to Stack Pointer (Implied)
-    Tcs,
-    /// Transfer Direct Page Register to 16-bit Accumulator (Implied)
-    Tdc,
-    /// Test and Reset Memory Bits Against Accumulator (Direct Page)
-    TrbDP,
-    /// Test and Reset Memory Bits Against Accumulator (Absolute)
-    TrbAbs,
-    /// Test and Set Memory Bits Against Accumulator (Direct Page)
-    TsbDP,
-    /// Test and Set Memory Bits Against Accumulator (Absolute)
-    TsbAbs,
-    /// Transfer Stack Pointer to 16-bit Accumulator (Implied)
-    Tsc,
-    /// Transfer Stack Pointer to Index Register X (Implied)
-    Tsx,
-    /// Transfer Index Register X to Accumulator (Implied)
-    Txa,
-    /// Transfer Index Register X to Stack Pointer (Implied)
-    Txs,
-    /// Transfer Index Register X to Index Register Y (Implied)
-    Txy,
-    /// Transfer Index Register Y to Accumulator (Implied)
-    Tya,
-    /// Transfer Index Register Y to Index Register X (Implied)
-    Tyx,
-    /// Wait for Interrupt (Implied)
-    Wai,
-    /// <em>Reserved for Future Expansion</em> ()
-    Wdm,
-    /// Exchange B and A 8-bit Accumulators (Implied)
-    Xba,
-    /// Exchange Carry and Emulation Flags (Implied)
-    Xce,
+    
+/// ($00) BRK, Break (Stack/Interrupt)
+/// 
+/// * Byte length: 2
+/// * Cycles: 7
+Brk,
+
+/// ($01) ORA, OR Accumulator with Memory (DP Indexed Indirect,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+OraDPIX,
+
+/// ($02) COP, Co-Processor (Stack/Interrupt)
+/// 
+/// * Byte length: 2
+/// * Cycles: 7
+Cop,
+
+/// ($03) ORA, OR Accumulator with Memory (Stack Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+OraSR,
+
+/// ($04) TSB, Test and Set Memory Bits Against Accumulator (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+TsbDP,
+
+/// ($05) ORA, OR Accumulator with Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+OraDP,
+
+/// ($06) ASL, Arithmetic Shift Left (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+AslDP,
+
+/// ($07) ORA, OR Accumulator with Memory (DP Indirect Long)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+OraDPLong,
+
+/// ($08) PHP, Push Processor Status Register (Stack (Push))
+/// 
+/// * Byte length: 1
+/// * Cycles: 3
+Php,
+
+/// ($09) ORA, OR Accumulator with Memory (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+OraImm,
+
+/// ($0A) ASL, Arithmetic Shift Left (Accumulator)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Asl,
+
+/// ($0B) PHD, Push Direct Page Register (Stack (Push))
+/// 
+/// * Byte length: 1
+/// * Cycles: 4
+Phd,
+
+/// ($0C) TSB, Test and Set Memory Bits Against Accumulator (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+TsbAbs,
+
+/// ($0D) ORA, OR Accumulator with Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+OraAbs,
+
+/// ($0E) ASL, Arithmetic Shift Left (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+AslAbs,
+
+/// ($0F) ORA, OR Accumulator with Memory (Absolute Long)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+OraAbsLong,
+
+/// ($10) BPL, Branch if Plus (Program Counter Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+Bpl,
+
+/// ($11) ORA, OR Accumulator with Memory (DP Indirect Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+OraDPIY,
+
+/// ($12) ORA, OR Accumulator with Memory (DP Indirect)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+OraDPI,
+
+/// ($13) ORA, OR Accumulator with Memory (SR Indirect Indexed,Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 7
+OraSRY,
+
+/// ($14) TRB, Test and Reset Memory Bits Against Accumulator (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+TrbDP,
+
+/// ($15) ORA, OR Accumulator with Memory (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+OraDPX,
+
+/// ($16) ASL, Arithmetic Shift Left (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+AslDPX,
+
+/// ($17) ORA, OR Accumulator with Memory (DP Indirect Long Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+OraDPIYLong,
+
+/// ($18) CLC, Clear Carry (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Clc,
+
+/// ($19) ORA, OR Accumulator with Memory (Absolute Indexed,Y)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+OraAbsY,
+
+/// ($1A) INA, Increment (Accumulator)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Ina,
+
+/// ($1B) TCS, Transfer 16-bit Accumulator to Stack Pointer (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Tcs,
+
+/// ($1C) TRB, Test and Reset Memory Bits Against Accumulator (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+TrbAbs,
+
+/// ($1D) ORA, OR Accumulator with Memory (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+OraAbsX,
+
+/// ($1E) ASL, Arithmetic Shift Left (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 7
+AslAbsX,
+
+/// ($1F) ORA, OR Accumulator with Memory (Absolute Long Indexed,X)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+OraAbsXLong,
+
+/// ($20) JSR, Jump to Subroutine (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+JsrAbs,
+
+/// ($21) AND, AND Accumulator with Memory (DP Indexed Indirect,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+AndDPIX,
+
+/// ($22) JSL, Jump to Subroutine (Absolute Long)
+/// 
+/// * Byte length: 4
+/// * Cycles: 8
+JslAbsLong,
+
+/// ($23) AND, AND Accumulator with Memory (Stack Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+AndSR,
+
+/// ($24) BIT, Test Bits (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+BitDP,
+
+/// ($25) AND, AND Accumulator with Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+AndDP,
+
+/// ($26) ROL, Rotate Memory or Accumulator Left (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+RolDP,
+
+/// ($27) AND, AND Accumulator with Memory (DP Indirect Long)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+AndDPLong,
+
+/// ($28) PLP, Pull Processor Status Register (Stack (Pull))
+/// 
+/// * Byte length: 1
+/// * Cycles: 4
+Plp,
+
+/// ($29) AND, AND Accumulator with Memory (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+AndImm,
+
+/// ($2A) ROL, Rotate Memory or Accumulator Left (Accumulator)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Rol,
+
+/// ($2B) PLD, Pull Direct Page Register (Stack (Pull))
+/// 
+/// * Byte length: 1
+/// * Cycles: 5
+Pld,
+
+/// ($2C) BIT, Test Bits (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+BitAbs,
+
+/// ($2D) AND, AND Accumulator with Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+AndAbs,
+
+/// ($2E) ROL, Rotate Memory or Accumulator Left (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+RolAbs,
+
+/// ($2F) AND, AND Accumulator with Memory (Absolute Long)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+AndAbsLong,
+
+/// ($30) BMI, Branch if Minus (Program Counter Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+Bmi,
+
+/// ($31) AND, AND Accumulator with Memory (DP Indirect Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+AndDPIY,
+
+/// ($32) AND, AND Accumulator with Memory (DP Indirect)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+AndDPI,
+
+/// ($33) AND, AND Accumulator with Memory (SR Indirect Indexed,Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 7
+AndSRY,
+
+/// ($34) BIT, Test Bits (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+BitDPX,
+
+/// ($35) AND, AND Accumulator with Memory (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+AndDPX,
+
+/// ($36) ROL, Rotate Memory or Accumulator Left (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+RolDPX,
+
+/// ($37) AND, AND Accumulator with Memory (DP Indirect Long Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+AndDPIYLong,
+
+/// ($38) SEC, Set Carry Flag (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Sec,
+
+/// ($39) AND, AND Accumulator with Memory (Absolute Indexed,Y)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+AndAbsY,
+
+/// ($3A) DEA, Decrement (Accumulator)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Dea,
+
+/// ($3B) TSC, Transfer Stack Pointer to 16-bit Accumulator (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Tsc,
+
+/// ($3C) BIT, Test Bits (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+BitAbsX,
+
+/// ($3D) AND, AND Accumulator with Memory (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+AndAbsX,
+
+/// ($3E) ROL, Rotate Memory or Accumulator Left (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 7
+RolAbsX,
+
+/// ($3F) AND, AND Accumulator with Memory (Absolute Long Indexed,X)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+AndAbsXLong,
+
+/// ($40) RTI, Return from Interrupt (Stack (RTI))
+/// 
+/// * Byte length: 1
+/// * Cycles: 6
+Rti,
+
+/// ($41) EOR, Exclusive-OR Accumulator with Memory (DP Indexed Indirect,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+EorDPIX,
+
+/// ($42) WDM, <em>Reserved for Future Expansion</em> ()
+/// 
+/// * Byte length: 2
+/// * Cycles: 0
+Wdm,
+
+/// ($43) EOR, Exclusive-OR Accumulator with Memory (Stack Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+EorSR,
+
+/// ($44) MVP, Block Move Positive (Block Move)
+/// 
+/// * Byte length: 3
+/// * Cycles: 1
+Mvp,
+
+/// ($45) EOR, Exclusive-OR Accumulator with Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+EorDP,
+
+/// ($46) LSR, Logical Shift Memory or Accumulator Right (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+LsrDP,
+
+/// ($47) EOR, Exclusive-OR Accumulator with Memory (DP Indirect Long)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+EorDPLong,
+
+/// ($48) PHA, Push Accumulator (Stack (Push))
+/// 
+/// * Byte length: 1
+/// * Cycles: 3
+Pha,
+
+/// ($49) EOR, Exclusive-OR Accumulator with Memory (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+EorImm,
+
+/// ($4A) LSR, Logical Shift Memory or Accumulator Right (Accumulator)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Lsr,
+
+/// ($4B) PHK, Push Program Bank Register (Stack (Push))
+/// 
+/// * Byte length: 1
+/// * Cycles: 3
+Phk,
+
+/// ($4C) JMP, Jump (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 3
+JmpAbs,
+
+/// ($4D) EOR, Exclusive-OR Accumulator with Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+EorAbs,
+
+/// ($4E) LSR, Logical Shift Memory or Accumulator Right (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+LsrAbs,
+
+/// ($4F) EOR, Exclusive-OR Accumulator with Memory (Absolute Long)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+EorAbsLong,
+
+/// ($50) BVC, Branch if Overflow Clear (Program Counter Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+Bvc,
+
+/// ($51) EOR, Exclusive-OR Accumulator with Memory (DP Indirect Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+EorDPIY,
+
+/// ($52) EOR, Exclusive-OR Accumulator with Memory (DP Indirect)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+EorDPI,
+
+/// ($53) EOR, Exclusive-OR Accumulator with Memory (SR Indirect Indexed,Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 7
+EorSRY,
+
+/// ($54) MVN, Block Move Negative (Block Move)
+/// 
+/// * Byte length: 3
+/// * Cycles: 1
+Mvn,
+
+/// ($55) EOR, Exclusive-OR Accumulator with Memory (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+EorDPX,
+
+/// ($56) LSR, Logical Shift Memory or Accumulator Right (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+LsrDPX,
+
+/// ($57) EOR, Exclusive-OR Accumulator with Memory (DP Indirect Long Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+EorDPIYLong,
+
+/// ($58) CLI, Clear Interrupt Disable Flag (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Cli,
+
+/// ($59) EOR, Exclusive-OR Accumulator with Memory (Absolute Indexed,Y)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+EorAbsY,
+
+/// ($5A) PHY, Push Index Register Y (Stack (Push))
+/// 
+/// * Byte length: 1
+/// * Cycles: 3
+Phy,
+
+/// ($5B) TCD, Transfer 16-bit Accumulator to Direct Page Register (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Tcd,
+
+/// ($5C) JML, Jump (Absolute Long)
+/// 
+/// * Byte length: 4
+/// * Cycles: 4
+JmlAbsLong,
+
+/// ($5D) EOR, Exclusive-OR Accumulator with Memory (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+EorAbsX,
+
+/// ($5E) LSR, Logical Shift Memory or Accumulator Right (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 7
+LsrAbsX,
+
+/// ($5F) EOR, Exclusive-OR Accumulator with Memory (Absolute Long Indexed,X)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+EorAbsXLong,
+
+/// ($60) RTS, Return from Subroutine (Stack (RTS))
+/// 
+/// * Byte length: 1
+/// * Cycles: 6
+Rts,
+
+/// ($61) ADC, Add With Carry (DP Indexed Indirect,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+AdcDPIX,
+
+/// ($62) PER, Push Effective PC Relative Indirect Address (Stack (PC Relative Long))
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+Per,
+
+/// ($63) ADC, Add With Carry (Stack Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+AdcSR,
+
+/// ($64) STZ, Store Zero to Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+StzDP,
+
+/// ($65) ADC, Add With Carry (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+AdcDP,
+
+/// ($66) ROR, Rotate Memory or Accumulator Right (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+RorDP,
+
+/// ($67) ADC, Add With Carry (DP Indirect Long)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+AdcDPLong,
+
+/// ($68) PLA, Pull Accumulator (Stack (Pull))
+/// 
+/// * Byte length: 1
+/// * Cycles: 4
+Pla,
+
+/// ($69) ADC, Add With Carry (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+AdcImm,
+
+/// ($6A) ROR, Rotate Memory or Accumulator Right (Accumulator)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Ror,
+
+/// ($6B) RTL, Return from Subroutine Long (Stack (RTL))
+/// 
+/// * Byte length: 1
+/// * Cycles: 6
+Rtl,
+
+/// ($6C) JMP, Jump (Absolute Indirect)
+/// 
+/// * Byte length: 3
+/// * Cycles: 5
+JmpIndirect,
+
+/// ($6D) ADC, Add With Carry (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+AdcAbs,
+
+/// ($6E) ROR, Rotate Memory or Accumulator Right (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+RorAbs,
+
+/// ($6F) ADC, Add With Carry (Absolute Long)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+AdcAbsLong,
+
+/// ($70) BVS, Branch if Overflow Set (Program Counter Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+Bvs,
+
+/// ($71) ADC, Add With Carry (DP Indirect Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+AdcDPIY,
+
+/// ($72) ADC, Add With Carry (DP Indirect)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+AdcDPI,
+
+/// ($73) ADC, Add With Carry (SR Indirect Indexed,Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 7
+AdcSRY,
+
+/// ($74) STZ, Store Zero to Memory (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+StzDPX,
+
+/// ($75) ADC, Add With Carry (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+AdcDPX,
+
+/// ($76) ROR, Rotate Memory or Accumulator Right (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+RorDPX,
+
+/// ($77) ADC, Add With Carry (DP Indirect Long Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+AdcDPIYLong,
+
+/// ($78) SEI, Set Interrupt Disable Flag (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Sei,
+
+/// ($79) ADC, Add With Carry (Absolute Indexed,Y)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+AdcAbsY,
+
+/// ($7A) PLY, Pull Index Register Y (Stack (Pull))
+/// 
+/// * Byte length: 1
+/// * Cycles: 4
+Ply,
+
+/// ($7B) TDC, Transfer Direct Page Register to 16-bit Accumulator (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Tdc,
+
+/// ($7C) JMP, Jump (Absolute Indexed Indirect)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+JmpAbsIX,
+
+/// ($7D) ADC, Add With Carry (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+AdcAbsX,
+
+/// ($7E) ROR, Rotate Memory or Accumulator Right (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 7
+RorAbsX,
+
+/// ($7F) ADC, Add With Carry (Absolute Long Indexed,X)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+AdcAbsXLong,
+
+/// ($80) BRA, Branch Always (Program Counter Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+Bra,
+
+/// ($81) STA, Store Accumulator to Memory (DP Indexed Indirect,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+StaDPIX,
+
+/// ($82) BRL, Branch Long Always (Program Counter Relative Long)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+Brl,
+
+/// ($83) STA, Store Accumulator to Memory (Stack Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+StaSR,
+
+/// ($84) STY, Store Index Register Y to Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+StyDP,
+
+/// ($85) STA, Store Accumulator to Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+StaDP,
+
+/// ($86) STX, Store Index Register X to Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+StxDP,
+
+/// ($87) STA, Store Accumulator to Memory (DP Indirect Long)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+StaDPLong,
+
+/// ($88) DEY, Decrement Index Register Y (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Dey,
+
+/// ($89) BIT, Test Bits (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+BitImm,
+
+/// ($8A) TXA, Transfer Index Register X to Accumulator (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Txa,
+
+/// ($8B) PHB, Push Data Bank Register (Stack (Push))
+/// 
+/// * Byte length: 1
+/// * Cycles: 3
+Phb,
+
+/// ($8C) STY, Store Index Register Y to Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+StyAbs,
+
+/// ($8D) STA, Store Accumulator to Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+StaAbs,
+
+/// ($8E) STX, Store Index Register X to Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+StxAbs,
+
+/// ($8F) STA, Store Accumulator to Memory (Absolute Long)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+StaAbsLong,
+
+/// ($90) BLT, Branch if Carry Clear (Program Counter Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+Blt,
+
+/// ($91) STA, Store Accumulator to Memory (DP Indirect Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+StaDPIY,
+
+/// ($92) STA, Store Accumulator to Memory (DP Indirect)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+StaDPI,
+
+/// ($93) STA, Store Accumulator to Memory (SR Indirect Indexed,Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 7
+StaSRY,
+
+/// ($94) STY, Store Index Register Y to Memory (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+StyDPX,
+
+/// ($95) STA, Store Accumulator to Memory (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+StaDPX,
+
+/// ($96) STX, Store Index Register X to Memory (DP Indexed,Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+StxDPY,
+
+/// ($97) STA, Store Accumulator to Memory (DP Indirect Long Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+StaDPIYLong,
+
+/// ($98) TYA, Transfer Index Register Y to Accumulator (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Tya,
+
+/// ($99) STA, Store Accumulator to Memory (Absolute Indexed,Y)
+/// 
+/// * Byte length: 3
+/// * Cycles: 5
+StaAbsY,
+
+/// ($9A) TXS, Transfer Index Register X to Stack Pointer (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Txs,
+
+/// ($9B) TXY, Transfer Index Register X to Index Register Y (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Txy,
+
+/// ($9C) STZ, Store Zero to Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+StzAbs,
+
+/// ($9D) STA, Store Accumulator to Memory (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 5
+StaAbsX,
+
+/// ($9E) STZ, Store Zero to Memory (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 5
+StzAbsX,
+
+/// ($9F) STA, Store Accumulator to Memory (Absolute Long Indexed,X)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+StaAbsXLong,
+
+/// ($A0) LDY, Load Index Register Y from Memory (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+LdyImm,
+
+/// ($A1) LDA, Load Accumulator from Memory (DP Indexed Indirect,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+LdaDPIX,
+
+/// ($A2) LDX, Load Index Register X from Memory (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+LdxImm,
+
+/// ($A3) LDA, Load Accumulator from Memory (Stack Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+LdaSR,
+
+/// ($A4) LDY, Load Index Register Y from Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+LdyDP,
+
+/// ($A5) LDA, Load Accumulator from Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+LdaDP,
+
+/// ($A6) LDX, Load Index Register X from Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+LdxDP,
+
+/// ($A7) LDA, Load Accumulator from Memory (DP Indirect Long)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+LdaDPLong,
+
+/// ($A8) TAY, Transfer Accumulator to Index Register Y (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Tay,
+
+/// ($A9) LDA, Load Accumulator from Memory (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+LdaImm,
+
+/// ($AA) TAX, Transfer Accumulator to Index Register X (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Tax,
+
+/// ($AB) PLB, Pull Data Bank Register (Stack (Pull))
+/// 
+/// * Byte length: 1
+/// * Cycles: 4
+Plb,
+
+/// ($AC) LDY, Load Index Register Y from Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+LdyAbs,
+
+/// ($AD) LDA, Load Accumulator from Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+LdaAbs,
+
+/// ($AE) LDX, Load Index Register X from Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+LdxAbs,
+
+/// ($AF) LDA, Load Accumulator from Memory (Absolute Long)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+LdaAbsLong,
+
+/// ($B0) BGE, Branch if Carry Set (Program Counter Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+Bge,
+
+/// ($B1) LDA, Load Accumulator from Memory (DP Indirect Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+LdaDPIY,
+
+/// ($B2) LDA, Load Accumulator from Memory (DP Indirect)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+LdaDPI,
+
+/// ($B3) LDA, Load Accumulator from Memory (SR Indirect Indexed,Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 7
+LdaSRY,
+
+/// ($B4) LDY, Load Index Register Y from Memory (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+LdyDPX,
+
+/// ($B5) LDA, Load Accumulator from Memory (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+LdaDPX,
+
+/// ($B6) LDX, Load Index Register X from Memory (DP Indexed,Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+LdxDPY,
+
+/// ($B7) LDA, Load Accumulator from Memory (DP Indirect Long Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+LdaDPIYLong,
+
+/// ($B8) CLV, Clear Overflow Flag (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Clv,
+
+/// ($B9) LDA, Load Accumulator from Memory (Absolute Indexed,Y)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+LdaAbsY,
+
+/// ($BA) TSX, Transfer Stack Pointer to Index Register X (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Tsx,
+
+/// ($BB) TYX, Transfer Index Register Y to Index Register X (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Tyx,
+
+/// ($BC) LDY, Load Index Register Y from Memory (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+LdyAbsX,
+
+/// ($BD) LDA, Load Accumulator from Memory (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+LdaAbsX,
+
+/// ($BE) LDX, Load Index Register X from Memory (Absolute Indexed,Y)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+LdxAbsY,
+
+/// ($BF) LDA, Load Accumulator from Memory (Absolute Long Indexed,X)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+LdaAbsXLong,
+
+/// ($C0) CPY, Compare Index Register Y with Memory (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+CpyImm,
+
+/// ($C1) CMP, Compare Accumulator with Memory (DP Indexed Indirect,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+CmpDPIX,
+
+/// ($C2) REP, Reset Processor Status Bits (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+RepImm,
+
+/// ($C3) CMP, Compare Accumulator with Memory (Stack Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+CmpSR,
+
+/// ($C4) CPY, Compare Index Register Y with Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+CpyDP,
+
+/// ($C5) CMP, Compare Accumulator with Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+CmpDP,
+
+/// ($C6) DEC, Decrement (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+DecDP,
+
+/// ($C7) CMP, Compare Accumulator with Memory (DP Indirect Long)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+CmpDPLong,
+
+/// ($C8) INY, Increment Index Register Y (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Iny,
+
+/// ($C9) CMP, Compare Accumulator with Memory (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+CmpImm,
+
+/// ($CA) DEX, Decrement Index Register X (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Dex,
+
+/// ($CB) WAI, Wait for Interrupt (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 3
+Wai,
+
+/// ($CC) CPY, Compare Index Register Y with Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+CpyAbs,
+
+/// ($CD) CMP, Compare Accumulator with Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+CmpAbs,
+
+/// ($CE) DEC, Decrement (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+DecAbs,
+
+/// ($CF) CMP, Compare Accumulator with Memory (Absolute Long)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+CmpAbsLong,
+
+/// ($D0) BNE, Branch if Not Equal (Program Counter Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+Bne,
+
+/// ($D1) CMP, Compare Accumulator with Memory (DP Indirect Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+CmpDPIY,
+
+/// ($D2) CMP, Compare Accumulator with Memory (DP Indirect)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+CmpDPI,
+
+/// ($D3) CMP, Compare Accumulator with Memory (SR Indirect Indexed,Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 7
+CmpSRY,
+
+/// ($D4) PEI, Push Effective Indirect Address (Stack (DP Indirect))
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+Pei,
+
+/// ($D5) CMP, Compare Accumulator with Memory (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+CmpDPX,
+
+/// ($D6) DEC, Decrement (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+DecDPX,
+
+/// ($D7) CMP, Compare Accumulator with Memory (DP Indirect Long Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+CmpDPIYLong,
+
+/// ($D8) CLD, Clear Decimal Mode Flag (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Cld,
+
+/// ($D9) CMP, Compare Accumulator with Memory (Absolute Indexed,Y)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+CmpAbsY,
+
+/// ($DA) PHX, Push Index Register X (Stack (Push))
+/// 
+/// * Byte length: 1
+/// * Cycles: 3
+Phx,
+
+/// ($DB) STP, Stop Processor (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 3
+Stp,
+
+/// ($DC) JML, Jump (Absolute Indirect Long)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+Jml,
+
+/// ($DD) CMP, Compare Accumulator with Memory (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+CmpAbsX,
+
+/// ($DE) DEC, Decrement (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 7
+DecAbsX,
+
+/// ($DF) CMP, Compare Accumulator with Memory (Absolute Long Indexed,X)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+CmpAbsXLong,
+
+/// ($E0) CPX, Compare Index Register X with Memory (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+CpxImm,
+
+/// ($E1) SBC, Subtract with Borrow from Accumulator (DP Indexed Indirect,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+SbcDPIX,
+
+/// ($E2) SEP, Set Processor Status Bits (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+SepImm,
+
+/// ($E3) SBC, Subtract with Borrow from Accumulator (Stack Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+SbcSR,
+
+/// ($E4) CPX, Compare Index Register X with Memory (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+CpxDP,
+
+/// ($E5) SBC, Subtract with Borrow from Accumulator (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 3
+SbcDP,
+
+/// ($E6) INC, Increment (Direct Page)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+IncDP,
+
+/// ($E7) SBC, Subtract with Borrow from Accumulator (DP Indirect Long)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+SbcDPLong,
+
+/// ($E8) INX, Increment Index Register X (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Inx,
+
+/// ($E9) SBC, Subtract with Borrow from Accumulator (Immediate)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+SbcImm,
+
+/// ($EA) NOP, No Operation (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Nop,
+
+/// ($EB) XBA, Exchange B and A 8-bit Accumulators (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 3
+Xba,
+
+/// ($EC) CPX, Compare Index Register X with Memory (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+CpxAbs,
+
+/// ($ED) SBC, Subtract with Borrow from Accumulator (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+SbcAbs,
+
+/// ($EE) INC, Increment (Absolute)
+/// 
+/// * Byte length: 3
+/// * Cycles: 6
+IncAbs,
+
+/// ($EF) SBC, Subtract with Borrow from Accumulator (Absolute Long)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+SbcAbsLong,
+
+/// ($F0) BEQ, Branch if Equal (Program Counter Relative)
+/// 
+/// * Byte length: 2
+/// * Cycles: 2
+Beq,
+
+/// ($F1) SBC, Subtract with Borrow from Accumulator (DP Indirect Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+SbcDPIY,
+
+/// ($F2) SBC, Subtract with Borrow from Accumulator (DP Indirect)
+/// 
+/// * Byte length: 2
+/// * Cycles: 5
+SbcDPI,
+
+/// ($F3) SBC, Subtract with Borrow from Accumulator (SR Indirect Indexed,Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 7
+SbcSRY,
+
+/// ($F4) PEA, Push Effective Absolute Address (Stack (Absolute))
+/// 
+/// * Byte length: 3
+/// * Cycles: 5
+Pea,
+
+/// ($F5) SBC, Subtract with Borrow from Accumulator (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 4
+SbcDPX,
+
+/// ($F6) INC, Increment (DP Indexed,X)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+IncDPX,
+
+/// ($F7) SBC, Subtract with Borrow from Accumulator (DP Indirect Long Indexed, Y)
+/// 
+/// * Byte length: 2
+/// * Cycles: 6
+SbcDPIYLong,
+
+/// ($F8) SED, Set Decimal Flag (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Sed,
+
+/// ($F9) SBC, Subtract with Borrow from Accumulator (Absolute Indexed,Y)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+SbcAbsY,
+
+/// ($FA) PLX, Pull Index Register X (Stack (Pull))
+/// 
+/// * Byte length: 1
+/// * Cycles: 4
+Plx,
+
+/// ($FB) XCE, Exchange Carry and Emulation Flags (Implied)
+/// 
+/// * Byte length: 1
+/// * Cycles: 2
+Xce,
+
+/// ($FC) JSR, Jump to Subroutine (Absolute Indexed Indirect)
+/// 
+/// * Byte length: 3
+/// * Cycles: 8
+JsrAbsIX,
+
+/// ($FD) SBC, Subtract with Borrow from Accumulator (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 4
+SbcAbsX,
+
+/// ($FE) INC, Increment (Absolute Indexed,X)
+/// 
+/// * Byte length: 3
+/// * Cycles: 7
+IncAbsX,
+
+/// ($FF) SBC, Subtract with Borrow from Accumulator (Absolute Long Indexed,X)
+/// 
+/// * Byte length: 4
+/// * Cycles: 5
+SbcAbsXLong,
+
+
 }
 
 impl Instruction {

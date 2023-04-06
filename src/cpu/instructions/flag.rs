@@ -49,7 +49,10 @@ impl Cpu {
 	
 	/// Exchange Carry and Emulation Flags (Implied)
 	pub fn exe_xce(&mut self, data: u16) {
-		todo!()
+		let carry = self.status.contains(ProcessorStatusFlags::Carry);
+		let emulation = self.status.contains(ProcessorStatusFlags::Emulation);
+		self.status.set(ProcessorStatusFlags::Carry, emulation);
+		self.status.set(ProcessorStatusFlags::Emulation, carry);
 	}
 	
 	

@@ -75,12 +75,7 @@ impl Instruction {
             AdcAbsLong | AdcAbsXLong | AndAbsLong | AndAbsXLong | CmpAbsLong | CmpAbsXLong | EorAbsLong | EorAbsXLong | JmlAbsLong | JslAbsLong | LdaAbsLong | LdaAbsXLong | OraAbsLong | OraAbsXLong | SbcAbsLong | SbcAbsXLong | StaAbsLong | StaAbsXLong  => 4,
         }
     }
-    
-    /// Get op code of this instruction, always returns a single byte
-    pub fn get_op_code() -> u8 {
-        todo!()
-    }
-    
+        
     /// Get cycle duration of this instruction. This cycle time is then added to the cpu after instruction completes to sync with ie PPU
     pub fn get_cycle_time(&self) -> usize {
         use Instruction::*;

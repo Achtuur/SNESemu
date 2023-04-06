@@ -68,11 +68,11 @@ pub struct Cpu {
 impl Cpu {
     pub fn new() -> Self {
         Cpu {
-            sp: 0,
-            pc: 0xFFFC, //todo -> set to correct init value
-            acc: 0,
-            status: ProcessorStatusFlags::from_bits(0).unwrap(),
             memory: Arc::new(Mutex::new(Memory::new())),
+            status: ProcessorStatusFlags::from_bits(0).unwrap(),
+            sp: 0,
+            pc: 0xFFFC,
+            acc: 0,
             x: 0,
             y: 0,
             dp: 0,
@@ -83,11 +83,20 @@ impl Cpu {
         }
     }
 
-    /// Initialize variables
-    /// 
-    /// Currently unused, could be removed as most initial values can be set in `Cpu::new()`
-    pub fn init(&mut self) {
-
+    /// Reset CPU, sets all values to initial state
+    pub fn reset(&mut self) {
+        // self.memory.lock().unwrap().reset(); // todo -> implement memory reset
+        self.status = ProcessorStatusFlags::from_bits(0).unwrap();
+        self.sp = 0;
+        self.pc = 0xFFFC; // reset vector
+        self.acc = 0;
+        self.x = 0;
+        self.y = 0;
+        self.dp = 0;
+        self.dbr = 0;
+        self.pbr = 0;
+        self.mdr = 0;
+        self.wait_cycles = 0;
     }
 
     // This function is called every 'clock cycle'

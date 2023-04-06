@@ -18,6 +18,7 @@ impl Cpu {
 		self.set_acc_nz_flag();
 	}
 
+	/// Add BCD numbers
 	fn exe_adc_bcd(&mut self, data: u16) -> u16 {
 		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
 			//8 bit addition
@@ -88,6 +89,7 @@ impl Cpu {
 		}
 	}
 
+	/// Add binary numbers
 	fn exe_adc_bin(&mut self, data: u16) -> u16 {
 		let sum = self.get_acc().wrapping_add(data).wrapping_add(self.carry());
 		

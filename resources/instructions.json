@@ -1082,7 +1082,7 @@
     {
         "name": "JMP",
         "addr_mode": "Absolute Indirect",
-        "code_name": "Jmp",
+        "code_name": "JmpIndirect",
         "bytes": "3",
         "cycles": "5",
         "op": "6C",

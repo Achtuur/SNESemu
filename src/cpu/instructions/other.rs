@@ -9,7 +9,7 @@ impl Cpu {
 	
 	/// Stop Processor (Implied)
 	pub fn exe_stp(&mut self, data: u16) {
-		todo!()
+		// NOT IMPLEMENTED ON PURPOSE
 	}
 	
 	/// <em>Reserved for Future Expansion</em> ()
