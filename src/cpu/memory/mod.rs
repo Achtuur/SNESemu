@@ -1,6 +1,9 @@
-use crate::memory::mapper::{hirom::HiROM, exhirom::ExHiROM};
 
-use self::{mapper::{Mappermode, lorom::LoROM}, cartridge::{CartridgeParseError, CartridgeMetadata}, ram::Ram};
+use std::sync::{Mutex, Arc};
+
+use crate::{ppu::memory::PpuMemory, apu::memory::ApuMemory};
+
+use self::{mapper::{Mappermode, lorom::LoROM, hirom::HiROM, exhirom::ExHiROM}, cartridge::{CartridgeParseError, CartridgeMetadata}, ram::Ram};
 
 
 mod mapper;
@@ -16,21 +19,23 @@ mod cartridge;
 /// Since rust does not support `u24` natively, `u32` will be used instead and the upper 8 bits are unused and ignored
 /// 
 /// Source used: [snes wiki page](https://snes.nesdev.org/wiki/Memory_map)
-pub struct Memory {
+pub struct CpuMemory {
     mapper: Box<dyn Mappermode>,
     pub cartridge_metadata: CartridgeMetadata,
     ram: Ram,
-    
+    ppu_memory: Arc<Mutex<PpuMemory>>,
+    apu_memory: Arc<Mutex<ApuMemory>>,
 }
 
-impl Memory {
+impl CpuMemory {
     pub fn new() -> Self {
-        Memory {
+        CpuMemory {
             // default to lorom mapper, this should probably be changed to be an Option<Box<dyn Mappermode>>
             mapper: Box::new(LoROM::new()),
             cartridge_metadata: CartridgeMetadata::new(),
             ram: Ram::new(),
-            
+            ppu_memory: Arc::new(Mutex::new(PpuMemory::new())),
+            apu_memory: Arc::new(Mutex::new(ApuMemory::new())),
         }
     }
 
@@ -104,7 +109,7 @@ impl Memory {
             
             // PPU, APU registers
             (0x00..=0x3F, 0x2000..=0x3FFF) |
-            (0x80..=0xBF, 0x2000..=0x3FFF) => todo!(),
+            (0x80..=0xBF, 0x2000..=0x3FFF) => self.ppu_memory.lock().unwrap().read(hhll),
 
             // Controller
             (0x00..=0x3F, 0x4000..=0x41FF) |
@@ -130,9 +135,12 @@ impl Memory {
             (0x80..=0xBF, 0x0000..=0x1FFF) | // Work ram mirror in third quadrant
             (0x7E..=0x7F, 0x0000..=0xFFFF) => self.ram.write(long_addr, value),
             
-            // PPU, APU registers
+            // PPU
             (0x00..=0x3F, 0x2000..=0x3FFF) |
-            (0x80..=0xBF, 0x2000..=0x3FFF) => todo!(),
+            (0x80..=0xBF, 0x2000..=0x3FFF) => self.ppu_memory.lock().unwrap().write(hhll, value),
+
+            // APU
+            // (0x00..=0x3F, 0x2140..=0x2143) => self.apu_memory.lock().unwrap().write(hhll, value),
 
             // Controller
             (0x00..=0x3F, 0x4000..=0x41FF) |

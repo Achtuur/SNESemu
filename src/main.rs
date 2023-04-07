@@ -1,9 +1,7 @@
-mod memory;
 mod ppu;
 mod cpu;
 mod apu;
 
-use memory::Memory;
 use crate::{cpu::Cpu, ppu::Ppu, apu::Apu};
 
 
@@ -19,16 +17,13 @@ macro_rules! arc_mut {
 fn main() {
     // let rom = include_bytes!("../resources/rom/Legend of Zelda, The - A Link to the Past.smc");
     let rom = include_bytes!("../resources/rom/Super Mario World.smc");
-    let m = arc_mut!(Memory::new());
     
-    let _ = m.lock().unwrap().insert_cartridge(rom);
     // println!("Cartridge parsed succesfully!: {0:#?}", m.lock().unwrap().cartridge_metadata);
 
     let mut cpu = Cpu::new();
     let mut ppu = Ppu::new();
     let mut apu = Apu::new();
 
-    cpu.set_memory(m.clone());
-    ppu.set_memory(m.clone());
-    apu.set_memory(m.clone());
+    let _ = cpu.memory.insert_cartridge(rom);
+    println!("{:#?}", cpu.memory.cartridge_metadata);
 }
