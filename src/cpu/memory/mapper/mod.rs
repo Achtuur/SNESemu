@@ -1,10 +1,9 @@
-use crate::memory::cartridge::CartridgeMetadata;
-
-use super::CartridgeParseError;
-
 pub mod lorom;
 pub mod hirom;
 pub mod exhirom;
+
+use super::cartridge::{CartridgeMetadata, CartridgeParseError};
+
 
 pub trait Mappermode {
 

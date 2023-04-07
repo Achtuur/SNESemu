@@ -1,11 +1,8 @@
-use std::sync::{Mutex, Arc};
-
-use crate::{arc_mut, memory::{Memory, self}};
+pub mod memory;
 
 
 /// Audio processing unit
 pub struct Apu {
-    memory: Arc<Mutex<Memory>>,
 
 }
 
@@ -13,12 +10,8 @@ pub struct Apu {
 impl Apu {
     pub fn new() -> Self {
         Apu {
-            memory: arc_mut!(Memory::new()),
+
         }
     }
 
-    /// Give APU a reference to memory shared between CPU, PPU and APU
-    pub fn set_memory(&mut self, memory: Arc<Mutex<Memory>>) {
-        self.memory = memory;
-    }
 }

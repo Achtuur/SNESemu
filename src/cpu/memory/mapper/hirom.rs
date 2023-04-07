@@ -1,4 +1,4 @@
-use crate::memory::{separate_bank_hhll_addr, cartridge::CartridgeParseError};
+use crate::cpu::memory::separate_bank_hhll_addr;
 
 use super::Mappermode;
 

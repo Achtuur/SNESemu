@@ -1,8 +1,6 @@
-use std::{string::ParseError, fs::metadata};
+use crate::cpu::memory::separate_bank_hhll_addr;
 
-use crate::{memory::{separate_bank_hhll_addr, CartridgeMetadata}};
-
-use super::{Mappermode, CartridgeParseError};
+use super::{Mappermode};
 
 /// Size of one bank of ROM memory using LoROM mapping
 const ROM_BANK_SIZE: usize = 0x8000;
