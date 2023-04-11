@@ -27,6 +27,7 @@ impl Vram {
             0x2115 => None,
             0x2116 => None,
             0x2117 => None,
+            0x2118 => None,
             0x2139 => None,
             0x213A => None,
         }
@@ -34,7 +35,13 @@ impl Vram {
 
     pub fn write(&mut self, addr: u16, byte: u8) {
         match addr {
-            
+            0x2115 => ,
+            0x2116 => ,
+            0x2117 => ,
+            0x2118 => ,
+            0x2139 => ,
+
+            _ => {},
         }
     }
 }

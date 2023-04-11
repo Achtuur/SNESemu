@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, processorstatusflag::ProcessorStatusFlags};
+use crate::cpu::{Cpu};
 
 impl Cpu {
 	
