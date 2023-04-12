@@ -243,6 +243,8 @@ impl PpuMemory {
 
             0x2113 => self.bg4.write_hscroll(byte, self.bg_latch),
             0x2114 => self.bg4.write_vscroll(byte, self.bg_latch),
+            
+            _ => unreachable!(),
         }
         self.bg_latch = byte;
     }

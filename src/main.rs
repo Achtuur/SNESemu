@@ -13,6 +13,22 @@ macro_rules! arc_mut {
     };
 }
 
+#[macro_export]
+/// Creates a word from two bytes, first pass the high byte, then the low byte
+macro_rules! to_word {
+    ($hh: expr, $ll: expr) => {
+        (($hh as u16) << 8) | ($ll as u16)
+    };
+}
+
+#[macro_export]
+/// Get `nth` bit
+macro_rules! nth_bit {
+    ($num: expr, $n: literal) => {
+        ($num >> $n) & 1
+    };
+}
+
 
 fn main() {
     // let rom = include_bytes!("../resources/rom/Legend of Zelda, The - A Link to the Past.smc");
