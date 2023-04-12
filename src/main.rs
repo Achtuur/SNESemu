@@ -27,6 +27,39 @@ macro_rules! nth_bit {
     ($num: expr, $n: literal) => {
         ($num >> $n) & 1
     };
+
+    ($num: expr, $n: expr) => {{
+        let m = $n as usize;
+        ($num >> m) & 1
+    }}
+}
+
+#[macro_export]
+/// Get bits nth to mth bit of num, including mth bit
+/// 
+/// `bit_slice!(0b0110_1001, 0, 3)` returns `0b1001`
+macro_rules! bit_slice {
+    ($num: expr, $n: literal, $m: literal) => {{
+        let mut b = 0;
+        for i in $n..=$m {
+            // get shift amount
+            let shift = i - $n;
+            b |= nth_bit!($num, i) << shift;
+        }
+        b
+    }};
+
+    ($num: expr, $n: expr, $m: expr) => {{
+        let n = $n as usize;
+        let m = $m as usize;
+        let mut b = 0;
+        for i in n..=m {
+            // get shift amount
+            let shift = i - n;
+            b |= nth_bit!($num, i) << shift;
+        }
+        b
+    }};
 }
 
 
@@ -36,10 +69,11 @@ fn main() {
     
     // println!("Cartridge parsed succesfully!: {0:#?}", m.lock().unwrap().cartridge_metadata);
 
-    let mut cpu = Cpu::new();
-    let mut ppu = Ppu::new();
-    let mut apu = Apu::new();
+    // let mut cpu = Cpu::new();
+    // let mut ppu = Ppu::new();
+    // let mut apu = Apu::new();
 
-    let _ = cpu.memory.insert_cartridge(rom);
-    println!("{:#?}", cpu.memory.cartridge_metadata);
+    // let _ = cpu.memory.insert_cartridge(rom);
+    // println!("{:#?}", cpu.memory.cartridge_metadata);
+
 }
