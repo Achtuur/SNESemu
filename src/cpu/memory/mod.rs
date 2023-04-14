@@ -1,7 +1,7 @@
 
 use std::sync::{Mutex, Arc};
 
-use crate::{ppu::memory::PpuMemory, apu::memory::ApuMemory};
+use crate::{ppu::memory::PpuMemory, apu::memory::ApuMemory, separate_bank_hhll_addr};
 
 use self::{mapper::{Mappermode, lorom::LoROM, hirom::HiROM, exhirom::ExHiROM}, cartridge::{CartridgeParseError, CartridgeMetadata}, ram::Ram};
 
@@ -37,6 +37,14 @@ impl CpuMemory {
             ppu_memory: Arc::new(Mutex::new(PpuMemory::new())),
             apu_memory: Arc::new(Mutex::new(ApuMemory::new())),
         }
+    }
+
+    pub fn set_ppumemory_ref(&mut self, memref: Arc<Mutex<PpuMemory>>) {
+        self.ppu_memory = memref;
+    }
+
+    pub fn set_apumemory_ref(&mut self, memref: Arc<Mutex<ApuMemory>>) {
+        self.apu_memory = memref;
     }
 
     /// Insert cartridge means copying raw bytes to mapper and parsing cartridge info
@@ -98,18 +106,21 @@ impl CpuMemory {
 
 
     /// Read a byte from memory using a 24 bit address, 
-    pub fn read(&self, long_addr: u32) -> Option<u8> {
-        let (bank, hhll) = separate_bank_hhll_addr(long_addr);
+    pub fn read(&mut self, long_addr: u32) -> Option<u8> {
+        let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
 
         match (bank, hhll) {
             // RAM
             (0x00..=0x3F, 0x0000..=0x1FFF) | // Work ram mirror in first quadrant
             (0x80..=0xBF, 0x0000..=0x1FFF) | // Work ram mirror in third quadrant
-            (0x7E..=0x7F, 0x0000..=0xFFFF) => self.ram.read(long_addr),
+            (0x7E..=0x7F, 0x0000..=0xFFFF) | // Main region of WRAM
+            (0x00..=0x3F, 0x2180..=0x2183) | // WM registers
+            (0x80..=0xBF, 0x2180..=0x2183) => self.ram.read(long_addr),
             
             // PPU, APU registers
-            (0x00..=0x3F, 0x2000..=0x3FFF) |
-            (0x80..=0xBF, 0x2000..=0x3FFF) => self.ppu_memory.lock().unwrap().read(hhll),
+            (0x00..=0x3F, 0x2000..=0x213F) |
+            (0x80..=0xBF, 0x2000..=0x213F) => self.ppu_memory.lock().unwrap().read(hhll),
+
 
             // Controller
             (0x00..=0x3F, 0x4000..=0x41FF) |
@@ -126,18 +137,20 @@ impl CpuMemory {
         }
     }
 
-    pub fn write(&mut self, long_addr: u32, value: u8) {
-        let (bank, hhll) = separate_bank_hhll_addr(long_addr);
+    pub fn write(&mut self, long_addr: u32, byte: u8) {
+        let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
 
         match (bank, hhll) {
             // RAM
             (0x00..=0x3F, 0x0000..=0x1FFF) | // Work ram mirror in first quadrant
             (0x80..=0xBF, 0x0000..=0x1FFF) | // Work ram mirror in third quadrant
-            (0x7E..=0x7F, 0x0000..=0xFFFF) => self.ram.write(long_addr, value),
+            (0x7E..=0x7F, 0x0000..=0xFFFF) | // Main region of WRAM
+            (0x00..=0x3F, 0x2180..=0x2183) | // WM registers
+            (0x80..=0xBF, 0x2180..=0x2183) => self.ram.write(long_addr, byte),
             
             // PPU
-            (0x00..=0x3F, 0x2000..=0x3FFF) |
-            (0x80..=0xBF, 0x2000..=0x3FFF) => self.ppu_memory.lock().unwrap().write(hhll, value),
+            (0x00..=0x3F, 0x2000..=0x213F) |
+            (0x80..=0xBF, 0x2000..=0x213F) => self.ppu_memory.lock().unwrap().write(hhll, byte),
 
             // APU
             // (0x00..=0x3F, 0x2140..=0x2143) => self.apu_memory.lock().unwrap().write(hhll, value),
@@ -152,7 +165,7 @@ impl CpuMemory {
 
 
             // Rest of space is dependant on mapper, so mapper will deal with it
-            _ => self.mapper.write(long_addr, value),
+            _ => self.mapper.write(long_addr, byte),
 
         }
     }
@@ -163,14 +176,4 @@ impl CpuMemory {
     pub fn get_sram_bytes(&self) -> Vec<u8> {
         self.mapper.get_sram_bytes()
     }
-}
-
-
-/// Separates long address `$BBHHLL` as tuple `($BB, $HHLL)`
-/// 
-/// Any bit above the 24th in `long_addr` is ignored
-fn separate_bank_hhll_addr(long_addr: u32) -> (u8, u16) {
-    let bank: u8 = ((long_addr & 0xFF0000) >> 16) as u8;
-    let hi_lo_byte: u16 = (long_addr & 0x00FFFF) as u16;
-    (bank, hi_lo_byte)
 }
