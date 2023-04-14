@@ -1,6 +1,8 @@
+use crate::{low_byte, high_byte, bank_byte, bit_set};
+
 use self::{cgram::CgRam, oam::Oam, vram::Vram};
 
-use super::{background::Background, mode7::Mode7, window::Window};
+use super::{background::Background, mode7::Mode7, window::Window, ppustate::PpuState, colormath::ColorMath};
 
 mod cgram;
 pub mod vram;
@@ -17,21 +19,8 @@ pub struct PpuMemory {
     pub w2: Window,
     pub mode7: Mode7,
     pub oam: Oam,
-    
-    pub inidisp: u8, //$2100
-    pub objsel: u8, //$2101
-    pub bgmode: u8,
-    pub mosaic: u8,
-
-    pub tm: u8,
-    pub ts: u8,
-    pub tmw: u8,
-    pub tsw: u8,
-
-    pub cgwsel: u8,
-    pub cgadsub: u8,
-    pub coldata: u8,
-    pub setini: u8,
+    pub ppustate: PpuState,
+    pub colormath: ColorMath,
 
     /// Multplication result of mode 7 A * mode 7 B
     pub mpy_mulres: u32,
@@ -53,19 +42,9 @@ impl PpuMemory {
             w2: Window::new(),
             mode7: Mode7::new(),
             oam: Oam::new(),
-            inidisp: 0,
-            objsel: 0,
-            bgmode: 0,
-            mosaic: 0,
-            tmw: 0,
-            tsw: 0,
+            ppustate: PpuState::new(),
+            colormath: ColorMath::new(),
             bg_latch: 0,
-            tm: 0,
-            ts: 0,
-            cgwsel: 0,
-            cgadsub: 0,
-            coldata: 0,
-            setini: 0,
             mpy_mulres: 0,
         }
     }
@@ -74,11 +53,11 @@ impl PpuMemory {
         match addr {
 
             // Lower bytes of mul register
-            0x2134 => Some((self.mpy_mulres) as u8),
+            0x2134 => Some(low_byte!(self.mpy_mulres)),
             // Middle bytes of mul register
-            0x2135 => Some((self.mpy_mulres >> 8) as u8),
+            0x2135 => Some(high_byte!(self.mpy_mulres)),
             // Upper bytes of mul register
-            0x2136 => Some((self.mpy_mulres >> 16) as u8),
+            0x2136 => Some(bank_byte!(self.mpy_mulres)),
 
             // Software latch for H/V counter
             0x2137 => {
@@ -117,16 +96,21 @@ impl PpuMemory {
 
     pub fn write(&mut self, addr: u16, byte: u8) {
         match addr {
-            0x2100 => self.inidisp = byte,
-
-            0x2101 => self.objsel = byte,
+            0x2100 => self.ppustate.write_inidisp(byte),
 
             // OAM
-            0x2102 | 0x2103 | 0x2104 | 0x2138 => self.oam.write(addr, byte),
+            0x2101..=0x2104 => self.oam.write(addr, byte),
 
-            0x2105 => self.set_bg_mode(byte),
+            0x2105 => self.ppustate.write_bgmode(byte),
 
-            0x2106 => self.mosaic = byte,
+            // Mosaic
+            0x2106 => {
+                self.ppustate.write_inidisp(byte);
+                self.bg1.set_mosaic(bit_set!(byte, 0));
+                self.bg2.set_mosaic(bit_set!(byte, 1));
+                self.bg3.set_mosaic(bit_set!(byte, 2));
+                self.bg4.set_mosaic(bit_set!(byte, 3));
+            }
 
             0x2107 => self.bg1.write_bgxsc_reg(byte),
             0x2108 => self.bg2.write_bgxsc_reg(byte),
@@ -191,36 +175,37 @@ impl PpuMemory {
             }
 
             // TM
-            0x212C => self.tm = byte,
+            0x212C => {
+                self.ppustate.write_tm(byte);
+                self.bg1.set_enable_main(bit_set!(byte, 0));
+                self.bg2.set_enable_main(bit_set!(byte, 1));
+                self.bg3.set_enable_main(bit_set!(byte, 2));
+                self.bg4.set_enable_main(bit_set!(byte, 3));
+            },
 
             // TS
-            0x212D => self.ts = byte,
+            0x212D => {
+                self.ppustate.write_ts(byte);
+                self.bg1.set_enable_sub(bit_set!(byte, 0));
+                self.bg2.set_enable_sub(bit_set!(byte, 1));
+                self.bg3.set_enable_sub(bit_set!(byte, 2));
+                self.bg4.set_enable_sub(bit_set!(byte, 3));
+            },
 
             // TMW
-            0x212E => self.tmw = byte,
+            0x212E => self.ppustate.write_tmw(byte),
 
             // TSW
-            0x212F => self.tsw = byte,
+            0x212F => self.ppustate.write_tsw(byte),
 
             // CGWSEL
-            0x2130 => self.cgwsel = byte,
-
-            // CGADSUB
-            0x2131 => self.cgadsub = byte,
-
-            // COLDATA
-            0x2132 => self.coldata = byte,
-
-            // SETINI
-            0x2133 => self.setini = byte,
+            0x2130..=0x2132 => self.colormath.write(addr, byte),
+            
+            // SETINI / INISEL
+            0x2133 => self.ppustate.write_inisel(byte),
 
             _ => {},
         }
-    }
-
-    /// Set bg mode register, `byte` is byte written to `$2105`
-    fn set_bg_mode(&mut self, byte: u8) {
-        self.bgmode = byte
     }
 
     fn set_bg_hvscroll(&mut self, addr: u16, byte: u8) {
@@ -243,7 +228,7 @@ impl PpuMemory {
 
             0x2113 => self.bg4.write_hscroll(byte, self.bg_latch),
             0x2114 => self.bg4.write_vscroll(byte, self.bg_latch),
-            
+
             _ => unreachable!(),
         }
         self.bg_latch = byte;
@@ -251,6 +236,7 @@ impl PpuMemory {
     
 
     fn set_mul_reg(&mut self) {
-        self.mpy_mulres = self.mode7.a as u32 * (self.mode7.b >> 8) as u32;
+        self.mpy_mulres = self.mode7.a as u32 * high_byte!(self.mode7.b) as u32;
     }
+
 }

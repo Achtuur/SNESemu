@@ -1,4 +1,4 @@
-use crate::{to_word, nth_bit};
+use crate::{to_word, nth_bit, bit_slice, high_byte, low_byte};
 
 const VRAM_SIZE: usize = 0x8000;
 
@@ -49,7 +49,7 @@ pub struct Vram {
     vmdatah: u8, // $2119
 
     /// True if there is currently a V-blank or F-blank (NOT H-BLANK!)
-    is_blanking: bool,
+    is_fvblanking: bool,
 }
 
 impl Vram {
@@ -66,8 +66,16 @@ impl Vram {
             incr_mode: IncrementMode::LowByte,
             incr_amount: 1,
             addr_remap: AddrRemap::NoRemap,
-            is_blanking: false,
+            is_fvblanking: false,
         }
+    }
+
+    pub fn start_fv_blank(&mut self) {
+        self.is_fvblanking = true;
+    }
+
+    pub fn stop_fvh_blank(&mut self) {
+        self.is_fvblanking = false;
     }
 
     /// Read from VRAM registers `$2139` and `$213A`
@@ -75,7 +83,7 @@ impl Vram {
         match addr {
             // VMDATALREAD
             0x2139 => {
-                let val = self.latch as u8;
+                let val = low_byte!(self.latch);
                 if matches!(self.incr_mode, IncrementMode::LowByte) {
                     self.latch = self.bytes[self.pointer];
                     self.increment_addr();
@@ -85,7 +93,7 @@ impl Vram {
             },
             // VMDATAHREAD
             0x213A => {
-                let val = (self.latch >> 8) as u8;
+                let val = high_byte!(self.latch);
                 if matches!(self.incr_mode, IncrementMode::HighByte) {
                     self.latch = self.bytes[self.pointer];
                     self.increment_addr();
@@ -156,7 +164,7 @@ impl Vram {
     /// 0: Increment after writing $2118 or reading $2139
     /// 1: Increment after writing $2119 or reading $213A
     fn write_vmain(&mut self, byte: u8) {
-        if !self.is_blanking {
+        if !self.is_fvblanking {
             return;
         }
 
@@ -184,14 +192,14 @@ impl Vram {
     
     /// Helper function to write `VMDATAH << 8 | VMDATAL` to `self.bytes[pointer]`
     fn write_data(&mut self) {
-        if !self.is_blanking {
+        if !self.is_fvblanking {
             self.bytes[self.pointer] = to_word!(self.vmdatah, self.vmdatal);
         }
     }
 
     /// Update pointer to VRAM after `vmaddh` or `vmaddl` are updated
     fn update_pointer(&mut self) {
-        if !self.is_blanking {
+        if !self.is_fvblanking {
             let pointer = get_remapped_address(&self.addr_remap, self.vmaddl, self.vmaddh);
             self.pointer = pointer as usize;
         }
@@ -216,22 +224,22 @@ fn get_remapped_address(remap: &AddrRemap, addrl: u8, addrh: u8) -> u16 {
     match remap {
         AddrRemap::NoRemap => to_word!(addrh, addrl),
         AddrRemap::TwoBpp => {
-            let y = nth_bit!(addrl, 7) << 2 | nth_bit!(addrl, 6) << 1 | nth_bit!(addrl, 5);
+            let y = bit_slice!(addrl, 5, 7);
             let ll = addrl << 3 | y;
             to_word!(addrh, ll)
         },
         AddrRemap::FourBpp => {
             let p = nth_bit!(addrl, 0);
-            let y = nth_bit!(addrh, 0) << 2 | nth_bit!(addrl, 7) << 1 | nth_bit!(addrl, 6);
+            let y = nth_bit!(addrh, 0) << 2 | bit_slice!(addrl, 6, 7);
             let c = nth_bit!(addrl, 5);
             let ll = ((addrl << 2) & 0xF0) | p << 3 | y;
             let hh = (addrh & 0xFE) | c;
             to_word!(hh, ll)
         },
         AddrRemap::EightBpp => {
-            let p = nth_bit!(addrl, 1) << 1 | nth_bit!(addrl, 0);
-            let y = nth_bit!(addrh, 1) << 2 | nth_bit!(addrh, 0) << 1 | nth_bit!(addrl, 7);
-            let c = nth_bit!(addrl, 6) << 1| nth_bit!(addrl, 5);
+            let p = bit_slice!(addrl, 0, 1);
+            let y = bit_slice!(addrh, 0, 1) << 1 | nth_bit!(addrl, 7);
+            let c = bit_slice!(addrl, 5, 6);
             let ll = ((addrl << 3) & 0xD0) | p << 3 | y;
             let hh = (addrh & 0xFC) | c;
             to_word!(hh, ll)

@@ -1,18 +1,16 @@
+use crate::{nth_bit, bit_set};
+
 pub struct Window {
     left: u8, // $2126 / $2127 for W1 / W2
     right: u8, // $2128 / $2129 for W1 / W2
     wbglog: u8, // $212A
     wobjlog: u8, // $212b
-    
-    bg1_enabled: bool,
-    bg1_inverted: bool,
-    bg2_enabled: bool,
-    bg2_inverted: bool,
-    bg3_inverted: bool,
-    bg3_enabled: bool,
-    bg4_inverted: bool,
-    bg4_enabled: bool,
 
+    /// Window enabled per background, bg_enabled[0] is bg1, bg_enabled[1] is bg2 etc.
+    bg_enabled: [bool; 4],
+    /// Window inverted per background, bg_enabled[0] is bg1, bg_enabled[1] is bg2 etc.
+    bg_inverted: [bool; 4],
+    
     obj_enabled: bool,
     obj_inverted: bool,
     clr_enabled: bool,
@@ -26,14 +24,8 @@ impl Window {
             right: 0,
             wbglog: 0,
             wobjlog: 0,
-            bg1_enabled: false,
-            bg1_inverted: false,
-            bg2_enabled: false,
-            bg2_inverted: false,
-            bg3_enabled: false,
-            bg3_inverted: false,
-            bg4_enabled: false,
-            bg4_inverted: false,
+            bg_enabled: [false; 4],
+            bg_inverted: [false; 4],
             obj_enabled: false,
             obj_inverted: false,
             clr_enabled: false,
@@ -46,24 +38,24 @@ impl Window {
     /// 
     /// Window 2 must have `byte` shifted by two to the right
     pub fn write_12sel(&mut self, byte: u8) {
-        self.bg1_inverted = ((byte >> 0) & 0x1) == 1;
-        self.bg1_enabled = ((byte >> 1) & 0x1) == 1;
-        self.bg2_enabled = ((byte >> 4) & 0x1) == 1;
-        self.bg2_inverted = ((byte >> 5) & 0x1) == 1;
+        self.bg_inverted[0] = bit_set!(byte, 0);
+        self.bg_enabled[0] = bit_set!(byte, 1);
+        self.bg_enabled[1] = bit_set!(byte, 4);
+        self.bg_inverted[1] = bit_set!(byte, 5);
     }
 
     /// Reads bits marked by x: `--xx --xx`
     /// 
     /// Window 2 must have `byte` shifted by two to the right
     pub fn write_34sel(&mut self, byte: u8) {
-        self.bg3_inverted = ((byte >> 0) & 0x1) == 1;
-        self.bg3_enabled = ((byte >> 1) & 0x1) == 1;
-        self.bg4_enabled = ((byte >> 4) & 0x1) == 1;
-        self.bg4_inverted = ((byte >> 5) & 0x1) == 1;
+        self.bg_inverted[2] = bit_set!(byte, 0);
+        self.bg_enabled[2] = bit_set!(byte, 1);
+        self.bg_enabled[3] = bit_set!(byte, 4);
+        self.bg_inverted[4] = bit_set!(byte, 5);
     }
 
     pub fn write_objsel(&mut self, byte: u8) {
-        
+        todo!()
     }
 
     pub fn write_left_pos(&mut self, byte: u8) {

@@ -44,6 +44,7 @@ impl Mode7 {
             0x211E => self.d = self.write_latch(byte),
             0x211F => self.x = self.write_latch(byte),
             0x2120 => self.y = self.write_latch(byte),
+            _ => unreachable!(),
         }
     }
 

@@ -1,3 +1,5 @@
+use crate::to_word;
+
 const SEVEN: u8 = 7;
 
 pub struct Background {
@@ -9,6 +11,7 @@ pub struct Background {
     pub vertical_scroll: u16,
     pub enable_main: bool,
     pub enable_sub: bool,
+    pub mosaic: bool,
 }
 
 impl Background {
@@ -22,6 +25,7 @@ impl Background {
             vertical_scroll: 0,
             enable_main: false,
             enable_sub: false,
+            mosaic: false,
         }
     }
 
@@ -48,9 +52,10 @@ impl Background {
     }
 
     pub fn write_hscroll(&mut self, byte: u8, bglatch: u8) {
-        let val = ((byte as u16) << 8) | 
-        (bglatch & !SEVEN) as u16 | 
+        let ll = (bglatch & !SEVEN) as u16 | 
         (self.horizontal_scroll >> 8) & SEVEN as u16;
+
+        let val = to_word!(byte, ll);
         self.horizontal_scroll = val & 0x3FF;
     }
 
@@ -58,5 +63,17 @@ impl Background {
         let val = ((byte as u16) << 8) | bglatch as u16;
 
         self.vertical_scroll = val & 0x3FF;
+    }
+
+    pub fn set_mosaic(&mut self, mosaic: bool) {
+        self.mosaic = mosaic;
+    }
+
+    pub fn set_enable_main(&mut self, enabled: bool) {
+        self.enable_main = enabled;
+    }
+
+    pub fn set_enable_sub(&mut self, enabled: bool) {
+        self.enable_sub = enabled;
     }
 }
