@@ -134,8 +134,8 @@ impl PpuMemory {
                 self.bg3.write_base_address(byte & 0xF);
                 self.bg4.write_base_address(byte >> 4);
             },
-
-            0x210D..=0x2114 => self.set_bg_hvscroll(addr, byte),
+                
+                0x210D..=0x2114 => self.set_bg_hvscroll(addr, byte),
 
             0x2115..=0x2119 => self.vram.write_register(addr, byte),
 

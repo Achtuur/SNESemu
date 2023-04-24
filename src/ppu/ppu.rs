@@ -83,6 +83,13 @@ impl Ppu {
             (c, true) => Layer::Bg4High(c),
         };
 
+        let spr0 = self.get_obj_color(&mem, 0);
+        let spr1 = self.get_obj_color(&mem, 1);
+        let spr2 = self.get_obj_color(&mem, 2);
+        let spr3 = self.get_obj_color(&mem, 3);
+
+        
+
     }
 
     /// Draw pixel on `(x, y)` using the layer selected by `layer`
@@ -134,7 +141,7 @@ impl Ppu {
         ]
     }
 
-    fn get_obj_color(&self, mem: &PpuMemory) -> (Rgba, usize) {
+    fn get_obj_color(&self, mem: &PpuMemory, priority: usize) -> Rgba {
 
         let sprites = mem.oam.as_sprites();
 
@@ -147,7 +154,13 @@ impl Ppu {
 
         // Get first sprite that should be currently visible on scanline x and y position
         // iterator returns (Rgba, prio) tuple
-        let colorprio = sprites.into_iter().find_map(|s| {
+        let color = sprites.into_iter().find_map(|s| {
+            
+            if s.priority != priority {
+                return None;
+            }
+
+            
             let (x_size, y_size) = if s.big_size {
                 mem.oam.bigobj_size
             } else {
@@ -186,14 +199,14 @@ impl Ppu {
             let color = self.get_4bpp_color(mem, addr as u16, sx % 8, sx % 8, s.palette as u16);
 
             if color != Rgba::default() {
-                return Some((color, s.priority));
+                return Some(color);
             }
             None
         });
 
-        match colorprio {
-            Some((c, p)) => (c, p),
-            None => (Rgba::default(), 0)
+        match color {
+            Some(c) => c,
+            None => Rgba::default()
         }
     }
 
