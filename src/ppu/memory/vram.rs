@@ -1,4 +1,4 @@
-use crate::{to_word, nth_bit, bit_slice, high_byte, low_byte};
+use crate::{to_word, nth_bit, bit_slice, high_byte, low_byte, fv_blanking};
 
 const VRAM_SIZE: usize = 0x8000;
 
@@ -70,16 +70,15 @@ impl Vram {
         }
     }
 
-    pub fn start_fv_blank(&mut self) {
-        self.is_fvblanking = true;
-    }
-
-    pub fn stop_fvh_blank(&mut self) {
-        self.is_fvblanking = false;
+    /// Read directly from bytes, without using registers
+    /// 
+    /// This is only to be used inside the PPU, as other components cannot actually access this
+    pub fn read(&self, addr: u16) -> u16 {
+        self.bytes[addr as usize]
     }
 
     /// Read from VRAM registers `$2139` and `$213A`
-    pub fn read(&mut self, addr: u16) -> Option<u8> {
+    pub fn read_register(&mut self, addr: u16) -> Option<u8> {
         match addr {
             // VMDATALREAD
             0x2139 => {
@@ -107,7 +106,7 @@ impl Vram {
     }
 
     /// Write to VRAM registers `$2115` to and including `$2119`
-    pub fn write(&mut self, addr: u16, byte: u8) {
+    pub fn write_register(&mut self, addr: u16, byte: u8) {
         match addr {
             // VMAIN
             0x2115 => self.write_vmain(byte),
@@ -164,7 +163,7 @@ impl Vram {
     /// 0: Increment after writing $2118 or reading $2139
     /// 1: Increment after writing $2119 or reading $213A
     fn write_vmain(&mut self, byte: u8) {
-        if !self.is_fvblanking {
+        if !fv_blanking!() {
             return;
         }
 
@@ -192,14 +191,14 @@ impl Vram {
     
     /// Helper function to write `VMDATAH << 8 | VMDATAL` to `self.bytes[pointer]`
     fn write_data(&mut self) {
-        if !self.is_fvblanking {
+        if !fv_blanking!() {
             self.bytes[self.pointer] = to_word!(self.vmdatah, self.vmdatal);
         }
     }
 
     /// Update pointer to VRAM after `vmaddh` or `vmaddl` are updated
     fn update_pointer(&mut self) {
-        if !self.is_fvblanking {
+        if !fv_blanking!() {
             let pointer = get_remapped_address(&self.addr_remap, self.vmaddl, self.vmaddh);
             self.pointer = pointer as usize;
         }

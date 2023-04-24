@@ -1,4 +1,4 @@
-use crate::{nth_bit, bit_slice, to_word, bit_set};
+use crate::{nth_bit, bit_slice, to_word, bit_set, fv_blanking, ppu::sprite::Sprite};
 
 pub struct Oam {
     bytes: [u8; 544],
@@ -6,21 +6,21 @@ pub struct Oam {
     pointer: usize,
 
     /// Small object size determined by `$2101`,
-    smallobj_size: (usize, usize),
+    pub smallobj_size: (usize, usize),
     /// Big object size determined by `$2101`
-    bigobj_size: (usize, usize),
+    pub bigobj_size: (usize, usize),
 
     /// Address of page zero
-    page0_addr: usize,
+    pub page0_addr: usize,
     /// Address of page 1 is page0 + page1_offs
-    page1_offs: usize,
+    /// 
+    /// page1_offs is in 8kB increments
+    pub page1_offs: usize,
 
-    highest_prio_obj: usize,
+    pub highest_prio_obj: usize,
 
-    oamaddl: u8, //$2102
-    oamaddh: u8, //$2103
-
-    is_fvblanking: bool,
+    pub oamaddl: u8, //$2102
+    pub oamaddh: u8, //$2103
 }
 
 impl Oam {
@@ -35,18 +35,47 @@ impl Oam {
             bigobj_size: (16, 16),
             page0_addr: 0,
             page1_offs: 0,
-            highest_prio_obj: 0,
-            is_fvblanking: false,            
+            highest_prio_obj: 0,          
         }
     }
 
-    pub fn start_fv_blank(&mut self) {
-        self.is_fvblanking = true;
+    /// Return data inside OAM currently as a vector of 128 sprites
+    pub fn as_sprites(&self) -> Vec<Sprite> {
+        (0..128).map(|i| {
+            let mut s = Sprite::new();
+            // Get 1st part of sprite info from first 512 bytes
+            let idx = 4 * i;
+
+            // low 8 bits of x position
+            s.x = self.bytes[idx] as usize;
+            // y position
+            s.y = self.bytes[idx + 1] as usize;
+
+            // Attribute byte
+            let attr = self.bytes[idx + 3];
+            // Set tile index using 3rd byte and 1st bit of 4th byte
+            s.tile_index = self.bytes[idx + 2] as usize;
+            let tile_page = nth_bit!(attr, 0);
+            s.tile_index |= (tile_page as usize) << 8;
+
+            // Other attribute bits
+            s.palette = bit_slice!(attr, 1, 3) as usize;
+            s.priority = bit_slice!(attr, 4, 5) as usize;
+            s.flip_h = bit_set!(attr, 6);
+            s.flip_v = bit_set!(attr, 7);
+
+            // Get 2nd part of sprite info from last 512 bytes
+            let idx2 = 512 + i / 4;
+            let shift = (i % 4) * 2;
+            let byte = self.bytes[idx2];
+
+            s.x |= (nth_bit!(byte, shift) as usize) << 8;
+            s.big_size = bit_set!(byte, shift + 1);
+
+            return s;
+        }).collect::<Vec<Sprite>>()
     }
-    
-    pub fn stop_fv_blank(&mut self) {
-        self.is_fvblanking = false;
-    }
+
 
     pub fn read(&mut self, addr: u16) -> Option<u8> {
         match addr {
@@ -94,7 +123,7 @@ impl Oam {
     ///             6: 16x32 and 32x64
     ///             7: 16x32 and 32x32
     fn write_objsel(&mut self, byte: u8) {
-        if !self.is_fvblanking {
+        if !fv_blanking!() {
             return;
         }
 
@@ -136,7 +165,7 @@ impl Oam {
     /// On write: Update OAMADD
     ///           internal_oamadd = (OAMADD & $1FF) << 1
     fn process_oamadd(&mut self) {
-        if !self.is_fvblanking {
+        if !fv_blanking!() {
             return;
         }
 
@@ -156,7 +185,7 @@ impl Oam {
     
     fn read_data(&mut self) -> Option<u8> {
         // Read val if blanking, else read nothing (emulate open bus)
-        let val = if self.is_fvblanking {
+        let val = if fv_blanking!() {
             let val = self.bytes[self.pointer];
             Some(val)
         } else {
@@ -169,7 +198,7 @@ impl Oam {
 
     /// [Source](https://snes.nesdev.org/wiki/PPU_registers#OAMDATA)
     fn write_data(&mut self, byte: u8) {
-        if self.is_fvblanking {
+        if fv_blanking!() {
             // Write in B part of OAM (write is instant)
             if self.pointer >= 0x200 {
                 self.bytes[self.pointer] = byte;

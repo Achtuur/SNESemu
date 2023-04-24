@@ -1,8 +1,10 @@
-use crate::{low_byte, high_byte, bank_byte, bit_set};
+use crate::{low_byte, high_byte, bank_byte, bit_set, bit_slice};
 
 use self::{cgram::CgRam, oam::Oam, vram::Vram};
 
-use super::{background::Background, mode7::Mode7, window::Window, ppustate::PpuState, colormath::ColorMath};
+use super::components::{background::Background, window::Window, mode7::Mode7, ppustate::PpuState, colormath::ColorMath};
+
+
 
 mod cgram;
 pub mod vram;
@@ -71,10 +73,10 @@ impl PpuMemory {
             0x2138 => self.oam.read(addr),
 
             // VRAM
-            0x2139 | 0x213A => self.vram.read(addr),
+            0x2139 | 0x213A => self.vram.read_register(addr),
 
             // CGRAM
-            0x213B => self.cgram.read(addr),
+            0x213B => self.cgram.read_register(addr),
 
             // horizontal scanline latch
             0x213C => todo!(),
@@ -101,7 +103,13 @@ impl PpuMemory {
             // OAM
             0x2101..=0x2104 => self.oam.write(addr, byte),
 
-            0x2105 => self.ppustate.write_bgmode(byte),
+            0x2105 => {
+                self.ppustate.write_bgmode(byte);
+                self.bg1.set_char_size(bit_set!(byte, 4));
+                self.bg2.set_char_size(bit_set!(byte, 5));
+                self.bg3.set_char_size(bit_set!(byte, 6));
+                self.bg4.set_char_size(bit_set!(byte, 7));
+            },
 
             // Mosaic
             0x2106 => {
@@ -129,7 +137,7 @@ impl PpuMemory {
 
             0x210D..=0x2114 => self.set_bg_hvscroll(addr, byte),
 
-            0x2115..=0x2119 => self.vram.write(addr, byte),
+            0x2115..=0x2119 => self.vram.write_register(addr, byte),
 
 
             // Mode 7 registers, writing to A and B also update multiplication
@@ -142,7 +150,7 @@ impl PpuMemory {
             0x211A | 0x211D..=0x2120 => self.mode7.write(addr, byte),
 
             // CGRAM
-            0x2121 | 0x2122 | 0x213B => self.cgram.write(addr, byte),
+            0x2121 | 0x2122 | 0x213B => self.cgram.write_register(addr, byte),
 
             0x2123 =>  {
                 self.w1.write_12sel(byte);
@@ -165,14 +173,13 @@ impl PpuMemory {
             0x2129 => self.w2.write_right_pos(byte),
 
             0x212A => {
-                self.w1.write_wbglog(byte);
-                self.w2.write_wbglog(byte);
+                self.bg1.write_masklogic(bit_slice!(byte, 0, 1));
+                self.bg2.write_masklogic(bit_slice!(byte, 2, 3));
+                self.bg3.write_masklogic(bit_slice!(byte, 4, 5));
+                self.bg4.write_masklogic(bit_slice!(byte, 6, 7));
             }
 
-            0x212B => {
-                self.w1.write_wobjlog(byte);
-                self.w2.write_wobjlog(byte);
-            }
+            0x212B => self.ppustate.write_wobjlog(byte),
 
             // TM
             0x212C => {

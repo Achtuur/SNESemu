@@ -1,5 +1,7 @@
+use crate::{fv_blanking, h_blanking};
+const CGRAM_SIZE: usize = 0x100;
 pub struct CgRam {
-    bytes: [u16; 256],
+    bytes: [u16; CGRAM_SIZE],
     rw_count: bool,
     latch: u8,
     word_address: u8,
@@ -9,27 +11,25 @@ pub struct CgRam {
 impl CgRam {
     pub fn new() -> CgRam {
         CgRam {
-            bytes: [0; 256],
+            bytes: [0; CGRAM_SIZE],
             rw_count: false,
             latch: 0,
             word_address: 0, // Emulates register $2121 (CGADD)
             is_fvhblanking: false,
         }
     }
-
-    pub fn start_fvh_blank(&mut self) {
-        self.is_fvhblanking = true;
-    }
-
-    pub fn stop_fvh_blank(&mut self) {
-        self.is_fvhblanking = false;
-    }
     
     pub fn reset_rwcount(&mut self) {
         self.rw_count = false;
     }
+
+    /// Read CGRAM from inside PPU
+    pub fn read(&self, addr: u16) -> u16 {
+        self.bytes[(addr as usize) % CGRAM_SIZE as usize]
+    }
         
-    pub fn read(&mut self, addr: u16) -> Option<u8> {
+    /// Read CGRAM using registers in cpu address space
+    pub fn read_register(&mut self, addr: u16) -> Option<u8> {
         
         match addr {
             // CGADD
@@ -47,7 +47,7 @@ impl CgRam {
         }
     }
     
-    pub fn write(&mut self, addr: u16, byte: u8) {
+    pub fn write_register(&mut self, addr: u16, byte: u8) {
         match addr {
             // CGADD
             0x2121 => self.write_word_address(byte),
@@ -65,7 +65,7 @@ impl CgRam {
     }
 
     fn write_word_address(&mut self, addr: u8) {
-        if self.is_fvhblanking {
+        if fv_blanking!() | h_blanking!() {
             self.word_address = addr;
             self.rw_count = false;
         }
@@ -73,7 +73,7 @@ impl CgRam {
 
 
     fn read_data(&mut self) -> Option<u8> {
-        if !self.is_fvhblanking {
+        if !fv_blanking!() | h_blanking!() {
             return None;
         }
 
@@ -89,7 +89,7 @@ impl CgRam {
     }
 
     fn write_data(&mut self, byte: u8) {
-        if !self.is_fvhblanking {
+        if !fv_blanking!() | h_blanking!() {
             return;
         }
 

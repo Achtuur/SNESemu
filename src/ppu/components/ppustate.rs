@@ -1,5 +1,8 @@
 use crate::{bit_set, bit_slice, fv_blanking};
 
+use super::masklogic::MaskLogic;
+
+
 pub struct PpuState {
     pub force_blank: bool,
     pub brightness: u8,
@@ -29,6 +32,9 @@ pub struct PpuState {
     /// False: 8x8, true: 16x16
     pub bg_size: [bool; 4],
 
+    pub window_obj_masklogic: MaskLogic,
+    pub window_clr_masklogic: MaskLogic,
+
 }
 
 impl PpuState {
@@ -50,6 +56,8 @@ impl PpuState {
             background_mode: 0,
             bg3_prio: false,
             bg_size: [false; 4],
+            window_obj_masklogic: MaskLogic::from_bits(0),
+            window_clr_masklogic: MaskLogic::from_bits(0),
         }
     }
 
@@ -97,7 +105,7 @@ impl PpuState {
     /// Write to `$2133`
     pub fn write_inisel(&mut self, byte: u8) {
         if fv_blanking!() {
-
+            todo!();
         }
     }
 
@@ -119,5 +127,10 @@ impl PpuState {
             }
             self.enabled_window_obj_sub = bit_set!(byte, 5)
         }
+    }
+
+    pub fn write_wobjlog(&mut self, byte: u8) {
+        self.window_obj_masklogic = MaskLogic::from_bits(bit_slice!(byte, 0, 1));
+        self.window_clr_masklogic = MaskLogic::from_bits(bit_slice!(byte, 2, 3));
     }
 }

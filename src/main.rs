@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 mod ppu;
 mod cpu;
 mod apu;
@@ -5,6 +7,7 @@ pub mod bit_macros;
 pub mod addr_macros;
 
 use apu::memory::ApuMemory;
+
 use ppu::memory::PpuMemory;
 
 use crate::{cpu::Cpu, ppu::Ppu, apu::Apu};
@@ -36,5 +39,7 @@ fn main() {
 
     let _ = cpu.memory.insert_cartridge(rom);
     println!("{:#?}", cpu.memory.cartridge_metadata);
+
+    ppu.run();
 
 }

@@ -1,6 +1,4 @@
-use crate::{bit_set, bit_slice};
-
-use super::color::Color;
+use crate::{bit_set, bit_slice, ppu::rgb::Rgba};
 
 enum Region {
     Enabled,
@@ -26,17 +24,16 @@ enum OperatorType {
 }
 
 pub struct ColorMath {
-    direct_color_mode: bool,
     addend: Addend,
     sub_transparent_region: Region,
     main_black_region: Region,
-
-    obj_color_enable: bool,
-    bg_color_enable: [bool; 4],
-    backdrop_enable: bool,
     operator_type: OperatorType,
-
-    fixed_color: Color,
+    
+    pub direct_color_mode: bool,
+    pub obj_color_enable: bool,
+    pub bg_color_enable: [bool; 4],
+    pub backdrop_enable: bool,
+    pub fixed_color: Rgba,
 }
 
 impl ColorMath {
@@ -50,7 +47,7 @@ impl ColorMath {
             bg_color_enable: [false; 4],
             backdrop_enable: false,
             operator_type: OperatorType::Add,
-            fixed_color: Color::default(),
+            fixed_color: Rgba::default(),
         }
     }
 

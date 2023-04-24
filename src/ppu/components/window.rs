@@ -1,20 +1,18 @@
 use crate::{nth_bit, bit_set};
 
 pub struct Window {
-    left: u8, // $2126 / $2127 for W1 / W2
-    right: u8, // $2128 / $2129 for W1 / W2
-    wbglog: u8, // $212A
-    wobjlog: u8, // $212b
-
-    /// Window enabled per background, bg_enabled[0] is bg1, bg_enabled[1] is bg2 etc.
-    bg_enabled: [bool; 4],
-    /// Window inverted per background, bg_enabled[0] is bg1, bg_enabled[1] is bg2 etc.
-    bg_inverted: [bool; 4],
+    pub left: u8, // $2126 / $2127 for W1 / W2
+    pub right: u8, // $2128 / $2129 for W1 / W2
     
-    obj_enabled: bool,
-    obj_inverted: bool,
-    clr_enabled: bool,
-    clr_inverted: bool
+    /// Window enabled per background, bg_enabled[0] is bg1, bg_enabled[1] is bg2 etc.
+    pub bg_enabled: [bool; 4],
+    /// Window inverted per background, bg_enabled[0] is bg1, bg_enabled[1] is bg2 etc.
+    pub bg_inverted: [bool; 4],
+    
+    pub obj_enabled: bool,
+    pub obj_inverted: bool,
+    pub clr_enabled: bool,
+    pub clr_inverted: bool
 }
 
 impl Window {
@@ -22,8 +20,6 @@ impl Window {
         Window {
             left: 0,
             right: 0,
-            wbglog: 0,
-            wobjlog: 0,
             bg_enabled: [false; 4],
             bg_inverted: [false; 4],
             obj_enabled: false,
@@ -65,13 +61,4 @@ impl Window {
     pub fn write_right_pos(&mut self, byte: u8) {
         self.right = byte;
     }
-
-    pub fn write_wbglog(&mut self, byte: u8) {
-        self.wbglog = byte;
-    }
-
-    pub fn write_wobjlog(&mut self, byte: u8) {
-        self.wobjlog = byte;
-    }
-
 }
