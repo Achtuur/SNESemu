@@ -6,6 +6,7 @@ pub mod ppu;
 pub mod sprite;
 pub mod scanline;
 pub mod tile;
+pub mod layer;
 
 use std::sync::{Mutex, Arc, RwLock};
 
