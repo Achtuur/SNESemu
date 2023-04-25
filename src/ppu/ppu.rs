@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
 
-use crate::{ppu::{SCREEN_WIDTH, tile::Tile}, bit_set, low_byte, high_byte, to_word, nth_bit};
+use crate::{ppu::{SCREEN_WIDTH, tile::Tile}, bit_set, low_byte, high_byte, to_word, nth_bit, main};
 
-use super::{rgb::Rgba, Ppu, sprite::Sprite, memory::PpuMemory, components::background::Background, layer::LayerStruct};
+use super::{rgb::Rgba, Ppu, sprite::Sprite, memory::PpuMemory, components::{background::Background, colormath::Addend}, layer::{LayerStruct, Layer}};
 
 
 macro_rules! invert_if {
@@ -24,6 +24,14 @@ enum TileMapQuadrant {
 
 
 impl Ppu {
+
+    /// Single clock cycle of ppu
+    fn cycle(&mut self) {
+        // draw pixel at current scanline position
+        self.draw_pixel();
+        // move scanline to next position
+        self.scanline.goto_next();
+    }
     
     /// Draw pixel on position denoted by current state of `self.scanline`
     fn draw_pixel(&mut self) {
@@ -38,6 +46,52 @@ impl Ppu {
         let obj_w = self.obj_layer_in_window(&mem, x_in_w1, x_in_w2);
         let clr_w = self.clr_layer_in_window(&mem, x_in_w1, x_in_w2);
         
+        // Get main and sub screen layers (they are copies of each other)
+        let mut main_layers = self.get_layers(&mem);
+        let mut sub_layers = main_layers;
+
+        // Enable and disable main screen layers based on enable flags set by TM and window set by TMW
+        main_layers.set_bg1_enabled(mem.bg1.enable_main, mem.ppustate.enable_window_bg_main[0], bgx_w[0]);
+        main_layers.set_bg2_enabled(mem.bg2.enable_main, mem.ppustate.enable_window_bg_main[1], bgx_w[1]);
+        main_layers.set_bg3_enabled(mem.bg3.enable_main, mem.ppustate.enable_window_bg_main[2], bgx_w[2]);
+        main_layers.set_bg4_enabled(mem.bg4.enable_main, mem.ppustate.enable_window_bg_main[3], bgx_w[3]);
+        main_layers.set_obj_enabled(mem.ppustate.enable_obj_main, mem.ppustate.enabled_window_obj_main, obj_w);
+
+        // Get highest priority layer that should be drawn on this pixel
+        let mut main_screen_layer = main_layers.get_highest_priority_layer(mem.ppustate.background_mode, mem.ppustate.bg3_prio, Rgba::default());
+
+        // Use either fixed color or subscreen as subscreen based on $2130.1
+        let mut sub_screen_layer = if matches!(mem.colormath.addend, Addend::FixedColor) {
+            Layer::FallBack(mem.colormath.fixed_color)
+        } else {  
+            // Enable and disable sub screen layers based on enable flags set by TS register and window options set by TSW register
+            sub_layers.set_bg1_enabled(mem.bg1.enable_sub, mem.ppustate.enable_window_bg_sub[0], bgx_w[0]);
+            sub_layers.set_bg2_enabled(mem.bg2.enable_sub, mem.ppustate.enable_window_bg_sub[1], bgx_w[1]);
+            sub_layers.set_bg3_enabled(mem.bg3.enable_sub, mem.ppustate.enable_window_bg_sub[2], bgx_w[2]);
+            sub_layers.set_bg4_enabled(mem.bg4.enable_sub, mem.ppustate.enable_window_bg_sub[3], bgx_w[3]);
+            sub_layers.set_obj_enabled(mem.ppustate.enable_obj_sub, mem.ppustate.enabled_window_obj_sub,  obj_w);
+            
+            // Get layers for main and sub screen that have the highest priority and should thus be drawn
+            sub_layers.get_highest_priority_layer(mem.ppustate.background_mode, mem.ppustate.bg3_prio, mem.colormath.fixed_color)
+        };
+        
+
+        // apply math
+        if !mem.colormath.apply_color_switch_main(clr_w) {
+            main_screen_layer = Layer::FallBack(Rgba::BLACK);
+        }
+
+        if !mem.colormath.apply_color_switch_sub(clr_w) {
+            sub_screen_layer = Layer::FallBack(Rgba::default());
+        }
+
+        let pixel_color = mem.colormath.apply_math(main_screen_layer, sub_screen_layer);
+
+        self.screen.set_pixel(self.scanline.x, self.scanline.y, pixel_color);
+        
+    }
+
+    fn get_layers(&self, mem: &PpuMemory) -> LayerStruct {
         let mut layers = LayerStruct::new();
 
         match self.get_bg1_color(&mem) {
@@ -60,26 +114,12 @@ impl Ppu {
             (c, true) => layers.bg4high = c,
         };
         
-        layers.sprite0 = self.get_obj_color(&mem, 0);
-        layers.sprite1 = self.get_obj_color(&mem, 1);
-        layers.sprite2 = self.get_obj_color(&mem, 2);
-        layers.sprite3 = self.get_obj_color(&mem, 3);
-        
-        let layer_vec = layers.as_ordered_vec(mem.ppustate.background_mode as usize, mem.ppustate.bg3_prio);
+        (layers.sprite0, layers.sprite0_palette) = self.get_obj_color(&mem, 0);
+        (layers.sprite1, layers.sprite1_palette) = self.get_obj_color(&mem, 1);
+        (layers.sprite2, layers.sprite2_palette) = self.get_obj_color(&mem, 2);
+        (layers.sprite3, layers.sprite3_palette) = self.get_obj_color(&mem, 3);
 
-        let drawn_layer = layer_vec.iter().find_map(|l| {
-            if l.inner_rgba() != Rgba::default() {
-                return None;
-            }
-            Some(l)
-        });
-
-
-        // apply mosaic
-        // apply windows
-        // apply color math
-
-        
+        layers
     }
     
     /// Determine whether the object layer is inside window on this pixel
@@ -126,7 +166,8 @@ impl Ppu {
         ]
     }
     
-    fn get_obj_color(&self, mem: &PpuMemory, priority: usize) -> Rgba {
+    /// Gets color for `Sprite0..3` layers, where `0..3` denotes the priority
+    fn get_obj_color(&self, mem: &PpuMemory, priority: usize) -> (Rgba, usize) {
         
         let sprites = mem.oam.as_sprites();
         
@@ -184,14 +225,14 @@ impl Ppu {
             let color = self.get_4bpp_color(mem, addr as u16, sx % 8, sx % 8, s.palette as u16);
             
             if color != Rgba::default() {
-                return Some(color);
+                return Some((color, s.palette as usize));
             }
             None
         });
         
         match color {
-            Some(c) => c,
-            None => Rgba::default()
+            Some((c, p)) => (c, p),
+            None => (Rgba::default(), 0)
         }
     }
     
@@ -200,7 +241,8 @@ impl Ppu {
         
         let tile = self.get_tile(mem, &mem.bg1);
         let char_addr = mem.bg1.chr_base_addr + tile.tile_num;
-        let (x, y) = self.get_tile_xy(&mem.bg1, tile.h_flip, tile.v_flip);
+        let (x, y) = self.get_tile_xy(&mem.bg1, tile.h_flip, tile.v_flip, mem.ppustate.mosaic_size);
+
         
         let c = match mem.ppustate.background_mode {
             // 2 bpp
@@ -227,7 +269,7 @@ impl Ppu {
         
         let tile = self.get_tile(mem, &mem.bg2);
         let char_addr = mem.bg2.chr_base_addr + tile.tile_num;
-        let (x, y) = self.get_tile_xy(&mem.bg2, tile.h_flip, tile.v_flip);
+        let (x, y) = self.get_tile_xy(&mem.bg2, tile.h_flip, tile.v_flip, mem.ppustate.mosaic_size);
         
         let c = match mem.ppustate.background_mode {
             // mode 0 = 2bpp with offset based on layer
@@ -248,7 +290,7 @@ impl Ppu {
         
         let tile = self.get_tile(mem, &mem.bg3);
         let char_addr = mem.bg3.chr_base_addr + tile.tile_num;
-        let (x, y) = self.get_tile_xy(&mem.bg3, tile.h_flip, tile.v_flip);
+        let (x, y) = self.get_tile_xy(&mem.bg3, tile.h_flip, tile.v_flip, mem.ppustate.mosaic_size);
         
         let c = match mem.ppustate.background_mode {
             // 2 bpp
@@ -267,7 +309,7 @@ impl Ppu {
         
         let tile = self.get_tile(mem, &mem.bg4);
         let char_addr = mem.bg4.chr_base_addr + tile.tile_num;
-        let (x, y) = self.get_tile_xy(&mem.bg4, tile.h_flip, tile.v_flip);
+        let (x, y) = self.get_tile_xy(&mem.bg4, tile.h_flip, tile.v_flip, mem.ppustate.mosaic_size);
         
         let c = match mem.ppustate.background_mode {
             // 2 bpp
@@ -278,9 +320,19 @@ impl Ppu {
         (c, tile.prio)
     }
     
-    /// Get x and y coordinate of this pixel, also handles horizontal and vertical flip
-    fn get_tile_xy(&self, bg: &Background, h_flip: bool, v_flip: bool) -> (usize, usize) {
-        let (mut x, mut y) = (self.scanline.x / bg.char_size as usize, self.scanline.y / bg.char_size as usize);
+    /// Get x and y coordinate of this pixel on tile, also handles horizontal and vertical flip
+    fn get_tile_xy(&self, bg: &Background, h_flip: bool, v_flip: bool, mosaic_size: usize) -> (usize, usize) {
+        let (mut x, mut y) = if bg.mosaic {
+            // The previous tile is selected in case mosaic size causes tile boundary crossing
+            // Meaning that this x/y should check what mosaic block it is and then check where
+            // that is on the current tile
+            let x = ((self.scanline.x / mosaic_size) * mosaic_size) % bg.char_size as usize;
+            let y = ((self.scanline.y / mosaic_size) * mosaic_size) % bg.char_size as usize;
+            (x, y)
+        } else {
+            (self.scanline.x % bg.char_size as usize, self.scanline.y % bg.char_size as usize)
+        };
+
         
         if h_flip {
             x = bg.char_size as usize - x;
@@ -297,8 +349,18 @@ impl Ppu {
     fn get_tile(&self, mem: &PpuMemory, bg: &Background) -> Tile {
         // Get t_xth and t_yth tile on tilemap
         // These are based on screen coordinates, and will have to be translated to the proper tilemap quadrant
-        let tx = (self.scanline.x + bg.scroll_x as usize) / bg.char_size as usize;  
-        let ty = (self.scanline.y + bg.scroll_y as usize) / bg.char_size as usize;
+        
+        // mosaic effect
+        let (bx, by) = if mem.bg1.mosaic {
+            let x = ((self.scanline.x + bg.scroll_x as usize) / mem.ppustate.mosaic_size) * mem.ppustate.mosaic_size;
+            let y = ((self.scanline.y + bg.scroll_y as usize) / mem.ppustate.mosaic_size) * mem.ppustate.mosaic_size;
+            (x, y)
+        } else {
+            ((self.scanline.x + bg.scroll_x as usize), self.scanline.y + bg.scroll_y as usize)
+        };
+        
+        let tx = bx / bg.char_size as usize;
+        let ty = by / bg.char_size as usize;
         
         // Tilemaps are always 32x32, the top left of each quadrant is tile (0, 0) + quad_offset
         // where quad_offset increment by 0x800 for quadrants topleft, topright, bottomleft, bottomright
@@ -421,6 +483,5 @@ impl Ppu {
         let color_word = plane76_col << 6 | plane54_col << 4 | plane32_col << 2 | plane10_col;
         Rgba::from_snes_palette(color_word)
     }
-    
     
 }

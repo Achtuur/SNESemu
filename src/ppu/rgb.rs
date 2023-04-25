@@ -2,7 +2,7 @@ use core::ops::{Add, Sub};
 
 use crate::{bit_slice, nth_bit};
 
-const MAX_RGB_VALUE: u8 = 0b11111;
+
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Rgba {
@@ -13,6 +13,13 @@ pub struct Rgba {
 }
 
 impl Rgba {
+    pub const MAX_RGB_VALUE: u8 = 0b11111;
+    pub const BLACK:    Rgba = Rgba{ r: 0, g: 0, b: 0, a: 1};
+    pub const RED:      Rgba = Rgba{ r: Self::MAX_RGB_VALUE, g: 0, b: 0, a: 1};
+    pub const GREEN:    Rgba = Rgba{ r: 0, g: Self::MAX_RGB_VALUE, b: 0, a: 1};
+    pub const BLUE:     Rgba = Rgba{ r: 0, g: 0, b: Self::MAX_RGB_VALUE, a: 1};
+    pub const WHITE:    Rgba = Rgba{ r: Self::MAX_RGB_VALUE, g: Self::MAX_RGB_VALUE, b: Self::MAX_RGB_VALUE, a: Self::MAX_RGB_VALUE};
+
     pub fn new(r: u8, g: u8, b: u8, a: u8) -> Rgba {
         Rgba {r, g, b, a}
     }
@@ -52,19 +59,31 @@ impl Rgba {
         (self.r, self.g, self.b, self.a)
     }
 
-    pub fn mul_rgb(&mut self, f: u8) {
-        self.r = std::cmp::min(MAX_RGB_VALUE, self.r * f);
-        self.g = std::cmp::min(MAX_RGB_VALUE, self.g * f);
-        self.b = std::cmp::min(MAX_RGB_VALUE, self.b * f);
+    /// Returns `self` as `(r, g, b, a)` using 8 bits per color instead of 5
+    pub fn as_highrange_rgba_tuple(&self) -> (u8, u8, u8, u8) {
+        (
+            (255 * (self.r as u16) / Self::MAX_RGB_VALUE as u16) as u8, 
+            (255 * (self.g as u16) / Self::MAX_RGB_VALUE as u16) as u8, 
+            (255 * (self.b as u16) / Self::MAX_RGB_VALUE as u16) as u8,
+            (255 * (self.a as u16) / Self::MAX_RGB_VALUE as u16) as u8,
+        )
     }
 
-    pub fn div_rgb(&mut self, d: u8) {
+    pub fn multiply(&self, f: u8) -> Rgba {
+        let r = std::cmp::min(Self::MAX_RGB_VALUE, self.r * f);
+        let g = std::cmp::min(Self::MAX_RGB_VALUE, self.g * f);
+        let b = std::cmp::min(Self::MAX_RGB_VALUE, self.b * f);
+        Rgba::new(r, g, b, self.a)
+    }
+
+    pub fn divide(&mut self, d: u8) -> Rgba {
         if d == 0 {
             dbg!("Color::div was giving argument 0, skipping division");
         }
-        self.r = std::cmp::min(MAX_RGB_VALUE, self.r / d);
-        self.g = std::cmp::min(MAX_RGB_VALUE, self.g / d);
-        self.b = std::cmp::min(MAX_RGB_VALUE, self.b / d);
+        let r = std::cmp::min(Self::MAX_RGB_VALUE, self.r / d);
+        let g = std::cmp::min(Self::MAX_RGB_VALUE, self.g / d);
+        let b = std::cmp::min(Self::MAX_RGB_VALUE, self.b / d);
+        Rgba::new(r, g, b, self.a)
     }
 }
 
@@ -85,9 +104,9 @@ impl Add for Rgba {
     type Output = Rgba;
     fn add(self, rhs: Self::Output) -> Self::Output {
         Rgba {
-            r: std::cmp::min(MAX_RGB_VALUE, self.r + rhs.r),
-            g: std::cmp::min(MAX_RGB_VALUE, self.g + rhs.g),
-            b: std::cmp::min(MAX_RGB_VALUE, self.b + rhs.b),
+            r: std::cmp::min(Self::MAX_RGB_VALUE, self.r + rhs.r),
+            g: std::cmp::min(Self::MAX_RGB_VALUE, self.g + rhs.g),
+            b: std::cmp::min(Self::MAX_RGB_VALUE, self.b + rhs.b),
             a: self.a,
         }
     }

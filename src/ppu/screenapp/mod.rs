@@ -40,10 +40,9 @@ impl ScreenApp {
             let p = Point::new([x as i32, y as i32]);
 
             // Set color of pixel to be drawn
-            let (r, g, b) = rgb.as_rgb_tuple();
-            let c = color!(r, g, b);
+            let (r, g, b, a) = rgb.as_highrange_rgba_tuple();
+            let c = color!(r, g, b, a);
             s.stroke(c);
-            // 
             s.point(p);
         });
     }
@@ -66,14 +65,25 @@ impl PixEngine for ScreenApp {
     // `target_frame_rate` was set with a value. (Required)
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 
-
         self.render_screen(s);
 
-        let v = (0..SCREEN_WIDTH)
-        .map(|_| Rgba::new(random!(255), random!(255), random!(255), 255))
+        let mut i: u16 = 0;
+        let mut j: u16 = 0;
+        let mut k: u16 = 0;
+        let mut l: u16 = 0;
+
+        let v = (0..SCREEN_WIDTH * NTSC_SCREEN_HEIGHT)
+        .map(|_| {
+            i = i.wrapping_add(1) % Rgba::MAX_RGB_VALUE as u16;
+            j = (random!(10) + i * 10) % Rgba::MAX_RGB_VALUE as u16;
+            k = (random!(1) + j * 6) % Rgba::MAX_RGB_VALUE as u16;
+            l = (random!(8) + k * 7) % Rgba::MAX_RGB_VALUE as u16;
+            Rgba::new(i as u8, j as u8, k as u8, l as u8)
+        })
         .collect::<Vec<Rgba>>();
 
-        self.set_scanline(self.scanline, &v);
+        // self.set_scanline(self.scanline, &v);
+        self.set_pixels(&v);
         self.scanline += 1;
         self.scanline %= NTSC_SCREEN_HEIGHT as usize;
         Ok(())

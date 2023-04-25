@@ -24,7 +24,7 @@ impl Scanline {
         }
     }
 
-    /// Moves this scanlin
+    /// Moves this scanline to next position
     pub fn goto_next(&mut self) {
         self.x += 1;
 

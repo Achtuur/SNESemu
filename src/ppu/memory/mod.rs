@@ -113,7 +113,7 @@ impl PpuMemory {
 
             // Mosaic
             0x2106 => {
-                self.ppustate.write_inidisp(byte);
+                self.ppustate.write_mosaic(byte);
                 self.bg1.set_mosaic(bit_set!(byte, 0));
                 self.bg2.set_mosaic(bit_set!(byte, 1));
                 self.bg3.set_mosaic(bit_set!(byte, 2));
@@ -206,7 +206,7 @@ impl PpuMemory {
             0x212F => self.ppustate.write_tsw(byte),
 
             // CGWSEL
-            0x2130..=0x2132 => self.colormath.write(addr, byte),
+            0x2130..=0x2132 => self.colormath.write_register(addr, byte),
             
             // SETINI / INISEL
             0x2133 => self.ppustate.write_inisel(byte),

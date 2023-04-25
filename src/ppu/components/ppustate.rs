@@ -6,7 +6,7 @@ use super::masklogic::MaskLogic;
 pub struct PpuState {
     pub force_blank: bool,
     pub brightness: u8,
-    pub mosaic_size: u8,
+    pub mosaic_size: usize,
 
     pub enable_obj_main: bool,
     pub enable_obj_sub: bool,
@@ -23,7 +23,7 @@ pub struct PpuState {
     pub obj_vertical_mode: bool,
 
     /// Background modes 0 to 7
-    pub background_mode: u8,
+    pub background_mode: usize,
 
     pub bg3_prio: bool,
 
@@ -72,7 +72,7 @@ impl PpuState {
     /// Write to `$2105`
     pub fn write_bgmode(&mut self, byte: u8) {
         if fv_blanking!() {
-            self.background_mode = bit_slice!(byte, 0, 2);
+            self.background_mode = bit_slice!(byte, 0, 2) as usize;
             self.bg3_prio = bit_set!(byte, 3);
             for i in 0..4 {
                 self.bg_size[i] = bit_set!(byte, i + 4);
@@ -84,7 +84,7 @@ impl PpuState {
     /// Write to `$2106`
     pub fn write_mosaic(&mut self, byte: u8) {
         if fv_blanking!() {
-            self.mosaic_size = bit_slice!(byte, 4, 7);
+            self.mosaic_size = bit_slice!(byte, 4, 7) as usize;
         }
     }
 
