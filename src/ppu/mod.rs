@@ -69,7 +69,7 @@ impl Ppu {
        
         loop {
             let t = Instant::now();
-            self.cycle();
+            self.tick();
             println!("t: {0:?}", t.elapsed());
             thread::sleep(Duration::from_millis(10))
         }

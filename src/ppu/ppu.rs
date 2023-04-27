@@ -26,7 +26,7 @@ enum TileMapQuadrant {
 impl Ppu {
 
     /// Single clock cycle of ppu
-    pub fn cycle(&mut self) {
+    pub fn tick(&mut self) {
         // draw pixel at current scanline position
         if self.scanline.x < SCREEN_WIDTH && self.scanline.y < NTSC_SCREEN_HEIGHT {
             self.draw_pixel();
@@ -34,15 +34,6 @@ impl Ppu {
         // move scanline to next position
         self.scanline.goto_next();
     }
-
-    // pub fn cycle(&mut self) {
-    //     for _ in 0..HOR_SCANLINES * NTSC_VER_SCANLINES {
-    //         if self.scanline.x < SCREEN_WIDTH && self.scanline.y < NTSC_SCREEN_HEIGHT {
-    //             self.draw_pixel();
-    //         }
-    //         self.scanline.goto_next();
-    //     }
-    // }
     
     /// Draw pixel on position denoted by current state of `self.scanline`
     fn draw_pixel(&mut self) {
