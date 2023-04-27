@@ -1,4 +1,5 @@
-use crate::cpu::memory::separate_bank_hhll_addr;
+use crate::separate_bank_hhll_addr;
+
 
 use super::{Mappermode};
 
@@ -61,7 +62,7 @@ impl LoROM {
     
     /// Returns index for internal sram vector based on `long_addr`
     fn sram_index_from_long_addr(&self, long_addr: u32) -> Option<usize> {
-        let (bank, hhll) = separate_bank_hhll_addr(long_addr);
+        let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
         
         let bank_i = match bank {
             0x70..=0x7D => bank - 0x70,
@@ -82,7 +83,7 @@ impl LoROM {
     
     pub fn read_rom(&self, long_addr: u32) -> Option<u8> {
         // get $BB and $HHLL as separate numbers, to make range checking a bit easier
-        let (bank, hi_lo_byte) = separate_bank_hhll_addr(long_addr);
+        let (bank, hi_lo_byte) = separate_bank_hhll_addr!(long_addr);
         
         // get indices for bank and address
         let bank_i = match bank {
@@ -109,7 +110,7 @@ impl LoROM {
 impl Mappermode for LoROM {
     
     fn read(&self, long_addr: u32) -> Option<u8> {
-        let (bank, hhll) = separate_bank_hhll_addr(long_addr);
+        let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
         match (bank, hhll) {
             // SRAM
             (0x70..=0x7D | 0xF0..=0xFF, 0x0000..=0x7FFF) => self.read_sram(long_addr),
@@ -124,7 +125,7 @@ impl Mappermode for LoROM {
     }
     
     fn write(&mut self, long_addr: u32, value: u8) {
-        let (bank, hhll) = separate_bank_hhll_addr(long_addr);
+        let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
         match (bank, hhll) {
             // SRAM
             (0x70..=0x7D | 0xF0..=0xFF, 0x0000..=0x7FFF) => self.write_sram(long_addr, value),
