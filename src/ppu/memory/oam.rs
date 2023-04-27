@@ -40,8 +40,11 @@ impl Oam {
     }
 
     /// Return data inside OAM currently as a vector of 128 sprites
+    /// 
+    /// Vector is ordered in sprite priority, it takes in to account the priority index for priority rotation
     pub fn as_sprites(&self) -> Vec<Sprite> {
-        (0..128).map(|i| {
+        let mut i = self.highest_prio_obj;
+        (0..128).map(|_| {
             let mut s = Sprite::new();
             // Get 1st part of sprite info from first 512 bytes
             let idx = 4 * i;
@@ -71,6 +74,8 @@ impl Oam {
 
             s.x |= (nth_bit!(byte, shift) as usize) << 8;
             s.big_size = bit_set!(byte, shift + 1);
+
+            i = (i + 1) % 128;
 
             return s;
         }).collect::<Vec<Sprite>>()
@@ -171,7 +176,7 @@ impl Oam {
 
         // Priority rotation
         if bit_set!(self.oamaddh, 7) {
-            self.highest_prio_obj = bit_slice!(self.oamaddl, 0, 6) as usize;
+            self.highest_prio_obj = bit_slice!(self.oamaddl, 1, 7) as usize;
         } else {
             self.highest_prio_obj = 0;
             self.update_pointer();

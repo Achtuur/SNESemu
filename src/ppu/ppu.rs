@@ -1,8 +1,8 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, time::Instant};
 
 use crate::{ppu::{SCREEN_WIDTH, tile::Tile}, bit_set, low_byte, high_byte, to_word, nth_bit, main};
 
-use super::{rgb::Rgba, Ppu, sprite::Sprite, memory::PpuMemory, components::{background::Background, colormath::Addend}, layer::{LayerStruct, Layer}};
+use super::{rgb::Rgba, Ppu, sprite::Sprite, memory::PpuMemory, components::{background::Background, colormath::Addend}, layer::{LayerStruct, Layer}, NTSC_SCREEN_HEIGHT, scanline::{HOR_SCANLINES, NTSC_VER_SCANLINES}};
 
 
 macro_rules! invert_if {
@@ -26,16 +26,26 @@ enum TileMapQuadrant {
 impl Ppu {
 
     /// Single clock cycle of ppu
-    fn cycle(&mut self) {
+    pub fn cycle(&mut self) {
         // draw pixel at current scanline position
-        self.draw_pixel();
+        if self.scanline.x < SCREEN_WIDTH && self.scanline.y < NTSC_SCREEN_HEIGHT {
+            self.draw_pixel();
+        }
         // move scanline to next position
         self.scanline.goto_next();
     }
+
+    // pub fn cycle(&mut self) {
+    //     for _ in 0..HOR_SCANLINES * NTSC_VER_SCANLINES {
+    //         if self.scanline.x < SCREEN_WIDTH && self.scanline.y < NTSC_SCREEN_HEIGHT {
+    //             self.draw_pixel();
+    //         }
+    //         self.scanline.goto_next();
+    //     }
+    // }
     
     /// Draw pixel on position denoted by current state of `self.scanline`
     fn draw_pixel(&mut self) {
-        
         let mem = self.memory.lock().unwrap();
         
         let x_in_w1 = self.scanline.x >= mem.w1.left as usize && self.scanline.x <= mem.w1.right as usize;
@@ -114,10 +124,13 @@ impl Ppu {
             (c, true) => layers.bg4high = c,
         };
         
-        (layers.sprite0, layers.sprite0_palette) = self.get_obj_color(&mem, 0);
-        (layers.sprite1, layers.sprite1_palette) = self.get_obj_color(&mem, 1);
-        (layers.sprite2, layers.sprite2_palette) = self.get_obj_color(&mem, 2);
-        (layers.sprite3, layers.sprite3_palette) = self.get_obj_color(&mem, 3);
+        let sprites = mem.oam.as_sprites();
+        
+
+        (layers.sprite0, layers.sprite0_palette) = self.get_obj_color(&mem, &sprites, 0);
+        (layers.sprite1, layers.sprite1_palette) = self.get_obj_color(&mem, &sprites, 1);
+        (layers.sprite2, layers.sprite2_palette) = self.get_obj_color(&mem, &sprites, 2);
+        (layers.sprite3, layers.sprite3_palette) = self.get_obj_color(&mem, &sprites, 3);
 
         layers
     }
@@ -167,39 +180,32 @@ impl Ppu {
     }
     
     /// Gets color for `Sprite0..3` layers, where `0..3` denotes the priority
-    fn get_obj_color(&self, mem: &PpuMemory, priority: usize) -> (Rgba, usize) {
-        
-        let sprites = mem.oam.as_sprites();
-        
-        // Reorder sprites such that highest priority sprite is at index 0
-        // This basically means moving the slice containing every element currently to the left 
-        // of mem.oam.highest_prio_obj to the right of it
-        let sprite_left = &sprites[0..mem.oam.highest_prio_obj];
-        let sprite_right = &sprites[mem.oam.highest_prio_obj..128];
-        let sprites = [sprite_right, sprite_left].concat();
-        
+    fn get_obj_color(&self, mem: &PpuMemory, sprites: &[Sprite], priority: usize) -> (Rgba, usize) {
         // Get first sprite that should be currently visible on scanline x and y position
         // iterator returns (Rgba, prio) tuple
-        let color = sprites.into_iter().find_map(|s| {
-            
+        for s in sprites {
+            // Priority difference -> wrong sprite
             if s.priority != priority {
-                return None;
+                continue;
             }
-            
-            
+
+            // Get sprite tile size          
             let (x_size, y_size) = if s.big_size {
                 mem.oam.bigobj_size
             } else {
                 mem.oam.smallobj_size
             };
             
+            // Check if x and y are within range of current pixel being drawn
             let in_x_range: bool = self.scanline.x >= s.x && self.scanline.x <= s.x + x_size;
             let in_y_range: bool = self.scanline.y >= s.y && self.scanline.y <= s.y + y_size;
             
             if !(in_x_range && in_y_range) {
-                return None;
+                continue;
             }
             
+            // From here on -> correct sprite found, now finding color of this pixel
+
             // get x and y coordinates on current sprite
             let sx = s.x + x_size - self.scanline.x;
             let sy = s.y + y_size - self.scanline.y;
@@ -225,15 +231,11 @@ impl Ppu {
             let color = self.get_4bpp_color(mem, addr as u16, sx % 8, sx % 8, s.palette as u16);
             
             if color != Rgba::default() {
-                return Some((color, s.palette as usize));
+                return (color, s.palette as usize);
             }
-            None
-        });
-        
-        match color {
-            Some((c, p)) => (c, p),
-            None => (Rgba::default(), 0)
         }
+
+        (Rgba::default(), 0)
     }
     
     /// Returns color and priority for current pixel for bg1 layer as a tuple

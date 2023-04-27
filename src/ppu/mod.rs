@@ -8,7 +8,8 @@ pub mod scanline;
 pub mod tile;
 pub mod layer;
 
-use std::sync::{Mutex, Arc, RwLock};
+use std::{sync::{Mutex, Arc, RwLock}, thread, time::Instant};
+use std::time::Duration;
 
 use crate::{arc_mut};
 use lazy_static::lazy_static;
@@ -64,6 +65,15 @@ impl Ppu {
     }
 
     pub fn run(&mut self) -> PixResult<()> {
+
+       
+        loop {
+            let t = Instant::now();
+            self.cycle();
+            println!("t: {0:?}", t.elapsed());
+            thread::sleep(Duration::from_millis(10))
+        }
+
         let mut engine = Engine::builder()
         .dimensions(SCREEN_WIDTH as u32, NTSC_SCREEN_HEIGHT as u32)
         .title("MyApp")

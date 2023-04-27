@@ -92,6 +92,7 @@ impl PixEngine for ScreenApp {
     // Clean up any state or resources before exiting such as deleting temporary
     // files or saving game state. (Optional)
     fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
+        // save sram data to file
         Ok(())
     }
 }

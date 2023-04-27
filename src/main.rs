@@ -41,5 +41,4 @@ fn main() {
     println!("{:#?}", cpu.memory.cartridge_metadata);
 
     ppu.run();
-
 }

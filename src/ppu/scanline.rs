@@ -1,9 +1,9 @@
 use super::{SCREEN_WIDTH, H_BLANK, NTSC_SCREEN_HEIGHT, V_BLANK};
 
 
-const HOR_SCANLINES: usize = 338;
-const NTSC_VER_SCANLINES: usize = 261;
-const PAL_VER_SCANLINES: usize = 311;
+pub const HOR_SCANLINES: usize = 338;
+pub const NTSC_VER_SCANLINES: usize = 261;
+pub const PAL_VER_SCANLINES: usize = 311;
 
 
 /// This struct emulates the electron beam in a CRT tv,
