@@ -2,7 +2,7 @@ use std::{cmp::Ordering, time::Instant};
 
 use crate::{ppu::{SCREEN_WIDTH, tile::Tile}, bit_set, low_byte, high_byte, to_word, nth_bit, main};
 
-use super::{rgb::Rgba, Ppu, sprite::Sprite, memory::PpuMemory, components::{background::Background, colormath::Addend}, layer::{LayerStruct, Layer}, NTSC_SCREEN_HEIGHT, scanline::{HOR_SCANLINES, NTSC_VER_SCANLINES}};
+use super::{rgb::Rgba, SPpu, sprite::Sprite, memory::PpuMemory, components::{background::Background, colormath::Addend}, layer::{LayerStruct, Layer}, NTSC_SCREEN_HEIGHT, scanline::{HOR_SCANLINES, NTSC_VER_SCANLINES}};
 
 
 macro_rules! invert_if {
@@ -23,20 +23,26 @@ enum TileMapQuadrant {
 }
 
 
-impl Ppu {
+impl SPpu {
+
+    pub fn reset(&mut self) {
+        self.pixels = vec![Rgba::default(); SCREEN_WIDTH * NTSC_SCREEN_HEIGHT];
+        self.scanline.reset();
+    }
 
     /// Single clock cycle of ppu
     pub fn tick(&mut self) {
         // draw pixel at current scanline position
         if self.scanline.x < SCREEN_WIDTH && self.scanline.y < NTSC_SCREEN_HEIGHT {
-            self.draw_pixel();
+            let pixel_color = self.draw_pixel();
+            self.set_pixel(self.scanline.x, self.scanline.y, pixel_color);
         }
         // move scanline to next position
         self.scanline.goto_next();
     }
     
     /// Draw pixel on position denoted by current state of `self.scanline`
-    fn draw_pixel(&mut self) {
+    fn draw_pixel(&mut self) -> Rgba {
         let mem = self.memory.lock().unwrap();
         
         let x_in_w1 = self.scanline.x >= mem.w1.left as usize && self.scanline.x <= mem.w1.right as usize;
@@ -88,8 +94,7 @@ impl Ppu {
 
         let pixel_color = mem.colormath.apply_math(main_screen_layer, sub_screen_layer);
 
-        self.screen.set_pixel(self.scanline.x, self.scanline.y, pixel_color);
-        
+        pixel_color
     }
 
     fn get_layers(&self, mem: &PpuMemory) -> LayerStruct {

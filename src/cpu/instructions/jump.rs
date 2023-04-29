@@ -1,6 +1,6 @@
-use crate::cpu::Cpu;
+use crate::cpu::SCpu;
 
-impl Cpu {
+impl SCpu {
 	
 	/// Jump (Absolute)
 	pub fn exe_jmp(&mut self, long_addr: u32) {

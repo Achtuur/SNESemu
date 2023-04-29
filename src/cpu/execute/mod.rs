@@ -1,17 +1,19 @@
 pub mod instrdata;
 
 
-use super::{instructions::instructions::Instruction, Cpu, CpuError};
+use super::{instructions::instructions::Instruction, SCpu, CpuError, NMI_PENDING, IRQ_PENDING, processorstatusflag::ProcessorStatusFlags};
 
-impl Cpu {
+impl SCpu {
 
     pub fn execute_nmi(&mut self) -> Result<(), CpuError> {
         self.exe_interrupt(0x00FFEA);
+        *NMI_PENDING.lock().unwrap() = false;
         Ok(())
     }
 
     pub fn execute_irq(&mut self) -> Result<(), CpuError> {
         self.exe_interrupt(0x00FFEE);
+        *IRQ_PENDING.lock().unwrap() = false;
         Ok(())
     }
 
@@ -19,7 +21,7 @@ impl Cpu {
     pub fn execute_instruction(&mut self, instr: Instruction) -> Result<(), CpuError> {
         self.execute_op(&instr);
 
-        self.wait_cycles = instr.get_cycle_time();
+        self.get_cycle_time(&instr);
 
         self.pc = self.pc.wrapping_add(instr.get_length() as u16);
 
@@ -186,6 +188,73 @@ impl Cpu {
             Xba => self.exe_xba(data),
             Xce => self.exe_xce(data),
 
+        }
+    }
+
+    /// Get cycle time of instruction, subtracts/adds cycles when certain flags are on
+    fn get_cycle_time(&mut self, instr: &Instruction) {
+        use Instruction::*;
+        self.wait_cycles = instr.get_cycle_time();
+        if self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+            match instr {
+                // Add accumulator flag * 2
+                AslDP | AslDPX | AslAbs | AslAbsX |
+                DecDP | DecDPX | DecAbs | DecAbsX |
+                IncDP | IncDPX | IncAbs | IncAbsX |
+                LsrDP | LsrDPX | LsrAbs | LsrAbsX |
+                RolDP | RolDPX | RolAbs | RolAbsX |
+                RorDP | RorDPX | RorAbs | RorAbsX |
+                TrbAbs | TrbDP | TsbAbs | TsbDP => {
+                    self.wait_cycles += 2 * self.status.accflag_as_u8() as usize
+                },
+
+                AdcAbs | AdcAbsLong | AdcAbsX | AdcAbsXLong | AdcAbsY | AdcDP |
+                AdcDPI | AdcDPIX | AdcDPIY | AdcDPIYLong | AdcDPLong | AdcDPX |
+                AdcImm | AdcSR | AdcSRY | 
+                AndAbs | AndAbsLong | AndAbsX | AndAbsXLong | AndAbsY | AndDP |
+                AndDPI | AndDPIX | AndDPIY | AndDPIYLong | AndDPLong | AndDPX |
+                AndImm | AndSR | AndSRY |
+                BitAbs | BitAbsX | BitDP | BitDPX | BitImm |
+                CmpAbs | CmpAbsLong | CmpAbsX | CmpAbsXLong | CmpAbsY | CmpDP |
+                CmpDPI | CmpDPIX | CmpDPIY | CmpDPIYLong | CmpDPLong | CmpDPX |
+                CmpImm | CmpSR | CmpSRY |
+                EorAbs | EorAbsLong | EorAbsX | EorAbsXLong | EorAbsY | EorDP |
+                EorDPI | EorDPIX | EorDPIY | EorDPIYLong | EorDPLong | EorDPX |
+                EorImm | EorSR | EorSRY |
+                OraAbs | OraAbsLong | OraAbsX | OraAbsXLong | OraAbsY | OraDP |
+                OraDPI | OraDPIX | OraDPIY | OraDPIYLong | OraDPLong | OraDPX |
+                OraImm | OraSR | OraSRY |
+                SbcAbs | SbcAbsLong | SbcAbsX | SbcAbsXLong | SbcAbsY | SbcDP |
+                SbcDPI | SbcDPIX | SbcDPIY | SbcDPIYLong | SbcDPLong | SbcDPX |
+                SbcImm | SbcSR | SbcSRY => {
+                    self.wait_cycles += self.status.accflag_as_u8() as usize;
+                }
+
+                _ => {},
+
+            }
+            self.wait_cycles -= 1;
+        }
+        
+        if self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+            self.wait_cycles -= 1;
+        }
+    }
+
+    /// Get length in bytes of instruction, subtracts 1 if accumulator or xyreg flags are set for certain instructions
+    fn get_instr_length(&self, instr: &Instruction) -> usize {
+        use Instruction::*;
+        let len = instr.get_length();
+        // sub accumulator or xy register
+        match instr {
+            AdcImm | AndImm | BitImm | CmpImm | EorImm | LdaImm | OraImm | SbcImm => {
+                len - self.status.accflag_as_u8() as usize
+            },
+
+            LdxImm | LdyImm | CpxImm | CpyImm => {
+                len - self.status.xyflag_as_u8() as usize
+            }
+            _ => len
         }
     }
 }

@@ -1,6 +1,6 @@
-use crate::cpu::{Cpu, processorstatusflag::ProcessorStatusFlags};
+use crate::cpu::{SCpu, processorstatusflag::ProcessorStatusFlags};
 
-impl Cpu {
+impl SCpu {
 	
 	/// Push Effective Absolute Address (Stack (Absolute))
 	pub fn exe_pea(&mut self, data: u16) {

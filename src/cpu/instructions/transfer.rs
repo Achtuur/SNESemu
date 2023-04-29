@@ -1,6 +1,6 @@
-use crate::cpu::{Cpu};
+use crate::cpu::{SCpu};
 
-impl Cpu {
+impl SCpu {
 	
 	/// Transfer Accumulator to Index Register X (Implied)
 	pub fn exe_tax(&mut self) {

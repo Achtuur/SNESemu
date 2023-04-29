@@ -1,6 +1,6 @@
-use crate::cpu::{Cpu, processorstatusflag::ProcessorStatusFlags};
+use crate::cpu::{SCpu, processorstatusflag::ProcessorStatusFlags};
 
-impl Cpu {
+impl SCpu {
 	
 	/// Add With Carry (DP Indexed Indirect,X)
 	pub fn exe_adc(&mut self, data: u16) {

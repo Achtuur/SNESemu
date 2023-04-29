@@ -1,40 +1,35 @@
+use std::{time::{Duration, Instant}, thread, sync::Mutex};
+use lazy_static::lazy_static;
 use pix_engine::{prelude::{Engine, PixResult, PixEngine, Color, Font}, state::PixState, shape::Point, random, line_};
 use pix_engine::color;
 use pix_engine::rgb;
 
-use super::{SCREEN_WIDTH, NTSC_SCREEN_HEIGHT, rgb::Rgba};
-pub struct ScreenApp {
-    scanline: usize,
-    pixels: Vec<Rgba>,
-}
+use super::{SCREEN_WIDTH, NTSC_SCREEN_HEIGHT, Snes};
 
-impl ScreenApp {
-    pub fn new() -> Self {
-        ScreenApp {
-            scanline: 0,
-            pixels: vec![Rgba::default(); (NTSC_SCREEN_HEIGHT * SCREEN_WIDTH) as usize],
-        }
-    }
+use crate::{ppu::rgb::Rgba, cpu::{NMI_PENDING, IRQ_PENDING}};
 
-    /// Set pixel for a single position
-    pub fn set_pixel(&mut self, x: usize, y: usize, pix: Rgba) {
-        let i = y * SCREEN_WIDTH + x;
-        self.pixels[i] = pix;
-    }
+/// NTSC Clock frequency in MHz
+const NTSC_CLOCK_FREQ: f64 = 21.447;
+/// NTSC Clock preiod in microseconds
+const NTSC_CLOCK_PER_US: f64 = 1.0 / 21.447;
+/// PAL Clock frequency in MHz
+const PAL_CLOCK_FREQ: f64 = 21.281;
+
+impl Snes {
 
     /// Set pixels for a single scanline
     pub fn set_scanline(&mut self, scanline: usize, pix: &[Rgba]) {
         let i = scanline * SCREEN_WIDTH as usize;
-        self.pixels[i..i+SCREEN_WIDTH as usize].clone_from_slice(pix);
+        self.ppu.pixels[i..i+SCREEN_WIDTH as usize].clone_from_slice(pix);
     }
 
     /// Set all pixels at once
     pub fn set_pixels(&mut self, pix: &[Rgba]) {
-        self.pixels.clone_from_slice(pix);
+        self.ppu.pixels.clone_from_slice(pix);
     }
 
     fn render_screen(&mut self, s: &mut PixState) {
-        self.pixels.iter().enumerate().for_each(|(i, rgb)| {
+        self.ppu.pixels.iter().enumerate().for_each(|(i, rgb)| {
             // Calculate x and y values and construct a Point
             let (x, y) = (i % SCREEN_WIDTH, i / SCREEN_WIDTH);
             let p = Point::new([x as i32, y as i32]);
@@ -48,13 +43,21 @@ impl ScreenApp {
     }
 }
 
-impl PixEngine for ScreenApp {
+impl PixEngine for Snes {
     // Set up application state and initial settings. `PixState` contains
     // engine specific state and utility methods for actions like getting mouse
     // coordinates, drawing shapes, etc. (Optional)
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+
+        // reset components
+        self.cpu.reset();
+        self.ppu.reset();
+        // self.apu.reset();
+
         // Set the background to GRAY and clear the screen.
         s.background(Color::BLACK);
+
+        self.last_tick = Instant::now();
 
         // Returning `Err` instead of `Ok` would indicate initialization failed,
         // and that the application should terminate immediately.
@@ -65,27 +68,38 @@ impl PixEngine for ScreenApp {
     // `target_frame_rate` was set with a value. (Required)
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 
+    
+        // execute correct number of cycles
+
+        let _ = self.cpu.tick();
+
+        for _ in 0..3 {
+            self.ppu.tick();
+        }
+
+        self.cycles += 1;
+
+        // get time difference with previous loop
+
+        let dt = self.last_tick - Instant::now();
+        
+        self.time_spent += (Instant::now()).duration_since(self.last_tick);
+
+        let expected_time = Duration::from_secs_f64(NTSC_CLOCK_PER_US * self.cycles as f64);
+        
+        if self.time_spent > expected_time {
+            // do extra cycles to catch up
+            println!("Emulation behind by {:?}", self.time_spent - expected_time);
+            
+        } else if self.time_spent < expected_time {
+            // sleep for a while
+            thread::sleep(expected_time - self.time_spent);
+        }
+        
+        self.last_tick = Instant::now();
+
         self.render_screen(s);
 
-        let mut i: u16 = 0;
-        let mut j: u16 = 0;
-        let mut k: u16 = 0;
-        let mut l: u16 = 0;
-
-        let v = (0..SCREEN_WIDTH * NTSC_SCREEN_HEIGHT)
-        .map(|_| {
-            i = i.wrapping_add(1) % Rgba::MAX_RGB_VALUE as u16;
-            j = (random!(10) + i * 10) % Rgba::MAX_RGB_VALUE as u16;
-            k = (random!(1) + j * 6) % Rgba::MAX_RGB_VALUE as u16;
-            l = (random!(8) + k * 7) % Rgba::MAX_RGB_VALUE as u16;
-            Rgba::new(i as u8, j as u8, k as u8, l as u8)
-        })
-        .collect::<Vec<Rgba>>();
-
-        // self.set_scanline(self.scanline, &v);
-        self.set_pixels(&v);
-        self.scanline += 1;
-        self.scanline %= NTSC_SCREEN_HEIGHT as usize;
         Ok(())
     }
 

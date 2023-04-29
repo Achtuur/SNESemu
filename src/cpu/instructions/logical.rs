@@ -1,6 +1,6 @@
-use crate::cpu::{Cpu, processorstatusflag::ProcessorStatusFlags};
+use crate::cpu::{SCpu, processorstatusflag::ProcessorStatusFlags};
 
-impl Cpu {
+impl SCpu {
 	
 	/// AND Accumulator with Memory (DP Indexed Indirect,X)
 	pub fn exe_and(&mut self, data: u16) {

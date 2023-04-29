@@ -1,6 +1,6 @@
-use crate::cpu::{Cpu, processorstatusflag::ProcessorStatusFlags};
+use crate::cpu::{SCpu, processorstatusflag::ProcessorStatusFlags};
 
-impl Cpu {
+impl SCpu {
 	
 	/// Clear Carry (Implied)
 	pub fn exe_clc(&mut self) {

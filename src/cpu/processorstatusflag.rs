@@ -39,6 +39,30 @@ impl ProcessorStatusFlags {
         ProcessorStatusFlags::from_bits(0).unwrap()
     }
 
+    pub fn startup_state() -> Self {
+        let mut p = Self::new();
+        p.set_flag(
+            ProcessorStatusFlags::Emulation | 
+            ProcessorStatusFlags::Accumulator8bit | 
+            ProcessorStatusFlags::XYreg8bit
+        );
+        p
+    }
+
+    pub fn accflag_as_u8(&self) -> u8 {
+        if self.contains(ProcessorStatusFlags::Accumulator8bit) {
+           return 1;
+        }
+        0
+    }
+
+    pub fn xyflag_as_u8(&self) -> u8 {
+        if self.contains(ProcessorStatusFlags::XYreg8bit) {
+           return 1;
+        }
+        0
+    }
+
     pub fn set_bits(&mut self, bits: u8) {
         let flag = ProcessorStatusFlags::from_bits(bits as u16).unwrap();
         self.set_flag(flag);

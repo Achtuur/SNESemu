@@ -5,12 +5,15 @@ mod cpu;
 mod apu;
 pub mod bit_macros;
 pub mod addr_macros;
+pub mod snes;
+
+use std::sync::Mutex;
 
 use apu::memory::ApuMemory;
 
 use ppu::memory::PpuMemory;
 
-use crate::{cpu::Cpu, ppu::Ppu, apu::Apu};
+use crate::{cpu::SCpu, ppu::SPpu, apu::SApu, snes::Snes};
 
 
 #[macro_export]
@@ -20,25 +23,25 @@ macro_rules! arc_mut {
         std::sync::Arc::new(std::sync::Mutex::new($obj))
     };
 }
+use lazy_static::lazy_static;
+lazy_static! {
+    #[derive(Debug)]
+    static ref TESTMUT: Mutex::<u8> = Mutex::new(5);
+}
 
 fn main() {
     // let rom = include_bytes!("../resources/rom/Legend of Zelda, The - A Link to the Past.smc");
     let rom = include_bytes!("../resources/rom/Super Mario World.smc");
+    
 
-    let mut cpu = Cpu::new();
-    let mut ppu = Ppu::new();
-    let mut apu = Apu::new();
-
-    let ppumem = arc_mut!(PpuMemory::new());
-    cpu.memory.set_ppumemory_ref(ppumem.clone());
-    ppu.set_ppumemory_ref(ppumem);
-
-    let apumem = arc_mut!(ApuMemory::new());
-    cpu.memory.set_apumemory_ref(apumem.clone());
-    apu.set_apumemory_ref(apumem);
-
-    let _ = cpu.memory.insert_cartridge(rom);
-    println!("{:#?}", cpu.memory.cartridge_metadata);
-
-    ppu.run();
+    let mut snes = Snes::new();
+    
+    let r = snes.insert_cartridge(rom);
+    match r {
+        Ok(_) => {
+            let e = snes.run();
+            println!("Snes run stopped: {:?}", e);
+        },
+        Err(e) => println!("Failed inserting cartridge: {:?}", e)
+    }
 }

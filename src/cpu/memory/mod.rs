@@ -1,4 +1,3 @@
-
 use std::sync::{Mutex, Arc};
 
 use crate::{ppu::memory::PpuMemory, apu::memory::ApuMemory, separate_bank_hhll_addr};
@@ -6,9 +5,9 @@ use crate::{ppu::memory::PpuMemory, apu::memory::ApuMemory, separate_bank_hhll_a
 use self::{mapper::{Mappermode, lorom::LoROM, hirom::HiROM, exhirom::ExHiROM}, cartridge::{CartridgeParseError, CartridgeMetadata}, ram::Ram};
 
 
-mod mapper;
-mod ram;
-mod cartridge;
+pub mod mapper;
+pub mod ram;
+pub mod cartridge;
 
 /// Struct that represents all memory in the SNES, this is shared between CPU, PPU and APU as they all need to read/write to it
 /// 
@@ -133,7 +132,6 @@ impl CpuMemory {
 
             // Rest of space is dependant on mapper, so mapper will deal with it
             _ => self.mapper.read(long_addr),
-
         }
     }
 

@@ -1,3 +1,5 @@
+use crate::cpu::NMI_PENDING;
+
 use super::{SCREEN_WIDTH, H_BLANK, NTSC_SCREEN_HEIGHT, V_BLANK};
 
 
@@ -24,6 +26,12 @@ impl Scanline {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.x = 0;
+        self.y = 0;
+        self.scanline_sprites = 0;
+    }
+
     /// Moves this scanline to next position
     pub fn goto_next(&mut self) {
         self.x += 1;
@@ -44,6 +52,7 @@ impl Scanline {
         // Same logic as x, but with Vblank instead
         if self.y >= NTSC_SCREEN_HEIGHT {
             *V_BLANK.write().unwrap() = true;
+            *NMI_PENDING.lock().unwrap() = true;
         } else if self.y >= NTSC_VER_SCANLINES {
             *V_BLANK.write().unwrap() = false;
             self.y = 0;

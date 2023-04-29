@@ -95,14 +95,13 @@ impl LoROM {
         let bank_i = bank_i % self.rom_banks;
         
         let hi_lo_byte_i = match hi_lo_byte {
-            0x0000..=0x7FFF => hi_lo_byte,
+            0x0000..=0x7FFF => panic!("not a rom address"),
             0x8000..=0xFFFF => hi_lo_byte - 0x8000,
         } as usize;
         
         // calculate final index using bank index and hhll index
         let i = bank_i * ROM_BANK_SIZE + hi_lo_byte_i;
         
-        // println!("${:#06X?} = rom[{:?}] = #{:#04X?}", long_addr, i, self.rom[i as usize]);
         Some(self.rom[i as usize])
     }
 }

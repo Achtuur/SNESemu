@@ -1,6 +1,6 @@
-use crate::cpu::Cpu;
+use crate::cpu::SCpu;
 
-impl Cpu {
+impl SCpu {
 	
 	/// Block Move Negative (Block Move)
 	/// 

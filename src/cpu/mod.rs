@@ -1,5 +1,5 @@
 use std::sync::{Arc, Mutex};
-
+use lazy_static::lazy_static;
 use self::{processorstatusflag::ProcessorStatusFlags, instructions::instructions::Instruction, memory::CpuMemory};
 
 pub mod processorstatusflag;
@@ -7,11 +7,16 @@ pub mod instructions;
 mod execute;
 pub mod memory;
 
+lazy_static! {
+    pub static ref NMI_PENDING: Mutex<bool> = Mutex::new(false);
+    pub static ref IRQ_PENDING: Mutex<bool> = Mutex::new(false);
+}
+
 pub enum CpuError {
     PlaceHolder,
 }
 
-pub struct Cpu {
+pub struct SCpu {
     // Registers
     /// Stack pointer
     /// (Points to the next available(unused) location on the stack.)
@@ -64,13 +69,13 @@ pub struct Cpu {
 
 }
 
-impl Cpu {
+impl SCpu {
     pub fn new() -> Self {
-        Cpu {
+        SCpu {
             memory: CpuMemory::new(),
-            status: ProcessorStatusFlags::from_bits(0).unwrap(),
-            sp: 0,
-            pc: 0xFFFC,
+            status: ProcessorStatusFlags::startup_state(),
+            sp: 0x1FF,
+            pc: 0,
             acc: 0,
             x: 0,
             y: 0,
@@ -85,9 +90,9 @@ impl Cpu {
     /// Reset CPU, sets all values to initial state
     pub fn reset(&mut self) {
         // self.memory.lock().unwrap().reset(); // todo -> implement memory reset
-        self.status = ProcessorStatusFlags::from_bits(0).unwrap();
-        self.sp = 0;
-        self.pc = 0xFFFC; // reset vector
+        self.status = ProcessorStatusFlags::startup_state();
+        self.sp = 0x1FF;
+        self.pc = self.mem_read_long(0xFFFC, 0xFFFD); // reset vector
         self.acc = 0;
         self.x = 0;
         self.y = 0;
@@ -99,27 +104,39 @@ impl Cpu {
     }
 
     // This function is called every 'clock cycle'
-    pub fn tick(&mut self, nmi_pending: bool, irq_pending: bool) -> Result<(), CpuError> {
+    pub fn tick(&mut self) -> Result<(), CpuError> {
+
+        if self.status.contains(ProcessorStatusFlags::Emulation) {
+            self.sp = (1 << 8) | (self.sp & 0x00FF); //force high byte to be 1
+        }
+
+        // force x and y to zero
+        if self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+            self.x &= 0x00FF;
+            self.y &= 0x00FF;
+        }
+
         if self.wait_cycles > 0 {
             self.wait_cycles -= 1;
         }
 
         // NMI pending -> execute NMI
-        if nmi_pending {
+        if *NMI_PENDING.lock().unwrap() {
             return self.execute_nmi();
         }
         // IRQ pending and IRQ not disabled -> execute IRQ
-        else if irq_pending && !self.status.contains(ProcessorStatusFlags::IRQdisable) {
+        else if *IRQ_PENDING.lock().unwrap() && !self.status.contains(ProcessorStatusFlags::IRQdisable) {
             return self.execute_irq();
         }
         // IRQ pending and irq disabled AND WAI flag on -> execute instruction as normal
-        else if irq_pending && self.status.contains(ProcessorStatusFlags::IRQdisable | ProcessorStatusFlags::WaitForInterrupt) {
+        else if *IRQ_PENDING.lock().unwrap() && self.status.contains(ProcessorStatusFlags::IRQdisable | ProcessorStatusFlags::WaitForInterrupt) {
             self.status.clear_flag(ProcessorStatusFlags::WaitForInterrupt);
         }
 
         // read & execute instruction
         let op = self.mem_read(self.get_pc_addr());
         let instr = Instruction::from_op(op);
+        println!("[{0:04X}]: {1:?}", self.pc, instr);
         self.execute_instruction(instr)
     }
 

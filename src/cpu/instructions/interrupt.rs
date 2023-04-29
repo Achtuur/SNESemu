@@ -1,6 +1,6 @@
-use crate::cpu::{Cpu, processorstatusflag::ProcessorStatusFlags};
+use crate::cpu::{SCpu, processorstatusflag::ProcessorStatusFlags};
 
-impl Cpu {
+impl SCpu {
 	
 	pub fn exe_interrupt(&mut self, interrupt_vector: u32) {
 		self.push_byte_stack(self.pbr);
@@ -25,13 +25,11 @@ impl Cpu {
 		self.status.set_bits(status_bits);
 		self.pc = self.pull_long_stack();
 		self.pbr = self.pull_byte_stack();
-
 	}
 	
 	/// Wait for Interrupt (Implied)
 	pub fn exe_wai(&mut self, data: u16) {
 		self.status.set_flag(ProcessorStatusFlags::WaitForInterrupt);
 	}
-	
 	
 }

@@ -1,6 +1,6 @@
-use crate::cpu::Cpu;
+use crate::cpu::SCpu;
 
-impl Cpu {
+impl SCpu {
 	
 	/// No Operation (Implied)
 	pub fn exe_nop(&mut self, data: u16) {

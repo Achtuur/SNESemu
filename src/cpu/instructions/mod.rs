@@ -14,6 +14,7 @@ pub mod transfer;
 
 pub mod instructions;
 
+#[derive(Debug)]
 pub enum AddressingMode {
     /// Argument is absolute 2 bytes
     Absolute,

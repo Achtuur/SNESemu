@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub enum Instruction {
     
 /// ($00) BRK, Break (Stack/Interrupt)

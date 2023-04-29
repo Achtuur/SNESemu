@@ -8,14 +8,14 @@ pub mod memory;
 
 
 /// Audio processing unit
-pub struct Apu {
+pub struct SApu {
     memory: Arc<Mutex<ApuMemory>>,
 }
 
 
-impl Apu {
+impl SApu {
     pub fn new() -> Self {
-        Apu {
+        SApu {
             memory: arc_mut!(ApuMemory::new()),
         }
     }

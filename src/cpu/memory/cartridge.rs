@@ -32,42 +32,42 @@ pub enum CartridgeParseError {
 
 #[derive(Debug)]
 pub struct CartridgeMetadata {
-    title: String,
-    dev_id: String,
-    region: CartridgeRegion,
-    version: u8,
-    maker_code: String,
-    game_code: String,
-    rom_size: usize,
-    ram_size: usize,
+    pub title: Option<String>,
+    pub dev_id: Option<String>,
+    pub region: Option<CartridgeRegion>,
+    pub version: Option<u8>,
+    pub maker_code: Option<String>,
+    pub game_code: Option<String>,
+    pub rom_size: Option<usize>,
+    pub ram_size: Option<usize>,
     pub has_copier_bytes: bool,
 }
 
 impl CartridgeMetadata {
     pub fn new() -> Self {
         CartridgeMetadata {
-            title: String::from(""),
-            dev_id: String::from(""),
-            region: CartridgeRegion::Unidentified,
-            version: 0,
-            maker_code: String::from(""),
-            game_code: String::from(""),
-            rom_size: 0,
-            ram_size: 0,
+            title: None,
+            dev_id: None,
+            region: None,
+            version: None,
+            maker_code: None,
+            game_code: None,
+            rom_size: None,
+            ram_size: None,
             has_copier_bytes: false,
         }
     }
     
     pub fn set_dev_id(&mut self, dev_id_bytes: &[u8]) {
-        if self.dev_id.is_empty() {
-            self.dev_id = std::str::from_utf8(dev_id_bytes).unwrap().to_string();
+        if self.dev_id.is_none() {
+            self.dev_id = Some(std::str::from_utf8(dev_id_bytes).unwrap().to_string());
         }
     }
     
     pub fn set_region(&mut self, region_id: u8) {
         use CartridgeRegion::*;
-        if matches!(self.region, Unidentified) {       
-            self.region = match region_id {
+        if self.region.is_none() {       
+            self.region = Some(match region_id {
                 0x00 => Japan,
                 0x01 => NorthAmerica,
                 0x02 => Europe,
@@ -87,45 +87,45 @@ impl CartridgeMetadata {
                 0x10 => Brazil,
                 0x11 => Australia,
                 _ => Unidentified,
-            };
+            });
         }
     }
     
     pub fn set_version(&mut self, version: u8) {
-        if self.version == 0 {
-            self.version = version;
+        if self.version.is_none() {
+            self.version = Some(version);
         }
     }
     
     pub fn set_title(&mut self, title_bytes: &[u8]) {
-        if self.title.is_empty() {
-            self.title = std::str::from_utf8(title_bytes).unwrap().to_string();
+        if self.title.is_none() {
+            self.title = Some(std::str::from_utf8(title_bytes).unwrap().to_string());
         }
     }
     
     pub fn set_maker_code(&mut self, maker_code: String) {
-        if self.maker_code.is_empty() {
-            self.maker_code = maker_code;
+        if self.maker_code.is_none() {
+            self.maker_code = Some(maker_code);
         }
     }
     
     pub fn set_game_code(&mut self, game_code: String) {
-        if self.game_code.is_empty() {
-            self.game_code = game_code;
+        if self.game_code.is_none() {
+            self.game_code = Some(game_code);
         }
     }
 
     /// Set rom size if unset, 'size' refers to the `1 << size` from the header
     pub fn set_rom_size(&mut self, size: u8) {
-        if self.rom_size == 0 {
-            self.rom_size = 1 << size;
+        if self.rom_size.is_none() {
+            self.rom_size = Some(1 << size);
         }
     }
 
     /// Set ram size if unset, 'size' refers to the `1 << size` from the header
     pub fn set_ram_size(&mut self, size: u8) {
-        if self.ram_size == 0 {
-            self.ram_size = 1 << size;
+        if self.ram_size.is_none() {
+            self.ram_size = Some(1 << size);
         }
     }
 }
