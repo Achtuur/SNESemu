@@ -1,8 +1,10 @@
-use std::{cmp::Ordering, time::Instant};
+use std::{cmp::Ordering, time::Instant, sync::Mutex};
 
-use crate::{ppu::{SCREEN_WIDTH, tile::Tile}, bit_set, low_byte, high_byte, to_word, nth_bit, main};
+use crate::{ppu::{SCREEN_WIDTH, tile::Tile, NTSC_SCREEN_PIXELS}, bit_set, low_byte, high_byte, to_word, nth_bit, main, wrap_add_lowbyte};
 
-use super::{rgb::Rgba, SPpu, sprite::Sprite, memory::PpuMemory, components::{background::Background, colormath::Addend}, layer::{LayerStruct, Layer}, NTSC_SCREEN_HEIGHT, scanline::{HOR_SCANLINES, NTSC_VER_SCANLINES}};
+use super::{rgb::Rgba, SPpu, sprite::Sprite, memory::PpuMemory, components::{background::{Background, BackgroundLayer}, colormath::Addend}, layer::{LayerStruct, Layer, BitDepth}, NTSC_SCREEN_HEIGHT, scanline::{HOR_SCANLINES, NTSC_VER_SCANLINES}};
+
+use rayon::prelude::*;
 
 
 macro_rules! invert_if {
@@ -24,14 +26,59 @@ enum TileMapQuadrant {
 
 
 impl SPpu {
-
+    
     pub fn reset(&mut self) {
-        self.pixels = vec![Rgba::default(); SCREEN_WIDTH * NTSC_SCREEN_HEIGHT];
+        self.pixels = vec![Rgba::default(); NTSC_SCREEN_PIXELS];
+        self.bg1_pixels = vec![(Rgba::default(), 0); NTSC_SCREEN_PIXELS];
+        self.bg2_pixels = vec![(Rgba::default(), 0); NTSC_SCREEN_PIXELS];
+        self.bg3_pixels = vec![(Rgba::default(), 0); NTSC_SCREEN_PIXELS];
+        self.bg4_pixels = vec![(Rgba::default(), 0); NTSC_SCREEN_PIXELS];
+        self.obj_pixels = vec![(Rgba::default(), 0, 0); NTSC_SCREEN_PIXELS];
         self.scanline.reset();
     }
-
+    
+    pub fn debug_tick(&mut self) {
+        // rust pls why is this necessary
+        let mem_refclone = self.memory.clone();
+        let mem = mem_refclone.lock().unwrap();
+        
+        self.draw_bg(&mem, &mem.bg1);
+        self.draw_bg(&mem, &mem.bg2);
+        self.draw_bg(&mem, &mem.bg3);
+        self.draw_bg(&mem, &mem.bg4);
+        self.draw_obj(&mem);
+    }
+    
     /// Single clock cycle of ppu
     pub fn tick(&mut self) {
+        
+        let t = Instant::now();
+        // rust pls why is this necessary
+        let mem_refclone = self.memory.clone();
+        let mut mem = mem_refclone.lock().unwrap();
+        
+        self.draw_bg(&mem, &mem.bg1);
+        self.draw_bg(&mem, &mem.bg2);
+        self.draw_bg(&mem, &mem.bg3);
+        self.draw_bg(&mem, &mem.bg4);
+        self.draw_obj(&mem);
+        if mem.bg1.update_pending {
+            mem.bg1.update_pending = false;
+        }
+        if mem.bg2.update_pending {
+            mem.bg2.update_pending = false;
+        }
+        if mem.bg3.update_pending {
+            mem.bg3.update_pending = false;
+        }
+        if mem.bg4.update_pending {
+            mem.bg4.update_pending = false;
+        }
+        if mem.oam.update_pending {
+            mem.oam.update_pending = false;
+        }
+        drop(mem); //free mutex for use witin draw_pixel function
+        
         // draw pixel at current scanline position
         if self.scanline.x < SCREEN_WIDTH && self.scanline.y < NTSC_SCREEN_HEIGHT {
             let pixel_color = self.draw_pixel();
@@ -39,6 +86,8 @@ impl SPpu {
         }
         // move scanline to next position
         self.scanline.goto_next();
+        
+        println!("t: {0:?}", t.elapsed());
     }
     
     /// Draw pixel on position denoted by current state of `self.scanline`
@@ -56,17 +105,17 @@ impl SPpu {
         // Get main and sub screen layers (they are copies of each other)
         let mut main_layers = self.get_layers(&mem);
         let mut sub_layers = main_layers;
-
+        
         // Enable and disable main screen layers based on enable flags set by TM and window set by TMW
         main_layers.set_bg1_enabled(mem.bg1.enable_main, mem.ppustate.enable_window_bg_main[0], bgx_w[0]);
         main_layers.set_bg2_enabled(mem.bg2.enable_main, mem.ppustate.enable_window_bg_main[1], bgx_w[1]);
         main_layers.set_bg3_enabled(mem.bg3.enable_main, mem.ppustate.enable_window_bg_main[2], bgx_w[2]);
         main_layers.set_bg4_enabled(mem.bg4.enable_main, mem.ppustate.enable_window_bg_main[3], bgx_w[3]);
         main_layers.set_obj_enabled(mem.ppustate.enable_obj_main, mem.ppustate.enabled_window_obj_main, obj_w);
-
+        
         // Get highest priority layer that should be drawn on this pixel
         let mut main_screen_layer = main_layers.get_highest_priority_layer(mem.ppustate.background_mode, mem.ppustate.bg3_prio, Rgba::default());
-
+        
         // Use either fixed color or subscreen as subscreen based on $2130.1
         let mut sub_screen_layer = if matches!(mem.colormath.addend, Addend::FixedColor) {
             Layer::FallBack(mem.colormath.fixed_color)
@@ -82,73 +131,77 @@ impl SPpu {
             sub_layers.get_highest_priority_layer(mem.ppustate.background_mode, mem.ppustate.bg3_prio, mem.colormath.fixed_color)
         };
         
-
+        
         // apply math
         if !mem.colormath.apply_color_switch_main(clr_w) {
             main_screen_layer = Layer::FallBack(Rgba::BLACK);
         }
-
+        
         if !mem.colormath.apply_color_switch_sub(clr_w) {
             sub_screen_layer = Layer::FallBack(Rgba::default());
         }
-
+        
         let pixel_color = mem.colormath.apply_math(main_screen_layer, sub_screen_layer);
-
+        
         pixel_color
     }
-
+    
     fn get_layers(&self, mem: &PpuMemory) -> LayerStruct {
         let mut layers = LayerStruct::new();
-
-        match self.get_bg1_color(&mem) {
-            (c, false) => layers.bg1low = c,
-            (c, true) => layers.bg1high = c,
+        let i = self.scanline.y * NTSC_SCREEN_HEIGHT + self.scanline.x;
+        match self.get_bg_pixel(mem, &mem.bg1) {
+            (c, 0) => layers.bg1low = c,
+            (c, 1) => layers.bg1high = c,
+            _ => unreachable!(),
         };
         
-        match self.get_bg2_color(&mem) {
-            (c, false) => layers.bg2low = c,
-            (c, true) => layers.bg2high = c,
+        match self.get_bg_pixel(mem, &mem.bg2) {
+            (c, 0) => layers.bg2low = c,
+            (c, 1) => layers.bg2high = c,
+            _ => unreachable!(),
         };
         
-        match self.get_bg3_color(&mem) {
-            (c, false) => layers.bg3low = c,
-            (c, true) => layers.bg3high = c,
+        match self.get_bg_pixel(mem, &mem.bg3) {
+            (c, 0) => layers.bg3low = c,
+            (c, 1) => layers.bg3high = c,
+            _ => unreachable!(),
         };
         
-        match self.get_bg4_color(&mem) {
-            (c, false) => layers.bg4low = c,
-            (c, true) => layers.bg4high = c,
+        match self.get_bg_pixel(mem, &mem.bg4) {
+            (c, 0) => layers.bg4low = c,
+            (c, 1) => layers.bg4high = c,
+            _ => unreachable!(),
         };
         
-        let sprites = mem.oam.as_sprites();
+        match self.obj_pixels[i] {
+            (c, 0, p) => (layers.sprite0, layers.sprite0_palette) = (c, p),
+            (c, 1, p) => (layers.sprite1, layers.sprite1_palette) = (c, p),
+            (c, 2, p) => (layers.sprite2, layers.sprite2_palette) = (c, p),
+            (c, 3, p) => (layers.sprite3, layers.sprite3_palette) = (c, p),
+            _ => unreachable!(),
+        }
         
-
-        (layers.sprite0, layers.sprite0_palette) = self.get_obj_color(&mem, &sprites, 0);
-        (layers.sprite1, layers.sprite1_palette) = self.get_obj_color(&mem, &sprites, 1);
-        (layers.sprite2, layers.sprite2_palette) = self.get_obj_color(&mem, &sprites, 2);
-        (layers.sprite3, layers.sprite3_palette) = self.get_obj_color(&mem, &sprites, 3);
-
         layers
     }
     
     /// Determine whether the object layer is inside window on this pixel
     fn obj_layer_in_window(&self, mem: &PpuMemory, x_in_w1: bool, x_in_w2: bool) -> bool {
-        let obj_w1 = x_in_w1 && mem.w1.obj_enabled;
-        let obj_w1 = invert_if!(obj_w1, mem.w1.obj_inverted);
+        let mut obj_w1 = x_in_w1 && mem.w1.obj_enabled;
+        obj_w1 = invert_if!(obj_w1, mem.w1.obj_inverted);
         
-        let obj_w2 = x_in_w2 && mem.w2.obj_enabled;
-        let obj_w2 = invert_if!(obj_w2, mem.w2.obj_inverted);
+        let mut obj_w2 = x_in_w2 && mem.w2.obj_enabled;
+        obj_w2 = invert_if!(obj_w2, mem.w2.obj_inverted);
         
         mem.ppustate.window_obj_masklogic.mask(obj_w1, obj_w2)
     }
     
     /// Determine whether the color layer is inside window on this pixel
     fn clr_layer_in_window(&self, mem: &PpuMemory, x_in_w1: bool, x_in_w2: bool) -> bool {
-        let clr_w1 = x_in_w1 && mem.w1.clr_enabled;
-        let clr_w1 = invert_if!(clr_w1, mem.w1.clr_inverted);
+        let mut clr_w1 = x_in_w1 && mem.w1.clr_enabled;
+        clr_w1 = invert_if!(clr_w1, mem.w1.clr_inverted);
         
-        let clr_w2 = x_in_w2 && mem.w2.clr_enabled;
-        let clr_w2 = invert_if!(clr_w2, mem.w2.clr_inverted);
+        let mut clr_w2 = x_in_w2 && mem.w2.clr_enabled;
+        clr_w2 = invert_if!(clr_w2, mem.w2.clr_inverted);
         
         mem.ppustate.window_clr_masklogic.mask(clr_w1, clr_w2)
     }
@@ -174,196 +227,258 @@ impl SPpu {
         mem.bg4.mask_logic.mask(bgx_w1[3], bgx_w2[3]),
         ]
     }
-    
-    /// Gets color for `Sprite0..3` layers, where `0..3` denotes the priority
-    fn get_obj_color(&self, mem: &PpuMemory, sprites: &[Sprite], priority: usize) -> (Rgba, usize) {
-        // Get first sprite that should be currently visible on scanline x and y position
-        // iterator returns (Rgba, prio) tuple
-        for s in sprites {
-            // Priority difference -> wrong sprite
-            if s.priority != priority {
-                continue;
-            }
 
+    /// Get pixel of current scanline position for background `bg`. Applies effects such as mosaic effect
+    fn get_bg_pixel(&self, mem: &PpuMemory, bg: &Background) -> (Rgba, usize) {
+        let i = self.scanline.y * SCREEN_WIDTH + self.scanline.x;
+        match bg.layer {
+            BackgroundLayer::Background1 => {
+                if mem.bg1.mosaic {
+                    return self.get_mosaic_pixel(&self.bg1_pixels, mem.ppustate.mosaic_size);
+                }
+                self.bg1_pixels[i]
+            },
+            BackgroundLayer::Background2 => {
+                if mem.bg2.mosaic {
+                    return self.get_mosaic_pixel(&self.bg2_pixels, mem.ppustate.mosaic_size);
+                }
+                self.bg2_pixels[i]
+            },
+            BackgroundLayer::Background3 => {
+                if mem.bg3.mosaic {
+                    return self.get_mosaic_pixel(&self.bg3_pixels, mem.ppustate.mosaic_size);
+                }
+                self.bg3_pixels[i]
+            },
+            BackgroundLayer::Background4 => {
+                if mem.bg4.mosaic {
+                    return self.get_mosaic_pixel(&self.bg4_pixels, mem.ppustate.mosaic_size);
+                }
+                self.bg4_pixels[i]
+            },
+        }
+
+        // high resolution stuff ?
+    }
+
+    fn get_mosaic_pixel(&self, bg_pixels: &[(Rgba, usize)], mosaic_size: usize) -> (Rgba, usize) {
+        // Get xth and yth mosaic_size x mosaic_size square based on scanline position
+        let x_s = self.scanline.x / mosaic_size;
+        let y_s = self.scanline.y / mosaic_size;
+
+        // Get topleft color of that square
+        let i_s = y_s * SCREEN_WIDTH + x_s;
+        bg_pixels[i_s]
+    }
+    
+    /// Draws all (visible) tiles for a background
+    fn draw_bg(&mut self, mem: &PpuMemory, bg: &Background) {
+        
+        let bg_pixels = match bg.layer {
+            BackgroundLayer::Background1 => &mut self.bg1_pixels,
+            BackgroundLayer::Background2 => &mut self.bg2_pixels,
+            BackgroundLayer::Background3 => &mut self.bg3_pixels,
+            BackgroundLayer::Background4 => &mut self.bg4_pixels,
+        };
+        
+        
+        // Loop through every 8th or 16th pixel in y direction depending on char size
+        (0..NTSC_SCREEN_HEIGHT).step_by(bg.char_size).for_each(|y| {
+            (0..SCREEN_WIDTH).step_by(bg.char_size).for_each(|x| {
+                // Get tile at current x and y position
+                let tile = Self::get_tile(mem, &bg, x, y);
+                let char_addr = bg.chr_base_addr + tile.tile_num;
+                // Loop through pixels in tile and get colorss
+                
+                // If char_size is 16x16, then 'neighbouring' tiles need to be used
+                // In case of 8x8 tiles, this for loop runs once and uses 'char_addr' as the char address
+                for y_i in 0..bg.char_size / 8 {
+                    for x_i in 0..bg.char_size / 8 {
+                        // Current tile address is base char address or 'neighbours' of it depending on x_i and y_i
+                        let mut t_addr = wrap_add_lowbyte!(char_addr, x_i * 0x20);
+                        t_addr = wrap_add_lowbyte!(t_addr, y_i * 0x200);
+                        
+                        let char_rgba = Self::get_bg_tile_color(mem, bg, &tile, t_addr);
+                        
+                        // base index is current x/y position offset by neighbour tile position
+                        let i_base = (y + 8*y_i) * SCREEN_WIDTH + x + 8*x_i;
+                        
+                        char_rgba.iter().enumerate().for_each(|(idx, clr)| {
+                            let x = i_base + idx % 8;
+                            let y = i_base + idx / 8;
+                            if y < NTSC_SCREEN_HEIGHT && x < SCREEN_WIDTH {
+                                let i = y * SCREEN_WIDTH + x;
+                                bg_pixels[i] = (*clr, tile.priority);
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    }
+    
+    fn draw_obj(&mut self, mem: &PpuMemory) {
+        
+        let sprites = mem.oam.as_sprites();
+        // Loop in reverse so each next sprite can overwrite the previous one
+        // (sprites with lower index have higher priority over sprites with higher index)
+        sprites.iter().rev().for_each(|sprite| {
+            
+            // Get position of sprite
+            let x = sprite.x;
+            let y = sprite.y;
+            
+            // Skip sprites that are not currently on screen
+            if x > SCREEN_WIDTH || y > NTSC_SCREEN_HEIGHT {
+                return;
+            }
+            
             // Get sprite tile size          
-            let (x_size, y_size) = if s.big_size {
+            let (x_size, y_size) = if sprite.big_size {
                 mem.oam.bigobj_size
             } else {
                 mem.oam.smallobj_size
             };
-            
-            // Check if x and y are within range of current pixel being drawn
-            let in_x_range: bool = self.scanline.x >= s.x && self.scanline.x <= s.x + x_size;
-            let in_y_range: bool = self.scanline.y >= s.y && self.scanline.y <= s.y + y_size;
-            
-            if !(in_x_range && in_y_range) {
-                continue;
-            }
-            
-            // From here on -> correct sprite found, now finding color of this pixel
-
-            // get x and y coordinates on current sprite
-            let sx = s.x + x_size - self.scanline.x;
-            let sy = s.y + y_size - self.scanline.y;
-            
-            let mut tile_index_offset = s.tile_index;
-            
-            if sx >= 8 {
-                tile_index_offset += 0x20;
-            }
-            
-            if sy >= 8 {
-                tile_index_offset += 0x200;
-            }
-            
             // Select from first or second sprite page based on tile index
-            let addr = if s.tile_index < 0x100 {
-                mem.oam.page0_addr + tile_index_offset * 0x20
+            let char_addr = if sprite.tile_index < 0x100 {
+                mem.oam.page0_addr + sprite.tile_index * 0x20
             } else {
-                mem.oam.page0_addr + mem.oam.page1_offs + (tile_index_offset - 0x100) * 0x20
+                mem.oam.page0_addr + mem.oam.page1_offs + (sprite.tile_index - 0x100) * 0x20
             };
             
-            // read tile form memory
-            let color = self.get_4bpp_color(mem, addr as u16, sx % 8, sx % 8, s.palette as u16);
-            
-            if color != Rgba::default() {
-                return (color, s.palette as usize);
-            }
-        }
+            // If object size larger than 8, 'neighbouring' characters should be drawn as well
+            for y_i in 0..y_size/8 {
+                for x_i in 0..x_size/8 {
+                    let mut t_addr = wrap_add_lowbyte!(char_addr, x_i * 0x20);
+                    t_addr = wrap_add_lowbyte!(t_addr, y_i * 0x200);
+                    
+                    // Get colors of this character and base index in obj_pixels vector
+                    // Sprites always use 4bpp
+                    let char_rgba = Self::draw_character(
+                        mem, 
+                        t_addr as u16,
+                         BitDepth::FourBpp, 
+                         Some(8 + sprite.palette as u16), // Sprites use palettes 8-15, so offset of 8 is added
+                         sprite.flip_h, 
+                         sprite.flip_v
+                    );
 
-        (Rgba::default(), 0)
+
+                    let i_base = (y + 8*y_i) * SCREEN_WIDTH + x + 8*x_i;
+                    
+                    
+                    char_rgba.iter().enumerate().for_each(|(idx, clr)| {
+                        let x = i_base + idx % 8;
+                        let y = i_base + idx / 8;
+                        if y < NTSC_SCREEN_HEIGHT && x < SCREEN_WIDTH {
+                            let i = y * SCREEN_WIDTH + x;
+                            self.obj_pixels[i] = (*clr, sprite.priority, sprite.palette);
+                        }
+                    });
+                }
+            }
+            
+        });
+    } 
+    
+    /// Draws a single character at `$char_addr` with specified bitdepth and optional palette
+    /// 
+    /// Pallette input is required when using `BitDepth::TwoBpp` and `BitDepth::FourBpp`
+    fn draw_character(mem: &PpuMemory, char_addr: u16, bitdepth: BitDepth, palette: Option<u16>, flip_h: bool, flip_v: bool) -> Vec<Rgba> {
+        let mut v = vec![Rgba::default(); 64];
+        
+        v.iter_mut().enumerate().for_each(|(idx, clr)| {
+            let mut  x = idx % 8;
+            let mut y = idx / 8;
+            if flip_h { x = 8 - x };
+            if flip_v { y = 8 - y };
+            
+            *clr = match bitdepth {
+                BitDepth::TwoBpp => Self::get_2bpp_color(mem, char_addr, x, y, palette.unwrap()),
+                BitDepth::FourBpp => Self::get_4bpp_color(mem, char_addr, x, y, palette.unwrap()),
+                BitDepth::EightBpp => Self::get_8bpp_color(mem, char_addr, x, y),
+                BitDepth::DirectColor => Self::get_direct_color(mem, char_addr, x, y),
+            };
+        });
+        
+        v
     }
     
-    /// Returns color and priority for current pixel for bg1 layer as a tuple
-    fn get_bg1_color(&self, mem: &PpuMemory) -> (Rgba, bool) {
-        
-        let tile = self.get_tile(mem, &mem.bg1);
-        let char_addr = mem.bg1.chr_base_addr + tile.tile_num;
-        let (x, y) = self.get_tile_xy(&mem.bg1, tile.h_flip, tile.v_flip, mem.ppustate.mosaic_size);
-
-        
-        let c = match mem.ppustate.background_mode {
+    
+    fn get_bg_tile_color(mem: &PpuMemory, bg: &Background, tile: &Tile, char_addr: u16) -> Vec<Rgba> {
+        match bg.layer {
+            BackgroundLayer::Background1 => Self::get_bg1_tile_color(mem, tile, char_addr),
+            BackgroundLayer::Background2 => Self::get_bg2_tile_color(mem, tile, char_addr),
+            BackgroundLayer::Background3 => Self::get_bg3_tile_color(mem, tile, char_addr),
+            BackgroundLayer::Background4 => Self::get_bg4_tile_color(mem, tile, char_addr),
+        }
+    }
+    
+    fn get_bg1_tile_color(mem: &PpuMemory, tile: &Tile, char_addr: u16) -> Vec<Rgba> {
+        match mem.ppustate.background_mode {
             // 2 bpp
-            0 => self.get_2bpp_color(mem, char_addr, x, y, tile.palette as u16),
+            0 => Self::draw_character(mem, char_addr, BitDepth::TwoBpp, Some(tile.palette as u16), tile.flip_h, tile.flip_v),
             // 4 bpp
-            1 | 2 | 5 | 6 => self.get_4bpp_color(mem, char_addr, x, y, tile.palette as u16),
+            1 | 2 | 5 | 6 => Self::draw_character(mem, char_addr, BitDepth::FourBpp, Some(tile.palette as u16), tile.flip_h, tile.flip_v),
             // 8 bpp (direct color)
             3 | 4 | 7 => {
                 if mem.colormath.direct_color_mode {
-                    self.get_direct_color(mem, char_addr, x, y)
+                    Self::draw_character(mem, char_addr, BitDepth::DirectColor, None, tile.flip_h, tile.flip_v)
+                    
                 } else {
-                    self.get_8bpp_color(mem, char_addr, x, y)
+                    Self::draw_character(mem, char_addr, BitDepth::EightBpp, None, tile.flip_h, tile.flip_v)
                 }
             },
-            _ => Rgba::default(),
-        };
-        
-        (c, tile.prio)
-    }
-    
-    /// Returns color and priority for current pixel for bg2 layer as a tuple
-    fn get_bg2_color(&self, mem: &PpuMemory) -> (Rgba, bool) {
-        
-        
-        let tile = self.get_tile(mem, &mem.bg2);
-        let char_addr = mem.bg2.chr_base_addr + tile.tile_num;
-        let (x, y) = self.get_tile_xy(&mem.bg2, tile.h_flip, tile.v_flip, mem.ppustate.mosaic_size);
-        
-        let c = match mem.ppustate.background_mode {
-            // mode 0 = 2bpp with offset based on layer
-            0 => self.get_2bpp_color(mem, char_addr, x, y, tile.palette as u16 + 0x10),
-            // 2 bpp
-            4 | 5 => self.get_2bpp_color(mem, char_addr, x, y, tile.palette as u16),
-            // 4 bpp
-            1 | 2 | 3 => self.get_4bpp_color(mem, char_addr, x, y, tile.palette as u16),
-            
-            _ => Rgba::default(),
-        };
-        
-        (c, tile.prio)
-    }
-    
-    /// Returns color and priority for current pixel for bg3 layer as a tuple
-    fn get_bg3_color(&self, mem: &PpuMemory) -> (Rgba, bool) {
-        
-        let tile = self.get_tile(mem, &mem.bg3);
-        let char_addr = mem.bg3.chr_base_addr + tile.tile_num;
-        let (x, y) = self.get_tile_xy(&mem.bg3, tile.h_flip, tile.v_flip, mem.ppustate.mosaic_size);
-        
-        let c = match mem.ppustate.background_mode {
-            // 2 bpp
-            0 => self.get_2bpp_color(mem, char_addr, x, y, tile.palette as u16 + 0x20),
-            // 4 bpp
-            1 => self.get_2bpp_color(mem, char_addr, x, y, tile.palette as u16),
-            
-            _ => Rgba::default(),
-        };
-        
-        (c, tile.prio)
-    }
-    
-    /// Returns color and priority for current pixel for bg4 layer as a tuple
-    fn get_bg4_color(&self, mem: &PpuMemory) -> (Rgba, bool) {
-        
-        let tile = self.get_tile(mem, &mem.bg4);
-        let char_addr = mem.bg4.chr_base_addr + tile.tile_num;
-        let (x, y) = self.get_tile_xy(&mem.bg4, tile.h_flip, tile.v_flip, mem.ppustate.mosaic_size);
-        
-        let c = match mem.ppustate.background_mode {
-            // 2 bpp
-            0 => self.get_2bpp_color(mem, char_addr, x, y, tile.palette as u16 + 0x30),
-            _ => Rgba::default(),
-        };
-        
-        (c, tile.prio)
-    }
-    
-    /// Get x and y coordinate of this pixel on tile, also handles horizontal and vertical flip
-    fn get_tile_xy(&self, bg: &Background, h_flip: bool, v_flip: bool, mosaic_size: usize) -> (usize, usize) {
-        let (mut x, mut y) = if bg.mosaic {
-            // The previous tile is selected in case mosaic size causes tile boundary crossing
-            // Meaning that this x/y should check what mosaic block it is and then check where
-            // that is on the current tile
-            let x = ((self.scanline.x / mosaic_size) * mosaic_size) % bg.char_size as usize;
-            let y = ((self.scanline.y / mosaic_size) * mosaic_size) % bg.char_size as usize;
-            (x, y)
-        } else {
-            (self.scanline.x % bg.char_size as usize, self.scanline.y % bg.char_size as usize)
-        };
-
-        
-        if h_flip {
-            x = bg.char_size as usize - x;
+            _ => vec![Rgba::default(); 64],
         }
-        
-        if v_flip {
-            y = bg.char_size as usize - y;
-        }
-        
-        (x, y)
     }
     
-    /// Get address of tilemap entry corresponding to current scanline x and y position for this background
-    fn get_tile(&self, mem: &PpuMemory, bg: &Background) -> Tile {
+    fn get_bg2_tile_color(mem: &PpuMemory, tile: &Tile, char_addr: u16) -> Vec<Rgba> {
+        match mem.ppustate.background_mode {
+            // 2 bpp (with palette offset)
+            0 => Self::draw_character(mem, char_addr, BitDepth::TwoBpp, Some((tile.palette + 0x10) as u16), tile.flip_h, tile.flip_v),
+            // 2 bpp
+            4 | 5 => Self::draw_character(mem, char_addr, BitDepth::TwoBpp, Some(tile.palette as u16), tile.flip_h, tile.flip_v),
+            // 4 bpp
+            1 | 2 | 3 => Self::draw_character(mem, char_addr, BitDepth::FourBpp, Some(tile.palette as u16), tile.flip_h, tile.flip_v),
+            
+            _ => vec![Rgba::default(); 64],
+        }
+    }
+    
+    fn get_bg3_tile_color(mem: &PpuMemory, tile: &Tile, char_addr: u16) -> Vec<Rgba> {
+        match mem.ppustate.background_mode {
+            // 2 bpp (with palette offset)
+            0 => Self::draw_character(mem, char_addr, BitDepth::TwoBpp, Some((tile.palette + 0x20) as u16), tile.flip_h, tile.flip_v),
+            // 2 bpp
+            1 => Self::draw_character(mem, char_addr, BitDepth::TwoBpp, Some(tile.palette as u16), tile.flip_h, tile.flip_v),
+            
+            _ => vec![Rgba::default(); 64],
+        }
+    }
+    
+    fn get_bg4_tile_color(mem: &PpuMemory, tile: &Tile, char_addr: u16) -> Vec<Rgba> {
+        match mem.ppustate.background_mode {
+            // 2 bpp (with palette offset)
+            0 => Self::draw_character(mem, char_addr, BitDepth::TwoBpp, Some((tile.palette + 0x30) as u16), tile.flip_h, tile.flip_v),
+            _ => vec![Rgba::default(); 64],
+        }
+    }
+    
+    /// Get address of tilemap entry corresponding to x and y screen position for this background
+    fn get_tile(mem: &PpuMemory, bg: &Background, x: usize, y: usize) -> Tile {
         // Get t_xth and t_yth tile on tilemap
         // These are based on screen coordinates, and will have to be translated to the proper tilemap quadrant
+        let x = x + bg.scroll_x as usize;
+        let y = y + bg.scroll_y as usize;
         
-        // mosaic effect
-        let (bx, by) = if mem.bg1.mosaic {
-            let x = ((self.scanline.x + bg.scroll_x as usize) / mem.ppustate.mosaic_size) * mem.ppustate.mosaic_size;
-            let y = ((self.scanline.y + bg.scroll_y as usize) / mem.ppustate.mosaic_size) * mem.ppustate.mosaic_size;
-            (x, y)
-        } else {
-            ((self.scanline.x + bg.scroll_x as usize), self.scanline.y + bg.scroll_y as usize)
-        };
-        
-        let tx = bx / bg.char_size as usize;
-        let ty = by / bg.char_size as usize;
+        let tx = x / bg.char_size;
+        let ty = y / bg.char_size;
         
         // Tilemaps are always 32x32, the top left of each quadrant is tile (0, 0) + quad_offset
         // where quad_offset increment by 0x800 for quadrants topleft, topright, bottomleft, bottomright
         // in that order
-        let addr = bg.tilemap_vram_addr + match self.get_quadrant(tx, ty, bg) {
+        let addr = bg.tilemap_vram_addr + match Self::get_quadrant(tx, ty, bg) {
             // Top left is 
             TileMapQuadrant::TopLeft => ty * 32 + tx,
             TileMapQuadrant::TopRight => ty * 32 + (tx - 32) + 0x800,
@@ -377,7 +492,7 @@ impl SPpu {
     
     /// Returns quadrant in memory of tile in tilemap based on tile x and y position and 
     /// current horizontal/vertical tilemap size settings
-    fn get_quadrant(&self, tx: usize, ty: usize, bg: &Background) -> TileMapQuadrant {
+    fn get_quadrant(tx: usize, ty: usize, bg: &Background) -> TileMapQuadrant {
         match (bg.horizontal_tilemap_count, bg.vertical_tilemap_count) {
             (0, 0) => TileMapQuadrant::TopLeft,
             (0, 1) => {
@@ -405,7 +520,7 @@ impl SPpu {
     }
     
     /// Get color of character at char_addr with pixel coord `x` and `y` using 2bpp palette
-    fn get_2bpp_color(&self, mem: &PpuMemory, char_addr: u16, x: usize, y: usize, palette: u16) -> Rgba {
+    fn get_2bpp_color(mem: &PpuMemory, char_addr: u16, x: usize, y: usize, palette: u16) -> Rgba {
         // In 2bpp, characters are stored as [row0plane1, row0plane0, row1plane1, row1plane0, ...]
         // To get the correct row, 2*y should be added
         let addr_row = char_addr + 2*y as u16;
@@ -420,13 +535,14 @@ impl SPpu {
     }
     
     /// Get color of character at char_addr with pixel coord `x` and `y` using 4bpp palette
-    fn get_4bpp_color(&self, mem: &PpuMemory, char_addr: u16, x: usize, y: usize, palette: u16) -> Rgba {
+    fn get_4bpp_color(mem: &PpuMemory, char_addr: u16, x: usize, y: usize, palette: u16) -> Rgba {
         // In 2bpp, characters are stored as [row0plane1, row0plane0, row1plane1, row1plane0, ...]
         // To get the correct row, 2*y should be added
         let addr_row = char_addr + 2*y as u16;
         
         let plane10 = mem.vram.read(addr_row);
-        let plane32 = mem.vram.read(addr_row.wrapping_add(8));
+        // Next plane is in the next 16 bytes, mem.vram.read() reads a long, so 8 addresses should be skipped
+        let plane32 = mem.vram.read(addr_row.wrapping_add(0x8));
         
         let palette_offset = nth_bit!(plane32, x + 8) << 3 | nth_bit!(plane32, x) << 2 | 
         nth_bit!(plane10, x + 8) << 1 | nth_bit!(plane10, x);
@@ -437,7 +553,7 @@ impl SPpu {
     }
     
     /// Get color of character at char_addr with pixel coord `x` and `y` using 8bpp palette
-    fn get_8bpp_color(&self, mem: &PpuMemory, char_addr: u16, x: usize, y: usize) -> Rgba {
+    fn get_8bpp_color(mem: &PpuMemory, char_addr: u16, x: usize, y: usize) -> Rgba {
         // In 2bpp, characters are stored as [row0plane1, row0plane0, row1plane1, row1plane0, ...]
         // To get the correct row, 2*y should be added
         let addr_row = char_addr + 2*y as u16;
@@ -461,7 +577,7 @@ impl SPpu {
     
     /// Direct color mode, similar to 8bpp, 
     /// the difference being that the bitplane is interpreted as a color instead of a palette index
-    fn get_direct_color(&self, mem: &PpuMemory, char_addr: u16, x: usize, y: usize) -> Rgba {
+    fn get_direct_color(mem: &PpuMemory, char_addr: u16, x: usize, y: usize) -> Rgba {
         // In 2bpp, characters are stored as [row0plane1, row0plane0, row1plane1, row1plane0, ...]
         // To get the correct row, 2*y should be added
         let addr_row = char_addr + 2*y as u16;

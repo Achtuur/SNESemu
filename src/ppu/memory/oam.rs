@@ -21,6 +21,11 @@ pub struct Oam {
 
     pub oamaddl: u8, //$2102
     pub oamaddh: u8, //$2103
+
+    /// When set to true, the ppu object pixels will be updated next tick
+    /// 
+    /// This is set to true in ppumem when there is a write to oam registers or any oam settings change
+    pub update_pending: bool,
 }
 
 impl Oam {
@@ -35,7 +40,8 @@ impl Oam {
             bigobj_size: (16, 16),
             page0_addr: 0,
             page1_offs: 0,
-            highest_prio_obj: 0,          
+            highest_prio_obj: 0,
+            update_pending: false,
         }
     }
 

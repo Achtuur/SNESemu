@@ -3,10 +3,15 @@ use crate::{nth_bit, bit_slice, bit_set};
 /// Representation for a single tile of bg, 
 /// used as an abstraction layer for the data held in VRAM for a single tile
 pub struct Tile {
-    pub v_flip: bool,
-    pub h_flip: bool,
-    pub prio: bool,
+    /// True if the character this tile represents should be flipped vertically
+    pub flip_v: bool,
+    /// True if the character this tile represents should be flipped horizontally
+    pub flip_h: bool,
+    /// Priority of this tile, either 0 or 1
+    pub priority: usize,
+    /// Palette this tile uses for use with 2BPP and 4BPP
     pub palette: u8,
+    /// Tile number, index in Tilemap
     pub tile_num: u16,
 }
 
@@ -20,9 +25,9 @@ impl Tile {
     /// * `cc cccccccc`: tile number (address offset for character)
     pub fn new(word: u16) -> Tile {
         Tile {
-            v_flip: bit_set!(word, 15),
-            h_flip: bit_set!(word, 14),
-            prio: bit_set!(word, 13),
+            flip_v: bit_set!(word, 15),
+            flip_h: bit_set!(word, 14),
+            priority: nth_bit!(word, 13) as usize,
             palette: bit_slice!(word, 10, 12) as u8,
             tile_num: bit_slice!(word, 0, 9),
         }

@@ -2,7 +2,7 @@ use crate::{low_byte, high_byte, bank_byte, bit_set, bit_slice};
 
 use self::{cgram::CgRam, oam::Oam, vram::Vram};
 
-use super::components::{background::Background, window::Window, mode7::Mode7, ppustate::PpuState, colormath::ColorMath};
+use super::components::{background::{Background, BackgroundLayer}, window::Window, mode7::Mode7, ppustate::PpuState, colormath::ColorMath};
 
 
 
@@ -36,10 +36,10 @@ impl PpuMemory {
         PpuMemory {
             vram: Vram::new(),
             cgram: CgRam::new(),
-            bg1: Background::new(),
-            bg2: Background::new(),
-            bg3: Background::new(),
-            bg4: Background::new(),
+            bg1: Background::new(BackgroundLayer::Background1),
+            bg2: Background::new(BackgroundLayer::Background2),
+            bg3: Background::new(BackgroundLayer::Background3),
+            bg4: Background::new(BackgroundLayer::Background4),
             w1: Window::new(),
             w2: Window::new(),
             mode7: Mode7::new(),

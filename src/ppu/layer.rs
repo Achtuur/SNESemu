@@ -1,5 +1,15 @@
 use super::rgb::Rgba;
 
+
+pub enum BitDepth {
+    TwoBpp,
+    FourBpp,
+    EightBpp,
+    DirectColor,
+}
+
+
+
 #[derive(Debug, Copy, Clone)]
 /// Layer that the SNES PPU uses when drawing on screen.
 /// Inner RGBA value representing value for this scanline's x and y pixel can be obtained using `Layer::inner_rgba()`

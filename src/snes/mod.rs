@@ -59,6 +59,19 @@ impl Snes {
             return Err(SnesRunError::NoCartridgeInserted);
         }
 
+        self.cpu.reset();
+        self.ppu.reset();
+        // snes.apu.reset();
+
+
+        loop {
+            self.ppu.tick();
+            std::thread::sleep(Duration::from_millis(10));
+        }
+
+
+
+
         let mut engine = Engine::builder()
         .dimensions(SCREEN_WIDTH as u32, NTSC_SCREEN_HEIGHT as u32)
         .title("MyApp")

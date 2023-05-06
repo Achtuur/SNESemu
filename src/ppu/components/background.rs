@@ -2,7 +2,16 @@ use crate::to_word;
 
 use super::masklogic::MaskLogic;
 
-const SEVEN: u8 = 7;
+const SEVEN: u8 = 0x07;
+
+#[derive(Debug, Clone, Copy)]
+pub enum BackgroundLayer {
+    Background1,
+    Background2,
+    Background3,
+    Background4,
+}
+
 
 pub struct Background {
     /// Base address of tilemap in VRAM
@@ -14,7 +23,7 @@ pub struct Background {
     /// Base address of character data (the actual sprites of the tiles)
     pub chr_base_addr: u16,
     /// Size of characters for this background, either `8` or `16`
-    pub char_size: u16,
+    pub char_size: usize,
     /// Horizontal scroll
     pub scroll_x: u16,
     /// Vertical scroll
@@ -27,10 +36,17 @@ pub struct Background {
     pub mosaic: bool,
     /// Which mask logic to windows that apply to this background
     pub mask_logic: MaskLogic,
+    /// Identifier for what background (1-4) this represents
+    pub layer: BackgroundLayer,
+    /// This is set to true if this background's pixels should be updated next tick.
+    /// 
+    /// Is normally set to true in PpuMemory when anything is written to background
+    /// or some other background variable changes (eg. bgmode)
+    pub update_pending: bool,
 }
 
 impl Background {
-    pub fn new() -> Background {
+    pub fn new(bglayer: BackgroundLayer) -> Background {
         Background {
             tilemap_vram_addr: 0,
             vertical_tilemap_count: 0,
@@ -43,6 +59,8 @@ impl Background {
             enable_sub: false,
             mosaic: false,
             mask_logic: MaskLogic::from_bits(0),
+            layer: bglayer,
+            update_pending: false,
         }
     }
 

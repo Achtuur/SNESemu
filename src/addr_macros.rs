@@ -11,6 +11,18 @@ macro_rules! separate_bank_hhll_addr {
 }
 
 #[macro_export]
+/// Separates page address `$HHLL` in to `($HH, $LL)`
+/// 
+/// Any bit above the 16th is ignored.
+macro_rules! separate_hhll_addr {
+    ($hhll_addr: expr) => {{
+        let hh = (($hhll_addr & 0xFF00) >> 8) as u8;
+        let ll = $hhll_addr as u8;
+        (hh, ll)
+    }}
+}
+
+#[macro_export]
 /// Creates a word from two bytes, first pass the high byte, then the low byte
 macro_rules! to_word {
     ($hh: expr, $ll: expr) => {
@@ -27,7 +39,7 @@ macro_rules! to_long {
     ($bank: expr, $hh: expr, $ll: expr) => {{
         (($bank as u32) << 16) | (($hh as u32) << 8) | ($ll as u32)
     }};
-
+    
     ($bank: expr, $hhll: expr) => {
         to_long!($bank, ($hhll >> 8) as u8, $hhll as u8)
     }
@@ -59,6 +71,57 @@ macro_rules! set_ll {
     };
 }
 
+#[macro_export]
+/// Increment `$addr` by `$incr` and wraps word around
+/// 
+/// # Examples
+/// 
+/// ```rs
+/// let x = 0xABFFFF;
+/// let y = wrap_add_word!(x, 1);
+/// println!("{06X}", y); // prints 0xAB0000;    
+/// 
+/// ```
+macro_rules! wrap_add_word {
+    ($addr: expr, $incr: literal) => {{
+        use crate::separate_bank_hhll_addr;
+        let (bank, word) = separate_bank_hhll_addr!($addr);
+        to_long!(bank, word.wrapping_add($incr))
+    }};
+    
+    ($addr: expr, $incr: expr) => {{
+        use crate::separate_bank_hhll_addr;
+        let (bank, word) = separate_bank_hhll_addr!($addr);
+        to_long!(bank, word.wrapping_add($incr as u16))
+    }};
+}
+
+#[macro_export]
+/// Increment `$addr` by `$incr` and wraps word around
+/// 
+/// # Examples
+/// 
+/// ```rs
+/// let x = 0xABFF;
+/// let y = wrap_add_page!(x, 1);
+/// println!("{04X}", y); // prints 0xAB00;    
+/// 
+/// ```
+macro_rules! wrap_add_lowbyte {
+    ($addr: expr, $incr: literal) => {{
+        use crate::separate_hhll_addr;
+        let (hh, ll) = separate_hhll_addr!($addr);
+        to_word!(hh, ll.wrapping_add($incr))
+    }};
+    
+    ($addr: expr, $incr: expr) => {{
+        use crate::separate_hhll_addr;
+        let (hh, ll) = separate_hhll_addr!($addr);
+        to_word!(hh, ll.wrapping_add($incr as u8))
+    }};
+}
+
+
 
 #[cfg(test)]
 mod tests {
@@ -69,7 +132,7 @@ mod tests {
         let z = to_word!(x, y);
         assert_eq!(z, 0x1234);
     }
-
+    
     #[test]
     fn test_to_long() {
         let x = 0x12;
@@ -78,7 +141,7 @@ mod tests {
         let w = to_long!(x, y, z);
         assert_eq!(w, 0x123456);
     }
-
+    
     #[test]
     fn test_separate_hhll_bank_address() {
         let addr = 0x123456;
@@ -87,7 +150,15 @@ mod tests {
         assert_eq!(bb, 0x12);
         assert_eq!(hhll, 0x3456);
     }
-
+    
+    #[test]
+    fn test_separate_hhll_address() {
+        let addr = 0x1234;
+        let (hh, ll) = separate_hhll_addr!(addr);
+        assert_eq!(hh, 0x12);
+        assert_eq!(ll, 0x34);
+    }
+    
     #[test]
     fn test_set_ll() {
         let x: u16 = 0xABCD;
@@ -95,7 +166,7 @@ mod tests {
         let z = set_ll!(x, y);
         assert_eq!(z, 0xAB12);
     }
-
+    
     #[test]
     fn test_set_hh() {
         let x: u16 = 0xABCD;
@@ -103,12 +174,26 @@ mod tests {
         let z = set_hh!(x, y);
         assert_eq!(z, 0x12CD);
     }
-
+    
     #[test]
     fn test_set_bb() {
         let x: u16 = 0xABCD;
         let y = 0x12;
         let z = set_bb!(x, y);
         assert_eq!(z, 0x12ABCD);
+    }
+    
+    #[test]
+    fn test_wrap_add_word() {
+        let x: u32 = 0xABFFFE;
+        let y = wrap_add_word!(x, 2);
+        assert_eq!(y, 0xAB0000);
+    }
+    
+    #[test]
+    fn test_wrap_add_lowbyte() {
+        let x = 0xABFF;
+        let y = wrap_add_lowbyte!(x, 1);
+        assert_eq!(y, 0xAB00);
     }
 }
