@@ -3,7 +3,7 @@ use crate::{separate_bank_hhll_addr, set_ll, set_bb, set_hh};
 /// Total bytes in RAM
 const RAM_SIZE: usize = 2 * 0xFFFF;
 
-const RAM_BANK_SIZE: u16 = 0xFFFF;
+const RAM_BANK_SIZE: usize = 0xFFFF;
 
 /// CPU Ram
 pub struct Ram {
@@ -63,13 +63,13 @@ impl Ram {
     fn index_from_long_addr(long_addr: u32) -> Option<usize> {
         let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
         let bank_i = match bank {
-            0x00..=0x3F | 0x7E | 0x80..=0xBF => 0_u16,
-            0x7F => 1_u16,
+            0x00..=0x3F | 0x7E | 0x80..=0xBF => 0_usize,
+            0x7F => 1_usize,
             _ => return None,
         };
 
-        let hhll_i = hhll;
-        let i = (bank_i * RAM_BANK_SIZE + hhll_i) as usize;
+        let hhll_i = hhll as usize;
+        let i = (bank_i * RAM_BANK_SIZE) + hhll_i;
         Some(i)
     }
 

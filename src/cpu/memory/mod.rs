@@ -107,7 +107,6 @@ impl CpuMemory {
     /// Read a byte from memory using a 24 bit address, 
     pub fn read(&mut self, long_addr: u32) -> Option<u8> {
         let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
-
         match (bank, hhll) {
             // RAM
             (0x00..=0x3F, 0x0000..=0x1FFF) | // Work ram mirror in first quadrant
@@ -121,13 +120,13 @@ impl CpuMemory {
             (0x80..=0xBF, 0x2000..=0x213F) => self.ppu_memory.lock().unwrap().read(hhll),
 
 
-            // Controller
+            // Controller todo: implement this!
             (0x00..=0x3F, 0x4000..=0x41FF) |
-            (0x80..=0xBF, 0x4000..=0x41FF) => todo!(),
+            (0x80..=0xBF, 0x4000..=0x41FF) => Some(0),
 
-            // CPU, DMA
+            // CPU, DMA todo: implement this!
             (0x00..=0x3F, 0x4200..=0x5FFF) |
-            (0x80..=0xBF, 0x4200..=0x5FFF) => todo!(),
+            (0x80..=0xBF, 0x4200..=0x5FFF) => Some(0),
 
 
             // Rest of space is dependant on mapper, so mapper will deal with it
@@ -153,13 +152,13 @@ impl CpuMemory {
             // APU
             // (0x00..=0x3F, 0x2140..=0x2143) => self.apu_memory.lock().unwrap().write(hhll, value),
 
-            // Controller
+            // Controller todo: implement this!
             (0x00..=0x3F, 0x4000..=0x41FF) |
-            (0x80..=0xBF, 0x4000..=0x41FF) => todo!(),
+            (0x80..=0xBF, 0x4000..=0x41FF) => {},
 
-            // CPU, DMA
+            // CPU, DMA todo: implement this!
             (0x00..=0x3F, 0x4200..=0x5FFF) |
-            (0x80..=0xBF, 0x4200..=0x5FFF) => todo!(),
+            (0x80..=0xBF, 0x4200..=0x5FFF) => {},
 
 
             // Rest of space is dependant on mapper, so mapper will deal with it

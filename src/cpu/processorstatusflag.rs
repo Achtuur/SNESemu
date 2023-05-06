@@ -70,6 +70,8 @@ impl ProcessorStatusFlags {
 
     pub fn clear_bits(&mut self, bits: u8) {
         let flag = ProcessorStatusFlags::from_bits(bits as u16).unwrap();
+        println!("bits: {0:02X?}", bits);
+        println!("flag: {0:?}", flag);
         self.clear_flag(flag);
     }
 

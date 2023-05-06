@@ -30,6 +30,7 @@ lazy_static! {
 }
 
 fn main() {
+    // std::env::set_var("RUST_BACKTRACE", "1");
     // let rom = include_bytes!("../resources/rom/Legend of Zelda, The - A Link to the Past.smc");
     let rom = include_bytes!("../resources/rom/Super Mario World.smc");
     

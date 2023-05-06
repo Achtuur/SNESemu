@@ -2531,7 +2531,7 @@
     },
     {
         "name": "WDM",
-        "addr_mode": "",
+        "addr_mode": "Implied",
         "code_name": "Wdm",
         "bytes": "2",
         "cycles": "0",

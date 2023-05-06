@@ -1,4 +1,4 @@
-use crate::{cpu::{instructions::{AddressingMode, instructions::Instruction}, SCpu, processorstatusflag::ProcessorStatusFlags}, to_long};
+use crate::{cpu::{instructions::{AddressingMode, instructions::Instruction}, SCpu, processorstatusflag::ProcessorStatusFlags}, to_long, wrap_add_word};
 
 
 /// Container for holding data that an instruction can take as input
@@ -25,26 +25,31 @@ impl SCpu {
     /// Source: [6502.org](http://www.6502.org/tutorials/65c816opcodes.html)
     pub fn get_instruction_data(&mut self, instr: &Instruction) -> InstrData {
         use AddressingMode::*;
+
+        let mut arg0: u8 = 0;
+        let mut arg1: u8 = 0;
+        let mut arg2: u8 = 0;
+
+        let len = self.get_instr_length(instr);
         
-        let (arg0, arg1, arg2) = match self.get_instr_length(instr) {
-            1 => (0, 0, 0), // Implied
-            2 => {
-                let arg0 = self.mem_read(self.get_pc_addr());
-                (arg0, 0, 0)
-            },
-            3 => {
-                let arg0 = self.mem_read(self.get_pc_addr());
-                let arg1 = self.mem_read(self.get_pc_addr());
-                (arg0, arg1, 0)
-            },
-            4 => {
-                let arg0 = self.mem_read(self.get_pc_addr());
-                let arg1 = self.mem_read(self.get_pc_addr());
-                let arg2 = self.mem_read(self.get_pc_addr());
-                (arg0, arg1, arg2)
-            }
-            _ => unreachable!("No instruction has more than 3 arguments")
-        };
+        // instruction has at least 1 argument
+        if len > 1 {
+            let pc_addr = wrap_add_word!(self.get_pc_addr(), 1);
+            arg0 = self.mem_read(pc_addr);
+        }
+
+        // instruction has at least 2 arguments
+        if len > 2 {
+            let pc_addr = wrap_add_word!(self.get_pc_addr(), 2);
+            arg1 = self.mem_read(pc_addr);
+        }
+
+        // instruction has 3 arguments (max amount in SNES)
+        if len > 3 {
+            let pc_addr = wrap_add_word!(self.get_pc_addr(), 3);
+            arg2 = self.mem_read(pc_addr);
+        }
+        
         
         match instr.get_addressing_mode() {
             Absolute => self.get_absolute_data(arg0, arg1),
@@ -58,7 +63,6 @@ impl SCpu {
             DirectY => self.get_directy_data(arg0),
             Implied => InstrData::new(0, 0, 0, 0),
             Immediate => self.get_immediate(arg0),
-            ImmediateLong => self.get_immediate_long(arg0, arg1),
             Indirect => self.get_indirect_data(arg0),
             IndirectX => self.get_indirectx_data(arg0),
             IndirectY => self.get_indirecty_data(arg0),

@@ -89,7 +89,6 @@ impl SCpu {
 
     /// Reset CPU, sets all values to initial state
     pub fn reset(&mut self) {
-        // self.memory.lock().unwrap().reset(); // todo -> implement memory reset
         self.status = ProcessorStatusFlags::startup_state();
         self.sp = 0x1FF;
         self.pc = self.mem_read_long(0xFFFC, 0xFFFD); // reset vector
@@ -136,7 +135,7 @@ impl SCpu {
         // read & execute instruction
         let op = self.mem_read(self.get_pc_addr());
         let instr = Instruction::from_op(op);
-        println!("[{0:04X}]: {1:?}", self.pc, instr);
+        println!("[{0:04X}]: {1:?}\t[{2:?}]", self.pc, instr, self.status);
         self.execute_instruction(instr)
     }
 
