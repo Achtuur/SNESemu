@@ -64,12 +64,6 @@ impl Snes {
         // snes.apu.reset();
 
 
-        loop {
-            self.ppu.tick();
-            std::thread::sleep(Duration::from_millis(10));
-        }
-
-
 
 
         let mut engine = Engine::builder()

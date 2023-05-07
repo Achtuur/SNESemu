@@ -51,8 +51,6 @@ impl SPpu {
     
     /// Single clock cycle of ppu
     pub fn tick(&mut self) {
-        
-        let t = Instant::now();
         // rust pls why is this necessary
         let mem_refclone = self.memory.clone();
         let mut mem = mem_refclone.lock().unwrap();
@@ -86,8 +84,6 @@ impl SPpu {
         }
         // move scanline to next position
         self.scanline.goto_next();
-        
-        println!("t: {0:?}", t.elapsed());
     }
     
     /// Draw pixel on position denoted by current state of `self.scanline`

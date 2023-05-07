@@ -1,4 +1,4 @@
-use crate::{cpu::{instructions::{AddressingMode, instructions::Instruction}, SCpu, processorstatusflag::ProcessorStatusFlags}, to_long, wrap_add_word};
+use crate::{cpu::{instructions::{AddressingMode, instructions::Instruction}, SCpu, processorstatusflag::ProcessorStatusFlags}, to_long, wrap_add_word, bit_set};
 
 
 /// Container for holding data that an instruction can take as input
@@ -331,7 +331,7 @@ impl SCpu {
     }
     
     fn get_relative_data(&mut self, arg0: u8) -> InstrData {
-        let target_addr = if (arg0 >> 7) == 1 {
+        let target_addr = if bit_set!(arg0, 7) {
             self.pc.wrapping_add(2).wrapping_add(arg0 as u16)
         } else {
             self.pc.wrapping_sub(254).wrapping_add(arg0 as u16)

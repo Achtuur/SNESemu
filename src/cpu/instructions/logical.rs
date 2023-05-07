@@ -1,4 +1,4 @@
-use crate::cpu::{SCpu, processorstatusflag::ProcessorStatusFlags};
+use crate::{cpu::{SCpu, processorstatusflag::ProcessorStatusFlags}, bit_set};
 
 impl SCpu {
 	
@@ -72,19 +72,19 @@ impl SCpu {
 			true => {
 				let mut val = self.mem_read(low_addr);
 				let c = self.carry() as u8;
-				self.status.set(ProcessorStatusFlags::Carry, (val >> 7) == 1);
+				self.status.set(ProcessorStatusFlags::Carry, bit_set!(val, 7));
 				val = (val << 1) | c;
 				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, (val >> 7) == 1);
+				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 7));
 				self.mem_write(low_addr, val);
 			},
 			false => {
 				let mut val = self.mem_read_long(low_addr, high_addr);
 				let c = self.carry();
-				self.status.set(ProcessorStatusFlags::Carry, (val >> 15) == 1);
+				self.status.set(ProcessorStatusFlags::Carry, bit_set!(val, 15));
 				val = (val << 1) | c;
 				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, (val >> 15) == 1);
+				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 15));
 				self.mem_write_long(low_addr, high_addr, val);
 			}
 		}
@@ -109,20 +109,20 @@ impl SCpu {
 			true => {
 				let mut val = self.mem_read(low_addr);
 				let c = self.carry() as u8;
-				self.status.set(ProcessorStatusFlags::Carry, (val & 0x01) == 1);
+				self.status.set(ProcessorStatusFlags::Carry, bit_set!(val, 01));
 				val = (val >> 1) | (c << 7);
 				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, (val >> 7) == 1);
+				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 7));
 				self.mem_write(low_addr, val);
 			},
 			
 			false => {
 				let mut val = self.mem_read_long(low_addr, high_addr);
 				let c = self.carry();
-				self.status.set(ProcessorStatusFlags::Carry, (val & 0x01) == 1);
+				self.status.set(ProcessorStatusFlags::Carry, bit_set!(val, 01));
 				val = (val >> 1) | (c << 15);
 				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, (val >> 15) == 1);
+				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 15));
 				self.mem_write_long(low_addr, high_addr, val);
 			}
 		}
