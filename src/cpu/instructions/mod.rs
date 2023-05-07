@@ -96,12 +96,12 @@ impl Instruction {
             
             MVN(Move) | MVP(Move)  => 1,
             
-            ADC(Immediate) | AND(Immediate) | ASL(Implied) | BEQ(Relative) | BGE(Relative) | BIT(Immediate) |
+            ADC(Immediate) | AND(Immediate) | ASL(Implied) | ASLA(Implied) | BEQ(Relative) | BGE(Relative) | BIT(Immediate) |
             BLT(Relative) | BMI(Relative) | BNE(Relative) | BPL(Relative) | BVC(Relative) |
             BVS(Relative) | CLC(Implied) | CLD(Implied) | CLI(Implied) | CLV(Implied) |
             CMP(Immediate) | CPX(Immediate) | CPY(Immediate) | DEA(Implied) | DEX(Implied) |
             DEY(Implied) | EOR(Immediate) | INA(Implied) | INX(Implied) | INY(Implied) |
-            LDA(Immediate) | LDX(Immediate) | LDY(Immediate) | LSR(Implied) | NOP(Implied) |
+            LDA(Immediate) | LDX(Immediate) | LDY(Immediate) | LSR(Implied) | LSRA(Implied) | NOP(Implied) |
             ORA(Immediate) | ROL(Implied) | ROR(Implied) | SBC(Immediate) | SEC(Implied) |
             SED(Implied) | SEI(Implied) | TAX(Implied) | TAY(Implied) | TCD(Implied) |
             TCS(Implied) | TDC(Implied) | TSC(Implied) | TSX(Implied) | TXA(Implied) |

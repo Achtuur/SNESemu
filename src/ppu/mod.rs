@@ -112,4 +112,14 @@ impl SPpu {
         self.pixels[i] = pix;
     }
 
+    pub fn pixels_as_str(&self) -> String {
+        let mut string_out = String::from("");
+        self.pixels.chunks(SCREEN_WIDTH).for_each(|row| {
+            row.iter().for_each(|pix| {
+                string_out = format!("{} {}", string_out, pix.as_hex_str());
+            });
+        });
+        string_out
+    }
+
 }

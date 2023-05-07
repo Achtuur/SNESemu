@@ -135,7 +135,7 @@ impl PpuMemory {
                 self.bg4.write_base_address(byte >> 4);
             },
                 
-                0x210D..=0x2114 => self.set_bg_hvscroll(addr, byte),
+            0x210D..=0x2114 => self.set_bg_hvscroll(addr, byte),
 
             0x2115..=0x2119 => self.vram.write_register(addr, byte),
 
@@ -227,7 +227,7 @@ impl PpuMemory {
                 self.mode7.write_vscroll(byte); 
             }
 
-            0x201F => self.bg2.write_hscroll(byte, self.bg_latch),
+            0x210F => self.bg2.write_hscroll(byte, self.bg_latch),
             0x2110 => self.bg2.write_vscroll(byte, self.bg_latch),
 
             0x2111 => self.bg3.write_hscroll(byte, self.bg_latch),

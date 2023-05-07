@@ -1,4 +1,4 @@
-use crate::{cpu::{instructions::{AddressingMode, instructions::Instruction}, SCpu, processorstatusflag::ProcessorStatusFlags}, to_long, wrap_add_word, bit_set};
+use crate::{cpu::{instructions::{AddressingMode, instructions::Instruction}, SCpu, processorstatusflag::ProcessorStatusFlags}, to_long, wrap_add_word, bit_set, to_word};
 
 
 /// Container for holding data that an instruction can take as input
@@ -7,15 +7,15 @@ pub struct InstrData {
     pub low_addr: u32,
     /// low_addr + 1 that wraps properly based on addressing mode
     pub high_addr: u32,
-    /// low_addr + 2 that wraps properly based on addressing mode
-    pub long_addr: u32,
+    /// Address that `JMP, JML, JSL, JSR` should use
+    pub jump_addr: u32,
     /// Data inside low_addr + 1
     pub data: u16,
 }
 
 impl InstrData {
-    pub fn new(data: u16, low_addr: u32, high_addr: u32, long_addr: u32) -> Self {
-        InstrData { low_addr, high_addr, long_addr, data }
+    pub fn new(data: u16, low_addr: u32, high_addr: u32, jump_addr: u32) -> Self {
+        InstrData { low_addr, high_addr, jump_addr: jump_addr, data }
     }
 }
 
@@ -49,6 +49,8 @@ impl SCpu {
             let pc_addr = wrap_add_word!(self.get_pc_addr(), 3);
             arg2 = self.mem_read(pc_addr);
         }
+        println!("self.get_pc_addr: {0:06X?}", wrap_add_word!(self.get_pc_addr(), 1));
+        println!("{:?} {:02X} {:02X} {:02X}", instr, arg0, arg1, arg2);
         
         
         match instr.get_addressing_mode() {
@@ -84,13 +86,14 @@ impl SCpu {
     /// * data: value in $rrHHLL
     /// * low_addr: $rrHHLL
     /// * high_addr: $rrHHLL + 1
+    /// * long_addr: K $HHLL (jump destination)
     fn get_absolute_data(&mut self, arg0: u8, arg1: u8) -> InstrData {
-        let low_addr = to_long!(self.pbr, arg1, arg0);
+        let low_addr = to_long!(self.dbr, arg1, arg0);
         let high_addr = low_addr.wrapping_add(1);
-        
         let data = self.mem_read_long(low_addr, high_addr);
+        let jump_dst = to_long!(self.pbr, arg1, arg0);
         
-        InstrData::new(data, low_addr, high_addr, 0)
+        InstrData::new(data, low_addr, high_addr, jump_dst)
     }
     
     /// $OP $LL $HH
@@ -100,7 +103,7 @@ impl SCpu {
     /// * low_addr: $rrHHLL
     /// * high_addr: $rrHHLL + 1 + X
     fn get_absolutex_data(&mut self, arg0: u8, arg1: u8) -> InstrData {
-        let low_addr = to_long!(self.pbr, arg1, arg0);
+        let low_addr = to_long!(self.dbr, arg1, arg0);
         let low_addr = low_addr.wrapping_add(self.x as u32);
         let high_addr = low_addr.wrapping_add(1);
         
@@ -116,7 +119,7 @@ impl SCpu {
     /// * low_addr: $rrHHLL
     /// * high_addr: $rrHHLL + 1 + Y
     fn get_absolutey_data(&mut self, arg0: u8, arg1: u8) -> InstrData {
-        let low_addr = to_long!(self.pbr, arg1, arg0);
+        let low_addr = to_long!(self.dbr, arg1, arg0);
         let low_addr = low_addr.wrapping_add(self.y as u32);
         let high_addr = low_addr.wrapping_add(1);
         
@@ -139,7 +142,7 @@ impl SCpu {
         let dest_addr = to_long!(self.pbr, hhll);
         let dest_addr = ((self.pbr as u32) << 16) | hhll;
         
-        InstrData::new(0, dest_addr, 0, 0)
+        InstrData::new(0, 0, 0, dest_addr)
         
     }
     
@@ -147,16 +150,19 @@ impl SCpu {
     /// 
     /// reads `$ll = $00HHLL + X` and `$hh = $00HHLL + 1 + X`
     /// 
+    /// Only used by jump instructions
+    /// 
     /// # Returns
-    /// * low_addr: `$rrhhll`
+    /// * long_addr: `$rrhhll`
     fn get_absolute_indirectx_data(&mut self, arg0: u8, arg1: u8) -> InstrData {
         let low_pointer = to_long!(0, arg1, arg0);
         let high_pointer = low_pointer.wrapping_add(1).wrapping_add(self.x as u32);
         
         let hhll = self.mem_read_long(low_pointer, high_pointer) as u32;
-        let dest_addr = ((self.pbr as u32) << 16) | hhll;
+        // let dest_addr = ((self.pbr as u32) << 16) | hhll;
+        let dest_addr = to_long!(self.pbr as u32, hhll);
         
-        InstrData::new(0, dest_addr, 0, 0)
+        InstrData::new(0, 0, 0, dest_addr)
         
     }
     
@@ -173,9 +179,10 @@ impl SCpu {
         
         let mmll = self.mem_read_long(low_pointer, high_pointer) as u32;
         let hh = self.mem_read(high_pointer) as u32;
-        let dest_addr = (hh << 16) | mmll;
+        // let dest_addr = (hh << 16) | mmll;
+        let dest_addr = to_long!(hh, mmll);
         
-        InstrData::new(0, dest_addr, 0, 0)
+        InstrData::new(0, 0, 0, dest_addr)
     }
     
     /// $OP $LL
@@ -332,10 +339,11 @@ impl SCpu {
     
     fn get_relative_data(&mut self, arg0: u8) -> InstrData {
         let target_addr = if bit_set!(arg0, 7) {
-            self.pc.wrapping_add(2).wrapping_add(arg0 as u16)
-        } else {
             self.pc.wrapping_sub(254).wrapping_add(arg0 as u16)
+        } else {
+            self.pc.wrapping_add(2).wrapping_add(arg0 as u16)
         };
+
         
         let target_addr = to_long!(self.pbr, target_addr);
         InstrData::new(0, target_addr, 0, 0)
@@ -343,7 +351,8 @@ impl SCpu {
     
     fn get_relative_long_data(&mut self, arg0: u8, arg1: u8) -> InstrData {
         let hhll = to_long!(0, arg1, arg0) as u16;
-        let target_addr = self.pc.wrapping_add(3).wrapping_add(hhll);
+        // Dont need to care about sign, as wrapping around u16 limit is same as subtraction
+        let target_addr = self.pc.wrapping_add(3).wrapping_add(hhll as u16);
         
         let target_addr = to_long!(self.pbr, target_addr);
         InstrData::new(0, target_addr, 0, 0)
@@ -379,7 +388,7 @@ impl SCpu {
         let ll = self.mem_read(pointer_lo as u32);
         let hh = self.mem_read(pointer_hi as u32);
         
-        let low_addr = to_long!(self.pbr, hh, ll).wrapping_add(self.y as u32);
+        let low_addr = to_long!(self.dbr, hh, ll).wrapping_add(self.y as u32);
         let high_addr = low_addr.wrapping_add(1);
         
         let data = self.mem_read_long(low_addr, high_addr);

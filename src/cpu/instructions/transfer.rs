@@ -14,22 +14,22 @@ impl SCpu {
 	
 	/// Transfer 16-bit Accumulator to Direct Page Register (Implied)
 	pub fn exe_tcd(&mut self) {
-		self.dp = self.get_acc();
+		self.dp = self.acc;
 	}
 	
 	/// Transfer 16-bit Accumulator to Stack Pointer (Implied)
 	pub fn exe_tcs(&mut self) {
-		self.sp = self.get_acc();
+		self.sp = self.acc;
 	}
 	
 	/// Transfer Direct Page Register to 16-bit Accumulator (Implied)
 	pub fn exe_tdc(&mut self) {
-		self.set_acc(self.dp);
+		self.acc = self.dp;
 	}
 	
 	/// Transfer Stack Pointer to 16-bit Accumulator (Implied)
 	pub fn exe_tsc(&mut self) {
-		self.set_acc(self.sp);
+		self.acc = self.sp;
 	}
 	
 	/// Transfer Stack Pointer to Index Register X (Implied)

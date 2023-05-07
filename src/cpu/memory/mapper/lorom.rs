@@ -101,7 +101,6 @@ impl LoROM {
         
         // calculate final index using bank index and hhll index
         let i = bank_i * ROM_BANK_SIZE + hi_lo_byte_i;
-        
         Some(self.rom[i as usize])
     }
 }

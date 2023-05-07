@@ -85,6 +85,10 @@ impl Rgba {
         let b = std::cmp::min(Self::MAX_RGB_VALUE, self.b / d);
         Rgba::new(r, g, b, self.a)
     }
+
+    pub fn as_hex_str(&self) -> String {
+        format!("{:02X}{:02X}{:02X}{:02X}", self.r, self.g, self.b, self.a)
+    }
 }
 
 

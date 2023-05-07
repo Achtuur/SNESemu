@@ -68,7 +68,6 @@ impl PixEngine for Snes {
     // `target_frame_rate` was set with a value. (Required)
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 
-    
         // execute correct number of cycles
 
         let _ = self.cpu.tick();
@@ -93,13 +92,13 @@ impl PixEngine for Snes {
             
         } else if self.time_spent < expected_time {
             // sleep for a while
-            thread::sleep(expected_time - self.time_spent);
+            // thread::sleep(expected_time - self.time_spent);
         }
         
         self.last_tick = Instant::now();
 
         self.render_screen(s);
-
+        println!("\n");
         Ok(())
     }
 

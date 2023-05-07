@@ -41,7 +41,7 @@ macro_rules! to_long {
     }};
     
     ($bank: expr, $hhll: expr) => {
-        to_long!($bank, ($hhll >> 8) as u8, $hhll as u8)
+        (($bank as u32) << 16) | ($hhll as u32) & 0xFFFF
     }
 }
 
@@ -139,6 +139,10 @@ mod tests {
         let y = 0x34;
         let z = 0x56;
         let w = to_long!(x, y, z);
+        assert_eq!(w, 0x123456);
+
+        let yz = 0x3456;
+        let w = to_long!(x, yz);
         assert_eq!(w, 0x123456);
     }
     

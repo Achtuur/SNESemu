@@ -34,8 +34,9 @@ impl SCpu {
         let data = instr_data.data;
         let low_addr = instr_data.low_addr;
         let high_addr = instr_data.high_addr;
+        let jump_addr = instr_data.jump_addr;
 
-        println!("{0:?} {1:02X} {2:02X} {3:02X}", instr, data, low_addr, high_addr);
+        println!("{0:?} {1:02X} {2:02X} {3:02X} {4:06X}", instr, data, low_addr, high_addr, jump_addr);
 
         match instr {
             ADC(_) => self.exe_adc(data),
@@ -71,13 +72,13 @@ impl SCpu {
             INA(_) => self.exe_ina(),
             INX(_) => self.exe_inx(),
             INY(_) => self.exe_iny(),
-            JMP(_) => self.exe_jmp(low_addr),
-            JML(_) => self.exe_jml(low_addr),
-            JSL(_) => self.exe_jsl(low_addr),
-            JSR(_) => self.exe_jsr(low_addr),
-            LDA(_) => self.exe_lda(low_addr, high_addr),
-            LDX(_) => self.exe_ldx(low_addr, high_addr),
-            LDY(_) => self.exe_ldy(low_addr, high_addr),
+            JMP(_) => self.exe_jmp(jump_addr),
+            JML(_) => self.exe_jml(jump_addr),
+            JSL(_) => self.exe_jsl(jump_addr),
+            JSR(_) => self.exe_jsr(jump_addr),
+            LDA(_) => self.exe_lda(data),
+            LDX(_) => self.exe_ldx(data),
+            LDY(_) => self.exe_ldy(data),
             LSRA(_) => self.exe_lsra(),
             LSR(_) => self.exe_lsr(low_addr, high_addr),
             MVN(_) => self.exe_mvn(low_addr, high_addr),
@@ -222,6 +223,7 @@ impl SCpu {
                 // Add 1 if xy flag = 0
                 len + (1 - self.status.xyflag_as_u8() as usize)
             }
+            
             _ => len
         }
     }

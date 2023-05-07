@@ -5,12 +5,18 @@ impl SCpu {
 	/// Jump (Absolute)
 	pub fn exe_jmp(&mut self, long_addr: u32) {
 		self.pc = long_addr as u16;
+		// Correct pc with length of this instruction
+		self.pc = self.pc.wrapping_sub(3);
 	}
 	
 	/// Jump (Absolute Long)
 	pub fn exe_jml(&mut self, long_addr: u32) {
 		self.pc = long_addr as u16;
-		self.pbr = (long_addr >> 16) as u8
+		// Correct pc with length of this instruction
+		self.pc = self.pc.wrapping_sub(3);
+		self.pbr = (long_addr >> 16) as u8;
+		// Correct pc with length of this instruction
+		self.pc = self.pc.wrapping_sub(4);
 	}
 	
 	/// Jump to Subroutine (Absolute)
@@ -18,6 +24,8 @@ impl SCpu {
 		// push program counter plus 3 to get $OP of next instruction
 		self.push_long_stack(self.pc.wrapping_add(2));
 		self.pc = long_addr as u16;
+		// Correct pc with length of this instruction
+		self.pc = self.pc.wrapping_sub(3);
 	}
 	
 	/// Jump to Subroutine (Absolute Long)
@@ -28,6 +36,8 @@ impl SCpu {
 		self.push_long_stack(self.pc.wrapping_add(3));
 		self.pc = long_addr as u16;
 		self.pbr = (long_addr >> 16) as u8;
+		// Correct pc with length of this instruction
+		self.pc = self.pc.wrapping_sub(4);
 	}
 	
 	/// Return from Subroutine Long (Stack (RTL))

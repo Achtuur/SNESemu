@@ -136,6 +136,7 @@ impl SCpu {
         let op = self.mem_read(self.get_pc_addr());
         let instr = Instruction::from_op(op);
         println!("[{0:04X}]: {1:?}\t[{2:?}]", self.pc, instr, self.status);
+        println!("sp: [{0:04X}]\tA: [{1:04X}]\tX: [{2:04X}]\tY: [{3:04X}]", self.sp, self.acc, self.x, self.y);
         self.execute_instruction(instr)
     }
 
@@ -273,14 +274,14 @@ impl SCpu {
     /// Locks `self.memory`
     pub fn push_byte_stack(&mut self, byte: u8) {
         self.mem_write(self.sp as u32, byte);
-        self.sp -= 1;
+        self.sp = self.sp.wrapping_sub(1);
     }
 
     /// Pull single byte from stack and puts it in `self.mdr` and returns `self.mdr`.
     /// Increments stack pointer.
     pub fn pull_byte_stack(&mut self) -> u8 {
         self.mem_read(self.sp as u32);
-        self.sp += 1;
+        self.sp = self.sp.wrapping_add(1);
         self.mdr
     }
 
@@ -300,5 +301,37 @@ impl SCpu {
         let lower = self.pull_byte_stack() as u16;
         let upper = self.pull_byte_stack() as u16;
         (upper << 8) | lower
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{cpu::{processorstatusflag::ProcessorStatusFlags, SCpu}, arc_mut, apu::memory::ApuMemory, ppu::memory::PpuMemory};
+
+	fn get_test_cpu() -> SCpu {
+		let mut cpu = SCpu::new();
+		let ppumem = arc_mut!(PpuMemory::new());
+        cpu.memory.set_ppumemory_ref(ppumem.clone());
+		let apumem = arc_mut!(ApuMemory::new());
+        cpu.memory.set_apumemory_ref(apumem.clone());
+		cpu
+	}
+
+    #[test]
+    fn test_acc() {
+        let mut cpu = get_test_cpu();
+
+        cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
+        cpu.acc = 0xABCD;
+        cpu.set_acc(0xAB);
+        assert_eq!(cpu.get_acc(), 0x00AB);
+        assert_eq!(cpu.acc, 0xABAB);
+
+        cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
+        cpu.acc = 0xABCD;
+        cpu.set_acc(0xABCD);
+        assert_eq!(cpu.get_acc(), 0xABCD);
+        assert_eq!(cpu.acc, 0xABCD);
+
     }
 }
