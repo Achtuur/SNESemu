@@ -1,11 +1,11 @@
 use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
-use self::{processorstatusflag::ProcessorStatusFlags, instructions::instructions::Instruction, memory::CpuMemory};
+use self::{statusflag::StatusFlags, instructions::instructions::Instruction, memory::CpuMemory};
 
-pub mod processorstatusflag;
+pub mod statusflag;
 pub mod instructions;
-mod execute;
 pub mod memory;
+mod execute;
 
 lazy_static! {
     pub static ref NMI_PENDING: Mutex<bool> = Mutex::new(false);
@@ -35,7 +35,7 @@ pub struct SCpu {
     acc: u16,
 
     /// Processor status flags
-    status: ProcessorStatusFlags,
+    status: StatusFlags,
 
     /// Index register X
     /// (Can be used to reference memory, to pass data to memory, or as counters for loops.)
@@ -73,7 +73,7 @@ impl SCpu {
     pub fn new() -> Self {
         SCpu {
             memory: CpuMemory::new(),
-            status: ProcessorStatusFlags::startup_state(),
+            status: StatusFlags::startup_state(),
             sp: 0x1FF,
             pc: 0,
             acc: 0,
@@ -89,7 +89,7 @@ impl SCpu {
 
     /// Reset CPU, sets all values to initial state
     pub fn reset(&mut self) {
-        self.status = ProcessorStatusFlags::startup_state();
+        self.status = StatusFlags::startup_state();
         self.sp = 0x1FF;
         self.pc = self.mem_read_long(0xFFFC, 0xFFFD); // reset vector
         self.acc = 0;
@@ -105,12 +105,12 @@ impl SCpu {
     // This function is called every 'clock cycle'
     pub fn tick(&mut self) -> Result<(), CpuError> {
 
-        if self.status.contains(ProcessorStatusFlags::Emulation) {
+        if self.status.contains(StatusFlags::Emulation) {
             self.sp = (1 << 8) | (self.sp & 0x00FF); //force high byte to be 1
         }
 
         // force x and y to zero
-        if self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+        if self.status.contains(StatusFlags::XYreg8bit) {
             self.x &= 0x00FF;
             self.y &= 0x00FF;
         }
@@ -124,12 +124,12 @@ impl SCpu {
             return self.execute_nmi();
         }
         // IRQ pending and IRQ not disabled -> execute IRQ
-        else if *IRQ_PENDING.lock().unwrap() && !self.status.contains(ProcessorStatusFlags::IRQdisable) {
+        else if *IRQ_PENDING.lock().unwrap() && !self.status.contains(StatusFlags::IRQdisable) {
             return self.execute_irq();
         }
         // IRQ pending and irq disabled AND WAI flag on -> execute instruction as normal
-        else if *IRQ_PENDING.lock().unwrap() && self.status.contains(ProcessorStatusFlags::IRQdisable | ProcessorStatusFlags::WaitForInterrupt) {
-            self.status.clear_flag(ProcessorStatusFlags::WaitForInterrupt);
+        else if *IRQ_PENDING.lock().unwrap() && self.status.contains(StatusFlags::IRQdisable | StatusFlags::WaitForInterrupt) {
+            self.status.clear_flag(StatusFlags::WaitForInterrupt);
         }
 
         // read & execute instruction
@@ -181,7 +181,7 @@ impl SCpu {
 
     /// Returns `0_u16` if carry flag is unset, `1_u16` if carry flag is set
     pub fn carry(&self) -> u16 {
-        match self.status.contains(ProcessorStatusFlags::Carry) {
+        match self.status.contains(StatusFlags::Carry) {
             true => 1,
             false => 0,
         }
@@ -191,7 +191,7 @@ impl SCpu {
     /// 
     /// 8 bit value is actually just 16 bit value ANDed with `0xFF`
     pub fn get_acc(&self) -> u16 {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.status.contains(StatusFlags::Accumulator8bit) {
             true => self.acc & 0xFF,
             false => self.acc,
         }
@@ -200,7 +200,7 @@ impl SCpu {
     /// Set accumulator, sets lower bytes of accumulator to `val` if 8 bit mode for accumulator register is enabled,
     /// else set accumulator to `val`
     pub fn set_acc(&mut self, val: u16) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.status.contains(StatusFlags::Accumulator8bit) {
             true => self.acc = (self.acc & 0xFF00) | (val & 0xFF),
             false => self.acc = val,
         }
@@ -208,10 +208,10 @@ impl SCpu {
 
     /// Call this function after setting accumulator to set negative and zero flags. Takes into account 16/8 bit mode
     pub fn set_acc_nz_flag(&mut self) {
-        self.status.set(ProcessorStatusFlags::Zero, self.acc == 0);
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-            true => self.status.set(ProcessorStatusFlags::Negative, (self.acc as i8) < 0),
-            false => self.status.set(ProcessorStatusFlags::Negative, (self.acc as i16) < 0),
+        self.status.set(StatusFlags::Zero, self.acc == 0);
+        match self.status.contains(StatusFlags::Accumulator8bit) {
+            true => self.status.set(StatusFlags::Negative, (self.acc as i8) < 0),
+            false => self.status.set(StatusFlags::Negative, (self.acc as i16) < 0),
         }
     }
 
@@ -219,7 +219,7 @@ impl SCpu {
     /// 
     /// 8 bit value is actually just 16 bit value ANDed with `0xFF`
     pub fn get_x(&self) -> u16 {
-        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+        match self.status.contains(StatusFlags::XYreg8bit) {
             true => self.x & 0xFF,
             false => self.x,
         }
@@ -227,7 +227,7 @@ impl SCpu {
 
     /// Set x, ANDS `val` with `0xFF` if 8 bit mode for x register is enabled
     pub fn set_x(&mut self, val: u16) {
-        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+        match self.status.contains(StatusFlags::XYreg8bit) {
             true => self.x = val & 0xFF,
             false => self.x = val,
         }
@@ -235,10 +235,10 @@ impl SCpu {
 
     /// Call this function after setting x register to set negative and zero flags. Takes into account 16/8 bit mode
     pub fn set_x_nz_flag(&mut self) {
-        self.status.set(ProcessorStatusFlags::Zero, self.x == 0);
-        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
-			true => self.status.set(ProcessorStatusFlags::Negative, (self.x as i8) < 0),
-            false => self.status.set(ProcessorStatusFlags::Negative, (self.x as i16) < 0),
+        self.status.set(StatusFlags::Zero, self.x == 0);
+        match self.status.contains(StatusFlags::XYreg8bit) {
+			true => self.status.set(StatusFlags::Negative, (self.x as i8) < 0),
+            false => self.status.set(StatusFlags::Negative, (self.x as i16) < 0),
 		}
     }
 
@@ -246,7 +246,7 @@ impl SCpu {
     /// 
     /// 8 bit value is actually just 16 bit value ANDed with `0xFF`
     pub fn get_y(&self) -> u16 {
-        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+        match self.status.contains(StatusFlags::XYreg8bit) {
             true => self.y & 0xFF,
             false => self.y,
         }
@@ -254,7 +254,7 @@ impl SCpu {
 
     /// Set y, ANDS `val` with `0xFF` if 8 bit mode for y register is enabled
     pub fn set_y(&mut self, val: u16) {
-        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+        match self.status.contains(StatusFlags::XYreg8bit) {
             true => self.y = val & 0xFF,
             false => self.y = val,
         }
@@ -262,10 +262,10 @@ impl SCpu {
 
     /// Call this function after setting y register to set negative and zero flags. Takes into account 16/8 bit mode
     pub fn set_y_nz_flag(&mut self) {
-        self.status.set(ProcessorStatusFlags::Zero, self.y == 0);
-        match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
-			true => self.status.set(ProcessorStatusFlags::Negative, (self.y as i8) < 0),
-            false => self.status.set(ProcessorStatusFlags::Negative, (self.y as i16) < 0),
+        self.status.set(StatusFlags::Zero, self.y == 0);
+        match self.status.contains(StatusFlags::XYreg8bit) {
+			true => self.status.set(StatusFlags::Negative, (self.y as i8) < 0),
+            false => self.status.set(StatusFlags::Negative, (self.y as i16) < 0),
 		}
     }
 
@@ -306,7 +306,7 @@ impl SCpu {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cpu::{processorstatusflag::ProcessorStatusFlags, SCpu}, arc_mut, apu::memory::ApuMemory, ppu::memory::PpuMemory};
+    use crate::{cpu::{statusflag::StatusFlags, SCpu}, arc_mut, ppu::memory::PpuMemory, apu::memory::ApuMemory};
 
 	fn get_test_cpu() -> SCpu {
 		let mut cpu = SCpu::new();
@@ -321,13 +321,13 @@ mod tests {
     fn test_acc() {
         let mut cpu = get_test_cpu();
 
-        cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
+        cpu.status.set_flag(StatusFlags::Accumulator8bit);
         cpu.acc = 0xABCD;
         cpu.set_acc(0xAB);
         assert_eq!(cpu.get_acc(), 0x00AB);
         assert_eq!(cpu.acc, 0xABAB);
 
-        cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
+        cpu.status.clear_flag(StatusFlags::Accumulator8bit);
         cpu.acc = 0xABCD;
         cpu.set_acc(0xABCD);
         assert_eq!(cpu.get_acc(), 0xABCD);

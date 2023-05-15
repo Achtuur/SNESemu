@@ -1,4 +1,4 @@
-use crate::cpu::{SCpu, processorstatusflag::ProcessorStatusFlags};
+use crate::cpu::{SCpu, statusflag::StatusFlags};
 
 impl SCpu {
 	
@@ -29,7 +29,7 @@ impl SCpu {
 	
 	/// Wait for Interrupt (Implied)
 	pub fn exe_wai(&mut self, data: u16) {
-		self.status.set_flag(ProcessorStatusFlags::WaitForInterrupt);
+		self.status.set_flag(StatusFlags::WaitForInterrupt);
 	}
 	
 }

@@ -1,4 +1,4 @@
-use crate::cpu::{SCpu, processorstatusflag::ProcessorStatusFlags};
+use crate::cpu::{SCpu, statusflag::StatusFlags};
 
 impl SCpu {
 
@@ -10,42 +10,42 @@ impl SCpu {
 	
 	/// Branch if Carry Clear (Program Counter Relative)
 	pub fn exe_bcc(&mut self, target_addr: u32) {
-		if !self.status.contains(ProcessorStatusFlags::Carry) {
+		if !self.status.contains(StatusFlags::Carry) {
 			self.branch(target_addr);
 		}
 	}
 	
 	/// Branch if Carry Set (Program Counter Relative)
 	pub fn exe_bcs(&mut self, target_addr: u32) {
-		if self.status.contains(ProcessorStatusFlags::Carry) {
+		if self.status.contains(StatusFlags::Carry) {
 			self.branch(target_addr);
 		}
 	}
 	
 	/// Branch if Equal (Program Counter Relative)
 	pub fn exe_beq(&mut self, target_addr: u32) {
-		if self.status.contains(ProcessorStatusFlags::Zero) {
+		if self.status.contains(StatusFlags::Zero) {
 			self.branch(target_addr);
 		}
 	}
 	
 	/// Branch if Minus (Program Counter Relative)
 	pub fn exe_bmi(&mut self, target_addr: u32) {
-		if self.status.contains(ProcessorStatusFlags::Negative) {
+		if self.status.contains(StatusFlags::Negative) {
 			self.branch(target_addr);
 		}
 	}
 	
 	/// Branch if Not Equal (Program Counter Relative)
 	pub fn exe_bne(&mut self, target_addr: u32) {
-		if !self.status.contains(ProcessorStatusFlags::Zero) {
+		if !self.status.contains(StatusFlags::Zero) {
 			self.branch(target_addr);
 		}
 	}
 	
 	/// Branch if Plus (Program Counter Relative)
 	pub fn exe_bpl(&mut self, target_addr: u32) {
-		if !self.status.contains(ProcessorStatusFlags::Negative) {
+		if !self.status.contains(StatusFlags::Negative) {
 			self.branch(target_addr);
 		}
 	}
@@ -65,14 +65,14 @@ impl SCpu {
 	
 	/// Branch if Overflow Clear (Program Counter Relative)
 	pub fn exe_bvc(&mut self, target_addr: u32) {
-		if !self.status.contains(ProcessorStatusFlags::Overflow) {
+		if !self.status.contains(StatusFlags::Overflow) {
 			self.branch(target_addr);
 		}
 	}
 	
 	/// Branch if Overflow Set (Program Counter Relative)
 	pub fn exe_bvs(&mut self, target_addr: u32) {
-		if self.status.contains(ProcessorStatusFlags::Overflow) {
+		if self.status.contains(StatusFlags::Overflow) {
 			self.branch(target_addr);
 		}
 	}
@@ -81,7 +81,7 @@ impl SCpu {
 
 #[cfg(test)]
 mod tests {
-	use crate::{cpu::{processorstatusflag::ProcessorStatusFlags, SCpu}, arc_mut, apu::memory::ApuMemory, ppu::memory::PpuMemory};
+	use crate::{cpu::{statusflag::StatusFlags, SCpu}, arc_mut, apu::memory::ApuMemory, ppu::memory::PpuMemory};
 	use crate::to_long;
 
 	fn get_test_cpu() -> SCpu {
@@ -100,11 +100,11 @@ mod tests {
 		cpu.pc = 0xABCD;
 		let target_addr = cpu.get_pc_addr() + 2 + 0xAD;
 		// Should NOT branch now
-		cpu.status.set_flag(ProcessorStatusFlags::Carry);
+		cpu.status.set_flag(StatusFlags::Carry);
 		cpu.exe_bcc(target_addr);
 		assert_eq!(cpu.get_pc_addr(), to_long!(cpu.pbr, cpu.pc));
 		// Should branch now
-		cpu.status.clear_flag(ProcessorStatusFlags::Carry);
+		cpu.status.clear_flag(StatusFlags::Carry);
 		cpu.exe_bcc(target_addr);
 		assert_eq!(cpu.get_pc_addr(), target_addr);
 	}
@@ -116,11 +116,11 @@ mod tests {
 		cpu.pc = 0xABCD;
 		let target_addr = cpu.get_pc_addr() + 2 + 0xAD;
 		// Should NOT branch now
-		cpu.status.clear_flag(ProcessorStatusFlags::Carry);
+		cpu.status.clear_flag(StatusFlags::Carry);
 		cpu.exe_bcs(target_addr);
 		assert_eq!(cpu.get_pc_addr(), to_long!(cpu.pbr, cpu.pc));
 		// Should branch now
-		cpu.status.set_flag(ProcessorStatusFlags::Carry);
+		cpu.status.set_flag(StatusFlags::Carry);
 		cpu.exe_bcs(target_addr);
 		assert_eq!(cpu.get_pc_addr(), target_addr);
 	}
@@ -132,11 +132,11 @@ mod tests {
 		cpu.pc = 0xABCD;
 		let target_addr = cpu.get_pc_addr() + 2 + 0xAD;
 		// Should NOT branch now
-		cpu.status.clear_flag(ProcessorStatusFlags::Zero);
+		cpu.status.clear_flag(StatusFlags::Zero);
 		cpu.exe_beq(target_addr);
 		assert_eq!(cpu.get_pc_addr(), to_long!(cpu.pbr, cpu.pc));
 		// Should branch now
-		cpu.status.set_flag(ProcessorStatusFlags::Zero);
+		cpu.status.set_flag(StatusFlags::Zero);
 		cpu.exe_beq(target_addr);
 		assert_eq!(cpu.get_pc_addr(), target_addr);
 	}
@@ -148,11 +148,11 @@ mod tests {
 		cpu.pc = 0xABCD;
 		let target_addr = cpu.get_pc_addr() + 2 + 0xAD;
 		// Should NOT branch now
-		cpu.status.clear_flag(ProcessorStatusFlags::Negative);
+		cpu.status.clear_flag(StatusFlags::Negative);
 		cpu.exe_bmi(target_addr);
 		assert_eq!(cpu.get_pc_addr(), to_long!(cpu.pbr, cpu.pc));
 		// Should branch now
-		cpu.status.set_flag(ProcessorStatusFlags::Negative);
+		cpu.status.set_flag(StatusFlags::Negative);
 		cpu.exe_bmi(target_addr);
 		assert_eq!(cpu.get_pc_addr(), target_addr);
 	}
@@ -164,11 +164,11 @@ mod tests {
 		cpu.pc = 0xABCD;
 		let target_addr = cpu.get_pc_addr() + 2 + 0xAD;
 		// Should NOT branch now
-		cpu.status.set_flag(ProcessorStatusFlags::Zero);
+		cpu.status.set_flag(StatusFlags::Zero);
 		cpu.exe_bne(target_addr);
 		assert_eq!(cpu.get_pc_addr(), to_long!(cpu.pbr, cpu.pc));
 		// Should branch now
-		cpu.status.clear_flag(ProcessorStatusFlags::Zero);
+		cpu.status.clear_flag(StatusFlags::Zero);
 		cpu.exe_bne(target_addr);
 		assert_eq!(cpu.get_pc_addr(), target_addr);
 	}
@@ -180,11 +180,11 @@ mod tests {
 		cpu.pc = 0xABCD;
 		let target_addr = cpu.get_pc_addr() + 2 + 0xAD;
 		// Should NOT branch now
-		cpu.status.set_flag(ProcessorStatusFlags::Negative);
+		cpu.status.set_flag(StatusFlags::Negative);
 		cpu.exe_bpl(target_addr);
 		assert_eq!(cpu.get_pc_addr(), to_long!(cpu.pbr, cpu.pc));
 		// Should branch now
-		cpu.status.clear_flag(ProcessorStatusFlags::Negative);
+		cpu.status.clear_flag(StatusFlags::Negative);
 		cpu.exe_bpl(target_addr);
 		assert_eq!(cpu.get_pc_addr(), target_addr);
 	}
@@ -218,11 +218,11 @@ mod tests {
 		cpu.pc = 0xABCD;
 		let target_addr = cpu.get_pc_addr() + 2 + 0xAD;
 		// Should NOT branch now
-		cpu.status.set_flag(ProcessorStatusFlags::Overflow);
+		cpu.status.set_flag(StatusFlags::Overflow);
 		cpu.exe_bvc(target_addr);
 		assert_eq!(cpu.get_pc_addr(), to_long!(cpu.pbr, cpu.pc));
 		// Should branch now
-		cpu.status.clear_flag(ProcessorStatusFlags::Overflow);
+		cpu.status.clear_flag(StatusFlags::Overflow);
 		cpu.exe_bvc(target_addr);
 		assert_eq!(cpu.get_pc_addr(), target_addr);
 	}
@@ -234,11 +234,11 @@ mod tests {
 		cpu.pc = 0xABCD;
 		let target_addr = cpu.get_pc_addr() + 2 + 0xAD;
 		// Should NOT branch now
-		cpu.status.clear_flag(ProcessorStatusFlags::Overflow);
+		cpu.status.clear_flag(StatusFlags::Overflow);
 		cpu.exe_bvs(target_addr);
 		assert_eq!(cpu.get_pc_addr(), to_long!(cpu.pbr, cpu.pc));
 		// Should branch now
-		cpu.status.set_flag(ProcessorStatusFlags::Overflow);
+		cpu.status.set_flag(StatusFlags::Overflow);
 		cpu.exe_bvs(target_addr);
 		assert_eq!(cpu.get_pc_addr(), target_addr);
 	}

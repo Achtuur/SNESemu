@@ -1,4 +1,4 @@
-use crate::cpu::{SCpu, processorstatusflag::ProcessorStatusFlags};
+use crate::cpu::{SCpu,statusflag::StatusFlags};
 
 impl SCpu {
 	
@@ -26,7 +26,7 @@ impl SCpu {
 	
 	/// Push Accumulator (Stack (Push))
 	pub fn exe_pha(&mut self, data: u16) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			true => self.push_byte_stack(self.acc as u8),
 			false => self.push_long_stack(self.acc),
 		}
@@ -54,7 +54,7 @@ impl SCpu {
 	
 	/// Push Index Register X (Stack (Push))
 	pub fn exe_phx(&mut self, data: u16) {
-		match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+		match self.status.contains(StatusFlags::XYreg8bit) {
 			true => self.push_byte_stack(self.x as u8),
 			false => self.push_long_stack(self.x),
 		}
@@ -62,7 +62,7 @@ impl SCpu {
 	
 	/// Push Index Register Y (Stack (Push))
 	pub fn exe_phy(&mut self, data: u16) {
-		match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+		match self.status.contains(StatusFlags::XYreg8bit) {
 			true => self.push_byte_stack(self.y as u8),
 			false => self.push_long_stack(self.y),
 		}
@@ -70,19 +70,19 @@ impl SCpu {
 	
 	/// Pull Accumulator (Stack (Pull))
 	pub fn exe_pla(&mut self, data: u16) {
-		self.acc = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		self.acc = match self.status.contains(StatusFlags::Accumulator8bit) {
 			true => self.pull_byte_stack() as u16,
 			false => self.pull_long_stack(), 
 		};
 		
 		// Check flags
 		if self.acc == 0 {
-			self.status.set_flag(ProcessorStatusFlags::Zero)
+			self.status.set_flag(StatusFlags::Zero)
 		}
 		
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => self.status.set(ProcessorStatusFlags::Accumulator8bit, (self.acc as i8) < 0),
-			false => self.status.set(ProcessorStatusFlags::Accumulator8bit, (self.acc as i16) < 1),
+		match self.status.contains(StatusFlags::Accumulator8bit) {
+			true => self.status.set(StatusFlags::Accumulator8bit, (self.acc as i8) < 0),
+			false => self.status.set(StatusFlags::Accumulator8bit, (self.acc as i16) < 1),
 		}
 		
 	}
@@ -93,11 +93,11 @@ impl SCpu {
 		
 		// Check flags
 		if self.dbr == 0 {
-			self.status.set_flag(ProcessorStatusFlags::Zero);
+			self.status.set_flag(StatusFlags::Zero);
 		}
 		
 		if (self.dbr as i8) < 0 {
-			self.status.set_flag(ProcessorStatusFlags::Negative);
+			self.status.set_flag(StatusFlags::Negative);
 		}
 	}
 	
@@ -107,11 +107,11 @@ impl SCpu {
 		
 		// Check flags
 		if self.dp == 0 {
-			self.status.set_flag(ProcessorStatusFlags::Zero);
+			self.status.set_flag(StatusFlags::Zero);
 		}
 		
 		if (self.dp as i16) < 0 {
-			self.status.set_flag(ProcessorStatusFlags::Negative);
+			self.status.set_flag(StatusFlags::Negative);
 		}
 	}
 	
@@ -121,47 +121,47 @@ impl SCpu {
 		self.status.set_bits(flag_bits);
 		
 		if flag_bits == 0 {
-			self.status.set_flag(ProcessorStatusFlags::Zero);
+			self.status.set_flag(StatusFlags::Zero);
 		}
 
 		if (flag_bits as i8) < 0 {
-			self.status.set_flag(ProcessorStatusFlags::Negative);
+			self.status.set_flag(StatusFlags::Negative);
 		}
 	}
 	
 	/// Pull Index Register X (Stack (Pull))
 	pub fn exe_plx(&mut self, data: u16) {
-		self.x = match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+		self.x = match self.status.contains(StatusFlags::XYreg8bit) {
 			true => self.pull_byte_stack() as u16,
 			false => self.pull_long_stack(), 
 		};
 		
 		// Check flags
 		if self.x == 0 {
-			self.status.set_flag(ProcessorStatusFlags::Zero)
+			self.status.set_flag(StatusFlags::Zero)
 		}
 		
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => self.status.set(ProcessorStatusFlags::Accumulator8bit, (self.x as i8) < 0),
-			false => self.status.set(ProcessorStatusFlags::Accumulator8bit, (self.x as i16) < 1),
+		match self.status.contains(StatusFlags::Accumulator8bit) {
+			true => self.status.set(StatusFlags::Accumulator8bit, (self.x as i8) < 0),
+			false => self.status.set(StatusFlags::Accumulator8bit, (self.x as i16) < 1),
 		}
 	}
 	
 	/// Pull Index Register Y (Stack (Pull))
 	pub fn exe_ply(&mut self, data: u16) {
-		self.y = match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+		self.y = match self.status.contains(StatusFlags::XYreg8bit) {
 			true => self.pull_byte_stack() as u16,
 			false => self.pull_long_stack(), 
 		};
 		
 		// Check flags
 		if self.y == 0 {
-			self.status.set_flag(ProcessorStatusFlags::Zero)
+			self.status.set_flag(StatusFlags::Zero)
 		}
 		
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => self.status.set(ProcessorStatusFlags::Accumulator8bit, (self.y as i8) < 0),
-			false => self.status.set(ProcessorStatusFlags::Accumulator8bit, (self.y as i16) < 1),
+		match self.status.contains(StatusFlags::Accumulator8bit) {
+			true => self.status.set(StatusFlags::Accumulator8bit, (self.y as i8) < 0),
+			false => self.status.set(StatusFlags::Accumulator8bit, (self.y as i16) < 1),
 		}
 	}
 	

@@ -1,15 +1,14 @@
 #![allow(dead_code)]
 
-mod ppu;
-mod cpu;
-mod apu;
+pub mod ppu;
+pub mod cpu;
+pub mod apu;
 pub mod bit_macros;
 pub mod addr_macros;
 pub mod snes;
 
 use std::sync::Mutex;
 
-use apu::memory::ApuMemory;
 
 use ppu::memory::PpuMemory;
 

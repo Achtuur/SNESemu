@@ -6,8 +6,8 @@ bitflags! {
     ///
     /// Status flags can also be unions, 
     /// so checking for example the negative and overflow flags at the 
-    /// same time can be done with `cpu.status.contains(ProcessorStatusFlags::Negative | ProcessorStatusFlags::Overflow)`
-    pub struct ProcessorStatusFlags: u16 {
+    /// same time can be done with `cpu.status.contains(StatusFlags::Negative | StatusFlags::Overflow)`
+    pub struct StatusFlags: u16 {
         /// Flag to check if WAI was called (not actually in snes!)
         const WaitForInterrupt = 0b100_0000_0000;
         /// Break (only in Emulation mode)
@@ -34,44 +34,42 @@ bitflags! {
 }
 
 
-impl ProcessorStatusFlags {
+impl StatusFlags {
     pub fn new() -> Self {
-        ProcessorStatusFlags::from_bits(0).unwrap()
+        StatusFlags::from_bits(0).unwrap()
     }
 
     pub fn startup_state() -> Self {
         let mut p = Self::new();
         p.set_flag(
-            ProcessorStatusFlags::Emulation | 
-            ProcessorStatusFlags::Accumulator8bit | 
-            ProcessorStatusFlags::XYreg8bit
+            StatusFlags::Emulation | 
+            StatusFlags::Accumulator8bit | 
+            StatusFlags::XYreg8bit
         );
         p
     }
 
     pub fn accflag_as_u8(&self) -> u8 {
-        if self.contains(ProcessorStatusFlags::Accumulator8bit) {
+        if self.contains(StatusFlags::Accumulator8bit) {
            return 1;
         }
         0
     }
 
     pub fn xyflag_as_u8(&self) -> u8 {
-        if self.contains(ProcessorStatusFlags::XYreg8bit) {
+        if self.contains(StatusFlags::XYreg8bit) {
            return 1;
         }
         0
     }
 
     pub fn set_bits(&mut self, bits: u8) {
-        let flag = ProcessorStatusFlags::from_bits(bits as u16).unwrap();
+        let flag = StatusFlags::from_bits(bits as u16).unwrap();
         self.set_flag(flag);
     }
 
     pub fn clear_bits(&mut self, bits: u8) {
-        let flag = ProcessorStatusFlags::from_bits(bits as u16).unwrap();
-        println!("bits: {0:02X?}", bits);
-        println!("flag: {0:?}", flag);
+        let flag = StatusFlags::from_bits(bits as u16).unwrap();
         self.clear_flag(flag);
     }
 

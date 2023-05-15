@@ -1,7 +1,7 @@
 pub mod instrdata;
 
 
-use super::{instructions::instructions::Instruction, SCpu, CpuError, NMI_PENDING, IRQ_PENDING, processorstatusflag::ProcessorStatusFlags};
+use super::{instructions::instructions::Instruction, SCpu, CpuError, NMI_PENDING, IRQ_PENDING, statusflag::StatusFlags};
 use super::{instructions::AddressingMode};
 impl SCpu {
 

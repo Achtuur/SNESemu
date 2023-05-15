@@ -1,4 +1,4 @@
-use crate::{cpu::{SCpu, processorstatusflag::ProcessorStatusFlags}, bit_set};
+use crate::{cpu::{statusflag::StatusFlags, SCpu}, bit_set};
 
 impl SCpu {
 	
@@ -7,37 +7,37 @@ impl SCpu {
 	/// `low_addr` is the address for the low byte, `high_addr` is the address for the high byte
 	pub fn exe_lda(&mut self, data: u16) {
 		self.set_acc(data);
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => self.status.set(ProcessorStatusFlags::Negative, bit_set!(self.get_acc(), 7)),
-			false => self.status.set(ProcessorStatusFlags::Negative, bit_set!(self.get_acc(), 15)),
+		match self.status.contains(StatusFlags::Accumulator8bit) {
+			true => self.status.set(StatusFlags::Negative, bit_set!(self.get_acc(), 7)),
+			false => self.status.set(StatusFlags::Negative, bit_set!(self.get_acc(), 15)),
 		}
-		self.status.set(ProcessorStatusFlags::Zero, self.get_acc() == 0);
+		self.status.set(StatusFlags::Zero, self.get_acc() == 0);
 	}
 
 	
 	/// Load Index Register X from Memory (Immediate)
 	pub fn exe_ldx(&mut self, data: u16) {
 		self.set_x(data);
-		match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
-			true => self.status.set(ProcessorStatusFlags::Negative, bit_set!(self.get_x(), 7)),
-			false => self.status.set(ProcessorStatusFlags::Negative, bit_set!(self.get_x(), 15)),
+		match self.status.contains(StatusFlags::XYreg8bit) {
+			true => self.status.set(StatusFlags::Negative, bit_set!(self.get_x(), 7)),
+			false => self.status.set(StatusFlags::Negative, bit_set!(self.get_x(), 15)),
 		}
-		self.status.set(ProcessorStatusFlags::Zero, self.get_x() == 0);
+		self.status.set(StatusFlags::Zero, self.get_x() == 0);
 	}
 	
 	/// Load Index Register Y from Memory (Immediate)
 	pub fn exe_ldy(&mut self, data: u16) {
 		self.set_y(data);
-		match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
-			true => self.status.set(ProcessorStatusFlags::Negative, bit_set!(self.get_y(), 7)),
-			false => self.status.set(ProcessorStatusFlags::Negative, bit_set!(self.get_y(), 15)),
+		match self.status.contains(StatusFlags::XYreg8bit) {
+			true => self.status.set(StatusFlags::Negative, bit_set!(self.get_y(), 7)),
+			false => self.status.set(StatusFlags::Negative, bit_set!(self.get_y(), 15)),
 		}
-		self.status.set(ProcessorStatusFlags::Zero, self.get_y() == 0);
+		self.status.set(StatusFlags::Zero, self.get_y() == 0);
 	}
 	
 	/// Store Accumulator to Memory (DP Indexed Indirect,X)
 	pub fn exe_sta(&mut self, low_addr: u32, high_addr: u32) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			true => {
 				self.mem_write(low_addr, self.get_acc() as u8);
 			},
@@ -50,7 +50,7 @@ impl SCpu {
 	
 	/// Store Index Register X to Memory (Direct Page)
 	pub fn exe_stx(&mut self, low_addr: u32, high_addr: u32) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			true => {
 				self.mem_write(low_addr, self.get_x() as u8);
 			},
@@ -63,7 +63,7 @@ impl SCpu {
 	
 	/// Store Index Register Y to Memory (Direct Page)
 	pub fn exe_sty(&mut self, low_addr: u32, high_addr: u32) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			true => {
 				self.mem_write(low_addr, self.get_y() as u8);
 			},
@@ -76,7 +76,7 @@ impl SCpu {
 	
 	/// Store Zero to Memory (Direct Page)
 	pub fn exe_stz(&mut self, low_addr: u32, high_addr: u32) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			true => {
 				self.mem_write(low_addr, 0);
 			},
@@ -90,7 +90,7 @@ impl SCpu {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cpu::{processorstatusflag::ProcessorStatusFlags, SCpu}, arc_mut, apu::memory::ApuMemory, ppu::memory::PpuMemory};
+    use crate::{cpu::{statusflag::StatusFlags, SCpu}, arc_mut, apu::memory::ApuMemory, ppu::memory::PpuMemory};
 
 	fn get_test_cpu() -> SCpu {
 		let mut cpu = SCpu::new();
@@ -104,7 +104,7 @@ mod tests {
 	#[test]
 	fn test_lda() {
 		let mut cpu = get_test_cpu();
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
 
 	}	
     

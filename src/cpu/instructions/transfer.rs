@@ -1,4 +1,4 @@
-use crate::cpu::{SCpu};
+use crate::cpu::{SCpu, statusflag::StatusFlags};
 
 impl SCpu {
 	

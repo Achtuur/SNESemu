@@ -1,4 +1,4 @@
-use crate::{cpu::{instructions::{AddressingMode, instructions::Instruction}, SCpu, processorstatusflag::ProcessorStatusFlags}, to_long, wrap_add_word, bit_set, to_word};
+use crate::{cpu::{instructions::{AddressingMode, instructions::Instruction}, SCpu, statusflag::StatusFlags}, to_long, wrap_add_word, bit_set, to_word};
 
 
 /// Container for holding data that an instruction can take as input
@@ -65,6 +65,7 @@ impl SCpu {
             DirectY => self.get_directy_data(arg0),
             Implied => InstrData::new(0, 0, 0, 0),
             Immediate => self.get_immediate(arg0),
+            ImmediateLong => self.get_immediate_long(arg0, arg1),
             Indirect => self.get_indirect_data(arg0),
             IndirectX => self.get_indirectx_data(arg0),
             IndirectY => self.get_indirecty_data(arg0),
@@ -397,7 +398,7 @@ impl SCpu {
     
     /// Check if lhs + rhs crosses page boundary, 
     fn page_boundary_crossed(&mut self, lhs: u16, rhs: u16) {
-        if lhs.checked_add(rhs).is_none() && self.status.contains(ProcessorStatusFlags::XYreg8bit) {
+        if lhs.checked_add(rhs).is_none() && self.status.contains(StatusFlags::XYreg8bit) {
             self.wait_cycles += 1;
         }
     }

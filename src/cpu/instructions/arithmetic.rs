@@ -1,10 +1,10 @@
-use crate::{cpu::{SCpu, processorstatusflag::ProcessorStatusFlags}, bit_set};
+use crate::{cpu::{SCpu, statusflag::StatusFlags}, bit_set};
 
 impl SCpu {
 	
 	/// Add With Carry (DP Indexed Indirect,X)
 	pub fn exe_adc(&mut self, data: u16) {
-		let sum = match self.status.contains(ProcessorStatusFlags::Decimal) {
+		let sum = match self.status.contains(StatusFlags::Decimal) {
 			// BCD addition
 			true => {
 				self.exe_adc_bcd(data)
@@ -22,7 +22,7 @@ impl SCpu {
 	/// 
 	/// Currently not completely functional, however no game uses this flag I think(?)
 	fn exe_adc_bcd(&mut self, data: u16) -> u16 {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			//8 bit addition
 			true => {
 				let data = data as u8;
@@ -39,15 +39,15 @@ impl SCpu {
 
 				if upper_nybble > 9 {
 					upper_nybble = (upper_nybble + 6) % 0xF;
-					self.status.set_flag(ProcessorStatusFlags::Carry);
+					self.status.set_flag(StatusFlags::Carry);
 				} else {
-					self.status.clear_flag(ProcessorStatusFlags::Carry);
+					self.status.clear_flag(StatusFlags::Carry);
 				}
 
 				let sum_bcd = (upper_nybble << 4) + lower_nybble;
 
 				// Overflow is unreliable with bcd, so just always disable
-				self.status.clear_flag(ProcessorStatusFlags::Overflow);
+				self.status.clear_flag(StatusFlags::Overflow);
 
 				sum_bcd as u16
 			},
@@ -75,16 +75,16 @@ impl SCpu {
 				if nybbles[3] > 9 {
 					nybbles[3] += 6;
 					nybbles[3] &= 0xF;
-					self.status.set_flag(ProcessorStatusFlags::Carry);
+					self.status.set_flag(StatusFlags::Carry);
 				} else {
-					self.status.clear_flag(ProcessorStatusFlags::Carry);
+					self.status.clear_flag(StatusFlags::Carry);
 				}
 
 				
 				let sum_bcd = (nybbles[3] << 12) | (nybbles[2] << 8) | (nybbles[1] << 4) | nybbles[0];
 
 				// Overflow is unreliable with bcd, so just always disable
-				self.status.clear_flag(ProcessorStatusFlags::Overflow);
+				self.status.clear_flag(StatusFlags::Overflow);
 
 				sum_bcd as u16
 			}
@@ -96,15 +96,15 @@ impl SCpu {
 		let sum = self.get_acc().wrapping_add(data).wrapping_add(self.carry());
 		
 		// If acc > sum, then sum wraps around u8/u16 limit, meaning carry should be propogated
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => self.status.set(ProcessorStatusFlags::Carry, sum > u8::MAX as u16),
-			false => self.status.set(ProcessorStatusFlags::Carry, self.get_acc() > sum),
+		match self.status.contains(StatusFlags::Accumulator8bit) {
+			true => self.status.set(StatusFlags::Carry, sum > u8::MAX as u16),
+			false => self.status.set(StatusFlags::Carry, self.get_acc() > sum),
 		}
 
 		
 
 		// number of bits to shift left to find if number is negative
-		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		let b = match self.status.contains(StatusFlags::Accumulator8bit) {
 			// 8 bit
 			true => 7,
 			// 16 bit
@@ -112,7 +112,7 @@ impl SCpu {
 		};
 
 		self.status.set(
-			ProcessorStatusFlags::Overflow, 
+			StatusFlags::Overflow, 
 			bit_set!(self.get_acc(), b) && bit_set!(data, b) && !bit_set!(sum, b) ||
 			!bit_set!(self.get_acc(), b) && !bit_set!(data, b) && bit_set!(sum, b)
 		);
@@ -122,21 +122,21 @@ impl SCpu {
 	
 	/// Arithmetic Shift Left (Direct Page)
 	pub fn exe_asl(&mut self, low_addr: u32, high_addr: u32) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			true => {
 				let mut val = self.mem_read(low_addr);
-				self.status.set(ProcessorStatusFlags::Carry, bit_set!(val, 7));
+				self.status.set(StatusFlags::Carry, bit_set!(val, 7));
 				val <<= 1;
-				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 7));
+				self.status.set(StatusFlags::Zero, val == 0);
+				self.status.set(StatusFlags::Negative, bit_set!(val, 7));
 				self.mem_write(low_addr, val);
 			},
 			false => {
 				let mut val = self.mem_read_long(low_addr, high_addr);
-				self.status.set(ProcessorStatusFlags::Carry, bit_set!(val, 15));
+				self.status.set(StatusFlags::Carry, bit_set!(val, 15));
 				val <<= 1;
-				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 15));
+				self.status.set(StatusFlags::Zero, val == 0);
+				self.status.set(StatusFlags::Negative, bit_set!(val, 15));
 				self.mem_write_long(low_addr, high_addr, val);
 			}
 		}
@@ -146,9 +146,9 @@ impl SCpu {
 	/// 
 	/// the asla name was made up by me to differentiate it from asl
 	pub fn exe_asla(&mut self) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-			true => self.status.set(ProcessorStatusFlags::Carry, bit_set!(self.get_acc(), 7)),
-			false => self.status.set(ProcessorStatusFlags::Carry, bit_set!(self.get_acc(), 15)),
+		match self.status.contains(StatusFlags::Accumulator8bit) {
+			true => self.status.set(StatusFlags::Carry, bit_set!(self.get_acc(), 7)),
+			false => self.status.set(StatusFlags::Carry, bit_set!(self.get_acc(), 15)),
 		}
 		self.set_acc(self.get_acc() << 1);
 		self.set_acc_nz_flag();
@@ -162,17 +162,17 @@ impl SCpu {
 	
 	/// Decrement (Direct Page)
 	pub fn exe_dec(&mut self, low_addr: u32, high_addr: u32) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			true => {
 				let val = self.mem_read(low_addr).wrapping_sub(1);
-				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 7));
+				self.status.set(StatusFlags::Zero, val == 0);
+				self.status.set(StatusFlags::Negative, bit_set!(val, 7));
 				self.mem_write(low_addr, val);
 			},
 			false => {
 				let val = self.mem_read_long(low_addr, high_addr).wrapping_sub(1);
-				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 15));
+				self.status.set(StatusFlags::Zero, val == 0);
+				self.status.set(StatusFlags::Negative, bit_set!(val, 15));
 				self.mem_write_long(low_addr, high_addr, val);
 			}
 		}
@@ -198,17 +198,17 @@ impl SCpu {
 	
 	/// Increment (Direct Page)
 	pub fn exe_inc(&mut self, low_addr: u32, high_addr: u32) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			true => {
 				let val = self.mem_read(low_addr).wrapping_sub(1);
-				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 7));
+				self.status.set(StatusFlags::Zero, val == 0);
+				self.status.set(StatusFlags::Negative, bit_set!(val, 7));
 				self.mem_write(low_addr, val);
 			},
 			false => {
 				let val = self.mem_read_long(low_addr, high_addr).wrapping_sub(1);
-				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 15));
+				self.status.set(StatusFlags::Zero, val == 0);
+				self.status.set(StatusFlags::Negative, bit_set!(val, 15));
 				self.mem_write_long(low_addr, high_addr, val);
 			}
 		}
@@ -228,35 +228,35 @@ impl SCpu {
 
 	/// Logical Shift Memory or Accumulator Right (Direct Page)
 	pub fn exe_lsr(&mut self, low_addr: u32, high_addr: u32) {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			true => {
 				let mut val = self.mem_read(low_addr);
-				self.status.set(ProcessorStatusFlags::Carry, bit_set!(val, 1));
+				self.status.set(StatusFlags::Carry, bit_set!(val, 1));
 				val >>= 1;
-				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 7));
+				self.status.set(StatusFlags::Zero, val == 0);
+				self.status.set(StatusFlags::Negative, bit_set!(val, 7));
 				self.mem_write(low_addr, val);
 			},
 			false => {
 				let mut val = self.mem_read_long(low_addr, high_addr);
-				self.status.set(ProcessorStatusFlags::Carry, bit_set!(val, 1));
+				self.status.set(StatusFlags::Carry, bit_set!(val, 1));
 				val >>= 1;
-				self.status.set(ProcessorStatusFlags::Zero, val == 0);
-				self.status.set(ProcessorStatusFlags::Negative, bit_set!(val, 15));
+				self.status.set(StatusFlags::Zero, val == 0);
+				self.status.set(StatusFlags::Negative, bit_set!(val, 15));
 				self.mem_write_long(low_addr, high_addr, val);
 			}
 		}
 	}
 
 	pub fn exe_lsra(&mut self) {
-		self.status.set(ProcessorStatusFlags::Carry, bit_set!(self.get_acc(), 1));
+		self.status.set(StatusFlags::Carry, bit_set!(self.get_acc(), 1));
 		self.set_acc(self.get_acc() >> 1);
 		self.set_acc_nz_flag();
 	}
 	
 	/// Subtract with Borrow from Accumulator (DP Indexed Indirect,X)
 	pub fn exe_sbc(&mut self, data: u16) {
-		let sum = match self.status.contains(ProcessorStatusFlags::Decimal) {
+		let sum = match self.status.contains(StatusFlags::Decimal) {
 			// BCD addition
 			true => {
 				self.exe_sbc_bcd(data)
@@ -270,7 +270,7 @@ impl SCpu {
 	}
 
 	fn exe_sbc_bcd(&mut self, data: u16) -> u16 {
-		match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		match self.status.contains(StatusFlags::Accumulator8bit) {
 			//8 bit addition
 			true => {				
 				let data = data as u8;
@@ -291,26 +291,26 @@ impl SCpu {
 				if upper_nybble > 9 {
 					upper_nybble -= 6;
 					upper_nybble &= 0xF;
-					self.status.clear_flag(ProcessorStatusFlags::Carry);
+					self.status.clear_flag(StatusFlags::Carry);
 				} else {
-					self.status.set_flag(ProcessorStatusFlags::Carry);
+					self.status.set_flag(StatusFlags::Carry);
 				}
 
 				let sum_bcd = (upper_nybble << 4) + lower_nybble;
 
 				self.status.clear_flag(
-					ProcessorStatusFlags::Overflow |
-					ProcessorStatusFlags::Negative |
-					ProcessorStatusFlags::Zero
+					StatusFlags::Overflow |
+					StatusFlags::Negative |
+					StatusFlags::Zero
 				);
 
 				if sum_bcd == 0 {
-					self.status.set_flag(ProcessorStatusFlags::Zero);
+					self.status.set_flag(StatusFlags::Zero);
 				}
 
 				// If first bit is set
 				if (sum_bcd as i8) < 0 {
-					self.status.set_flag(ProcessorStatusFlags::Negative);
+					self.status.set_flag(StatusFlags::Negative);
 				}
 
 				sum_bcd as u16
@@ -340,26 +340,26 @@ impl SCpu {
 				if nybbles[3] > 9 {
 					nybbles[3] -= 6;
 					nybbles[3] &= 0xF;
-					self.status.clear_flag(ProcessorStatusFlags::Carry);
+					self.status.clear_flag(StatusFlags::Carry);
 				} else {
-					self.status.set_flag(ProcessorStatusFlags::Carry);
+					self.status.set_flag(StatusFlags::Carry);
 				}
 
 				let sum_bcd = (nybbles[3] << 12) | (nybbles[2] << 8) | (nybbles[1] << 4) | nybbles[0];
 
 				self.status.clear_flag(
-					ProcessorStatusFlags::Overflow |
-					ProcessorStatusFlags::Negative |
-					ProcessorStatusFlags::Zero
+					StatusFlags::Overflow |
+					StatusFlags::Negative |
+					StatusFlags::Zero
 				);
 
 				if sum_bcd == 0 {
-					self.status.set_flag(ProcessorStatusFlags::Zero);
+					self.status.set_flag(StatusFlags::Zero);
 				}
 
 				// If first bit is set
 				if (sum_bcd as i16) < 0 {
-					self.status.set_flag(ProcessorStatusFlags::Negative);
+					self.status.set_flag(StatusFlags::Negative);
 				}
 
 				sum_bcd as u16
@@ -372,10 +372,10 @@ impl SCpu {
 		let sum = self.get_acc().wrapping_sub(data).wrapping_sub(1).wrapping_add(self.carry());
 		
 		// If acc < sum, then sum wraps around 0, meaning carry should be propogated
-		self.status.set(ProcessorStatusFlags::Carry, self.get_acc() < sum);
+		self.status.set(StatusFlags::Carry, self.get_acc() < sum);
 
 		// amount of bits to shift left to find if number is negative
-		let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+		let b = match self.status.contains(StatusFlags::Accumulator8bit) {
 			//8 bit
 			true => 7,
 			//16 bit
@@ -383,7 +383,7 @@ impl SCpu {
 		};
 
 		self.status.set(
-			ProcessorStatusFlags::Overflow, 
+			StatusFlags::Overflow, 
 			(self.get_acc() >> b) == 1 && (data >> b) == 0 && (sum >> b) == 0 || 
 				(self.get_acc() >> b) == 0 && (data >> b) == 1 && (sum >> b) == 1
 		);
@@ -395,7 +395,7 @@ impl SCpu {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cpu::{processorstatusflag::ProcessorStatusFlags, SCpu}, arc_mut, apu::memory::ApuMemory, ppu::memory::PpuMemory};
+    use crate::{cpu::{statusflag::StatusFlags, SCpu}, arc_mut, apu::memory::ApuMemory, ppu::memory::PpuMemory};
 
 	fn get_test_cpu() -> SCpu {
 		let mut cpu = SCpu::new();
@@ -409,13 +409,13 @@ mod tests {
 	#[test]
 	fn test_adc_bit_8() {
 		let mut cpu = get_test_cpu();
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
-		cpu.status.clear_flag(ProcessorStatusFlags::Decimal);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Decimal);
 
 		for a in 0..u8::MAX as u16 {
 			for b in 0..u16::MAX {
 				cpu.set_acc(a);
-				cpu.status.clear_flag(ProcessorStatusFlags::Carry);
+				cpu.status.clear_flag(StatusFlags::Carry);
 				cpu.exe_adc(b);
 				assert_eq!(a.wrapping_add(b) & 0xFF, cpu.get_acc());
 			}
@@ -425,13 +425,13 @@ mod tests {
 	#[test]
 	fn test_adc_bit_16() {
 		let mut cpu = get_test_cpu();
-		cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
-		cpu.status.clear_flag(ProcessorStatusFlags::Decimal);
+		cpu.status.clear_flag(StatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Decimal);
 
 		for a in 0..u8::MAX as u16 {
 			for b in 0..u16::MAX {
 				cpu.set_acc(a);
-				cpu.status.clear_flag(ProcessorStatusFlags::Carry);
+				cpu.status.clear_flag(StatusFlags::Carry);
 				cpu.exe_adc(b);
 				assert_eq!(a.wrapping_add(b), cpu.get_acc());
 			}
@@ -441,8 +441,8 @@ mod tests {
 	#[test]
 	fn test_adc_bcd_8() {
 		let mut cpu = get_test_cpu();
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
-		cpu.status.set_flag(ProcessorStatusFlags::Decimal);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
+		cpu.status.set_flag(StatusFlags::Decimal);
 
 		cpu.set_acc(0x03);
 		cpu.exe_adc(0x09);
@@ -462,11 +462,11 @@ mod tests {
 	#[test]
 	fn test_asl_8() {
 		let mut cpu = get_test_cpu();
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
 		let low_addr = 0x7F00AB;
 		let high_addr = 0;
 		for a in 0..u8::MAX {
-			cpu.status.clear_flag(ProcessorStatusFlags::Carry);
+			cpu.status.clear_flag(StatusFlags::Carry);
 			cpu.mem_write(low_addr, a);
 			cpu.exe_asl(low_addr, high_addr);
 			let v = cpu.mem_read(low_addr);
@@ -477,11 +477,11 @@ mod tests {
 	#[test]
 	fn test_asl_16() {
 		let mut cpu = get_test_cpu();
-		cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Accumulator8bit);
 		let low_addr = 0x7F00AB;
 		let high_addr = 0x7F00AC;
 		for a in 0..u16::MAX {
-			cpu.status.clear_flag(ProcessorStatusFlags::Carry);
+			cpu.status.clear_flag(StatusFlags::Carry);
 			cpu.mem_write_long(low_addr, high_addr, a);
 			cpu.exe_asl(low_addr, high_addr);
 			let v = cpu.mem_read_long(low_addr, high_addr);
@@ -494,7 +494,7 @@ mod tests {
 		let mut cpu = get_test_cpu();
 		
 		// 8 bit
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
 		for a in 0..u16::MAX {
 			cpu.set_acc(a);
 			cpu.exe_asla();
@@ -502,7 +502,7 @@ mod tests {
 		}
 
 		// 16 bit
-		cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Accumulator8bit);
 		for a in 0..u16::MAX {
 			cpu.set_acc(a);
 			cpu.exe_asla();
@@ -515,7 +515,7 @@ mod tests {
 		let mut cpu = get_test_cpu();
 
 		// 8 bit
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
 		for a in 0..u16::MAX {
 			cpu.set_acc(a);
 			cpu.exe_dea();
@@ -523,7 +523,7 @@ mod tests {
 		}
 
 		// 16 bit
-		cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Accumulator8bit);
 		for a in 0..u16::MAX {
 			cpu.set_acc(a);
 			cpu.exe_dea();
@@ -536,7 +536,7 @@ mod tests {
 		let mut cpu = get_test_cpu();
 
 		// 8 bit
-		cpu.status.set_flag(ProcessorStatusFlags::XYreg8bit);
+		cpu.status.set_flag(StatusFlags::XYreg8bit);
 		for a in 0..u16::MAX {
 			cpu.set_x(a);
 			cpu.exe_dex();
@@ -544,7 +544,7 @@ mod tests {
 		}
 
 		// 16 bit
-		cpu.status.clear_flag(ProcessorStatusFlags::XYreg8bit);
+		cpu.status.clear_flag(StatusFlags::XYreg8bit);
 		for a in 0..u16::MAX {
 			cpu.set_x(a);
 			cpu.exe_dex();
@@ -557,7 +557,7 @@ mod tests {
 		let mut cpu = get_test_cpu();
 
 		// 8 bit
-		cpu.status.set_flag(ProcessorStatusFlags::XYreg8bit);
+		cpu.status.set_flag(StatusFlags::XYreg8bit);
 		for a in 0..u16::MAX {
 			cpu.set_y(a);
 			cpu.exe_dey();
@@ -565,7 +565,7 @@ mod tests {
 		}
 
 		// 16 bit
-		cpu.status.clear_flag(ProcessorStatusFlags::XYreg8bit);
+		cpu.status.clear_flag(StatusFlags::XYreg8bit);
 		for a in 0..u16::MAX {
 			cpu.set_y(a);
 			cpu.exe_dey();
@@ -576,11 +576,11 @@ mod tests {
 	#[test]
 	fn test_dec_8() {
 		let mut cpu = get_test_cpu();
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
 		let low_addr = 0x7F00AB;
 		let high_addr = 0x7F00AC;
 		for a in 0..u8::MAX {
-			cpu.status.clear_flag(ProcessorStatusFlags::Carry);
+			cpu.status.clear_flag(StatusFlags::Carry);
 			cpu.mem_write(low_addr, a);
 			
 			cpu.exe_dec(low_addr, high_addr);
@@ -592,11 +592,11 @@ mod tests {
 	#[test]
 	fn test_dec_16() {
 		let mut cpu = get_test_cpu();
-		cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Accumulator8bit);
 		let low_addr = 0x7F00AB;
 		let high_addr = 0x7F00AC;
 		for a in 0..u16::MAX {
-			cpu.status.clear_flag(ProcessorStatusFlags::Carry);
+			cpu.status.clear_flag(StatusFlags::Carry);
 			cpu.mem_write_long(low_addr, high_addr, a);
 
 			cpu.exe_dec(low_addr, high_addr);
@@ -610,7 +610,7 @@ mod tests {
 		let mut cpu = get_test_cpu();
 
 		// 8 bit
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
 		for a in 0..u16::MAX {
 			cpu.set_acc(a);
 			cpu.exe_ina();
@@ -618,7 +618,7 @@ mod tests {
 		}
 
 		// 16 bit
-		cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Accumulator8bit);
 		for a in 0..u16::MAX {
 			cpu.set_acc(a);
 			cpu.exe_ina();
@@ -631,7 +631,7 @@ mod tests {
 		let mut cpu = get_test_cpu();
 
 		// 8 bit
-		cpu.status.set_flag(ProcessorStatusFlags::XYreg8bit);
+		cpu.status.set_flag(StatusFlags::XYreg8bit);
 		for a in 0..u16::MAX {
 			cpu.set_x(a);
 			cpu.exe_inx();
@@ -639,7 +639,7 @@ mod tests {
 		}
 
 		// 16 bit
-		cpu.status.clear_flag(ProcessorStatusFlags::XYreg8bit);
+		cpu.status.clear_flag(StatusFlags::XYreg8bit);
 		for a in 0..u16::MAX {
 			cpu.set_x(a);
 			cpu.exe_inx();
@@ -652,7 +652,7 @@ mod tests {
 		let mut cpu = get_test_cpu();
 
 		// 8 bit
-		cpu.status.set_flag(ProcessorStatusFlags::XYreg8bit);
+		cpu.status.set_flag(StatusFlags::XYreg8bit);
 		for a in 0..u16::MAX {
 			cpu.set_y(a);
 			cpu.exe_iny();
@@ -660,7 +660,7 @@ mod tests {
 		}
 
 		// 16 bit
-		cpu.status.clear_flag(ProcessorStatusFlags::XYreg8bit);
+		cpu.status.clear_flag(StatusFlags::XYreg8bit);
 		for a in 0..u16::MAX {
 			cpu.set_y(a);
 			cpu.exe_iny();
@@ -671,11 +671,11 @@ mod tests {
 	#[test]
 	fn test_lsr_8() {
 		let mut cpu = get_test_cpu();
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
 		let low_addr = 0x7F00AB;
 		let high_addr = 0;
 		for a in 0..u8::MAX {
-			cpu.status.clear_flag(ProcessorStatusFlags::Carry);
+			cpu.status.clear_flag(StatusFlags::Carry);
 			cpu.mem_write(low_addr, a);
 			cpu.exe_lsr(low_addr, high_addr);
 			let v = cpu.mem_read(low_addr);
@@ -686,11 +686,11 @@ mod tests {
 	#[test]
 	fn test_lsr_16() {
 		let mut cpu = get_test_cpu();
-		cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Accumulator8bit);
 		let low_addr = 0x7F00AB;
 		let high_addr = 0x7F00AC;
 		for a in 0..u16::MAX {
-			cpu.status.clear_flag(ProcessorStatusFlags::Carry);
+			cpu.status.clear_flag(StatusFlags::Carry);
 			cpu.mem_write_long(low_addr, high_addr, a);
 			cpu.exe_lsr(low_addr, high_addr);
 			let v = cpu.mem_read_long(low_addr, high_addr);
@@ -703,7 +703,7 @@ mod tests {
 		let mut cpu = get_test_cpu();
 		
 		// 8 bit
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
 		for a in 0..u16::MAX {
 			cpu.set_acc(a);
 			cpu.exe_lsra();
@@ -711,7 +711,7 @@ mod tests {
 		}
 
 		// 16 bit
-		cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Accumulator8bit);
 		for a in 0..u16::MAX {
 			cpu.set_acc(a);
 			cpu.exe_lsra();
@@ -723,13 +723,13 @@ mod tests {
 	#[test]
 	fn test_sbc_bit_8() {
 		let mut cpu = get_test_cpu();
-		cpu.status.set_flag(ProcessorStatusFlags::Accumulator8bit);
-		cpu.status.clear_flag(ProcessorStatusFlags::Decimal);
+		cpu.status.set_flag(StatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Decimal);
 
 		for a in 0..u8::MAX as u16 {
 			for b in 0..u16::MAX {
 				cpu.set_acc(a);
-				cpu.status.set_flag(ProcessorStatusFlags::Carry);
+				cpu.status.set_flag(StatusFlags::Carry);
 				cpu.exe_sbc(b);
 				assert_eq!(a.wrapping_sub(b) & 0xFF, cpu.get_acc());
 			}
@@ -739,13 +739,13 @@ mod tests {
 	#[test]
 	fn test_sbc_bit_16() {
 		let mut cpu = get_test_cpu();
-		cpu.status.clear_flag(ProcessorStatusFlags::Accumulator8bit);
-		cpu.status.clear_flag(ProcessorStatusFlags::Decimal);
+		cpu.status.clear_flag(StatusFlags::Accumulator8bit);
+		cpu.status.clear_flag(StatusFlags::Decimal);
 
 		for a in 0..u8::MAX as u16 {
 			for b in 0..u16::MAX {
 				cpu.set_acc(a);
-				cpu.status.set_flag(ProcessorStatusFlags::Carry);
+				cpu.status.set_flag(StatusFlags::Carry);
 				cpu.exe_sbc(b);
 				assert_eq!(a.wrapping_sub(b), cpu.get_acc());
 			}
