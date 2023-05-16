@@ -101,8 +101,6 @@ impl SCpu {
 			false => self.status.set(StatusFlags::Carry, self.get_acc() > sum),
 		}
 
-		
-
 		// number of bits to shift left to find if number is negative
 		let b = match self.status.contains(StatusFlags::Accumulator8bit) {
 			// 8 bit

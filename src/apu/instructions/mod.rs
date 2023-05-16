@@ -5,11 +5,13 @@ pub mod branch;
 pub mod jump;
 pub mod interrupt;
 pub mod stack;
+pub mod arithmetic;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AddressingMode {
     /// 8 bit Immediate value
     Immediate,
+    /// Immediate value that acts on a DP address
     DPImmediate,
     Implied,
     /// 8 bit direct page offset, ($0000 + dp or $0100 + dp depending on P flag)
@@ -46,7 +48,7 @@ pub enum AddressingMode {
 
 impl Instruction {
 
-    fn get_addressing_mode(&self) -> AddressingMode {
+    pub fn get_addressing_mode(&self) -> AddressingMode {
         match self {
             Instruction::MOV(a) => *a,
             Instruction::STA(a) => *a,

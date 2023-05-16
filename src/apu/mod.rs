@@ -10,6 +10,7 @@ pub mod dsp;
 pub mod memory;
 pub mod statusword;
 pub mod instructions;
+pub mod execute;
 
 /// Audio processing unit
 pub struct SApu {
@@ -79,6 +80,20 @@ impl SApu {
 
     pub fn set_apumemory_ref(&mut self, memref: Arc<Mutex<ApuMemory>>) {
         self.memory = memref;
+    }
+
+    pub fn get_dp_address(&self, low_byte: u8) -> u16 {
+        match self.status.contains(StatusWord::DPFlag) {
+            false => to_word!(0x00, low_byte),
+            true => to_word!(0x01, low_byte),
+        }
+    }
+
+    fn carry(&self) -> u8 {
+        match self.status.contains(StatusWord::Carry) {
+            false => 0,
+            true => 1,
+        }
     }
 
     /// Returns `y` concatenated with `acc`, used by some instructions

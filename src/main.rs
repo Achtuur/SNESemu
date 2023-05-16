@@ -33,7 +33,6 @@ fn main() {
     // let rom = include_bytes!("../resources/rom/Legend of Zelda, The - A Link to the Past.smc");
     let rom = include_bytes!("../resources/rom/Super Mario World.smc");
     
-
     let mut snes = Snes::new();
     
     let r = snes.insert_cartridge(rom);

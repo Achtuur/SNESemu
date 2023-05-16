@@ -1,4 +1,4 @@
-use crate::{apu::SApu, to_word};
+use crate::apu::SApu;
 
 impl SApu {
     pub fn exe_jmp(&mut self, target_addr: u16) {
@@ -14,13 +14,15 @@ impl SApu {
         self.pc -= 3
     }
 
-    pub fn exe_pcall(&mut self, addr_lowbyte: u8) {
-        let target_addr = to_word!(0xFF, addr_lowbyte);
+    /// PCALL uses table look up with argument, however this is already handled in `instrdata`
+    /// 
+    /// This function should simply receive the target address, similarly to `exe_call`
+    pub fn exe_pcall(&mut self, target_addr: u16) {
         self.exe_call(target_addr);
     }
 
     pub fn exe_tcall(&mut self, table_entry: u8) {
-        let target_addr = 0xFFC0 + 2 * (15 - table_entry as u16);
+        let target_addr = 0xFFDE - 2 * (15 - table_entry as u16);
         self.exe_call(target_addr);
     }
 
