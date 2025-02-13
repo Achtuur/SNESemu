@@ -1,10 +1,8 @@
 pub mod instrdata;
 
-
 use super::{instructions::instructions::Instruction, Cpu, CpuError};
 
 impl Cpu {
-
     pub fn execute_nmi(&mut self) -> Result<(), CpuError> {
         self.exe_interrupt(0x00FFEA);
         Ok(())
@@ -28,19 +26,21 @@ impl Cpu {
 
     fn execute_op(&mut self, instr: &Instruction) {
         use Instruction::*;
-        let instr_data = self.get_instruction_data(&instr);
+        let instr_data = self.get_instruction_data(instr);
         let data = instr_data.data;
         let low_addr = instr_data.low_addr;
         let high_addr = instr_data.high_addr;
 
         match instr {
-            AdcAbs | AdcAbsLong | AdcAbsX | AdcAbsXLong | AdcAbsY | AdcDP |
-            AdcDPI | AdcDPIX | AdcDPIY | AdcDPIYLong | AdcDPLong | AdcDPX |
-            AdcImm | AdcSR | AdcSRY => self.exe_adc(data),
+            AdcAbs | AdcAbsLong | AdcAbsX | AdcAbsXLong | AdcAbsY | AdcDP | AdcDPI | AdcDPIX
+            | AdcDPIY | AdcDPIYLong | AdcDPLong | AdcDPX | AdcImm | AdcSR | AdcSRY => {
+                self.exe_adc(data)
+            }
 
-            AndAbs | AndAbsLong | AndAbsX | AndAbsXLong | AndAbsY | AndDP |
-            AndDPI | AndDPIX | AndDPIY | AndDPIYLong | AndDPLong | AndDPX |
-            AndImm | AndSR | AndSRY => self.exe_and(data),
+            AndAbs | AndAbsLong | AndAbsX | AndAbsXLong | AndAbsY | AndDP | AndDPI | AndDPIX
+            | AndDPIY | AndDPIYLong | AndDPLong | AndDPX | AndImm | AndSR | AndSRY => {
+                self.exe_and(data)
+            }
 
             AslAbs | AslDP | AslDPX | AslAbsX => self.exe_asl(low_addr, high_addr),
 
@@ -64,9 +64,10 @@ impl Cpu {
             Cli => self.exe_clc(),
             Clv => self.exe_clv(),
 
-            CmpAbs | CmpAbsLong | CmpAbsX | CmpAbsXLong | CmpAbsY | CmpDP |
-            CmpDPI | CmpDPIX | CmpDPIY | CmpDPIYLong | CmpDPLong | CmpDPX |
-            CmpImm | CmpSR | CmpSRY => self.exe_cmp(data),
+            CmpAbs | CmpAbsLong | CmpAbsX | CmpAbsXLong | CmpAbsY | CmpDP | CmpDPI | CmpDPIX
+            | CmpDPIY | CmpDPIYLong | CmpDPLong | CmpDPX | CmpImm | CmpSR | CmpSRY => {
+                self.exe_cmp(data)
+            }
 
             Cop => self.exe_cop(data),
             CpxAbs | CpxDP | CpxImm => self.exe_cpx(data),
@@ -79,9 +80,10 @@ impl Cpu {
             Dex => self.exe_dex(),
             Dey => self.exe_dey(),
 
-            EorAbs | EorAbsLong | EorAbsX | EorAbsXLong | EorAbsY | EorDP |
-            EorDPI | EorDPIX | EorDPIY | EorDPIYLong | EorDPLong | EorDPX |
-            EorImm | EorSR | EorSRY => self.exe_eor(data),
+            EorAbs | EorAbsLong | EorAbsX | EorAbsXLong | EorAbsY | EorDP | EorDPI | EorDPIX
+            | EorDPIY | EorDPIYLong | EorDPLong | EorDPX | EorImm | EorSR | EorSRY => {
+                self.exe_eor(data)
+            }
 
             IncAbs | IncAbsX | IncDP | IncDPX => self.exe_inc(low_addr, high_addr),
 
@@ -97,9 +99,10 @@ impl Cpu {
 
             JsrAbs | JsrAbsIX => self.exe_jsr(low_addr),
 
-            LdaAbs | LdaAbsLong | LdaAbsX | LdaAbsXLong | LdaAbsY | LdaDP |
-            LdaDPI | LdaDPIX | LdaDPIY | LdaDPIYLong | LdaDPLong | LdaDPX |
-            LdaImm | LdaSR | LdaSRY => self.exe_lda(low_addr, high_addr),
+            LdaAbs | LdaAbsLong | LdaAbsX | LdaAbsXLong | LdaAbsY | LdaDP | LdaDPI | LdaDPIX
+            | LdaDPIY | LdaDPIYLong | LdaDPLong | LdaDPX | LdaImm | LdaSR | LdaSRY => {
+                self.exe_lda(low_addr, high_addr)
+            }
 
             LdxAbs | LdxAbsY | LdxDP | LdxDPY | LdxImm => self.exe_ldx(low_addr, high_addr),
             LdyAbs | LdyAbsX | LdyDP | LdyDPX | LdyImm => self.exe_ldy(low_addr, high_addr),
@@ -112,9 +115,10 @@ impl Cpu {
 
             Nop => self.exe_nop(data),
 
-            OraAbs | OraAbsLong | OraAbsX | OraAbsXLong | OraAbsY | OraDP |
-            OraDPI | OraDPIX | OraDPIY | OraDPIYLong | OraDPLong | OraDPX |
-            OraImm | OraSR | OraSRY => self.exe_ora(data),
+            OraAbs | OraAbsLong | OraAbsX | OraAbsXLong | OraAbsY | OraDP | OraDPI | OraDPIX
+            | OraDPIY | OraDPIYLong | OraDPLong | OraDPX | OraImm | OraSR | OraSRY => {
+                self.exe_ora(data)
+            }
 
             Pea => self.exe_pea(data),
             Pei => self.exe_pei(data),
@@ -136,27 +140,29 @@ impl Cpu {
             RepImm => self.exe_rep(data as u8),
 
             Rol => self.exe_rola(),
-            RolAbs | RolAbsX | RolDP | RolDPX  => self.exe_rol(low_addr, high_addr),
+            RolAbs | RolAbsX | RolDP | RolDPX => self.exe_rol(low_addr, high_addr),
 
             Ror => self.exe_rora(),
-            RorAbs | RorAbsX | RorDP | RorDPX  => self.exe_ror(low_addr, high_addr),
+            RorAbs | RorAbsX | RorDP | RorDPX => self.exe_ror(low_addr, high_addr),
 
             Rti => self.exe_rti(data),
             Rtl => self.exe_rtl(),
             Rts => self.exe_rts(),
 
-            SbcAbs | SbcAbsLong | SbcAbsX | SbcAbsXLong | SbcAbsY | SbcDP |
-            SbcDPI | SbcDPIX | SbcDPIY | SbcDPIYLong | SbcDPLong | SbcDPX |
-            SbcImm | SbcSR | SbcSRY => self.exe_sbc(data),
+            SbcAbs | SbcAbsLong | SbcAbsX | SbcAbsXLong | SbcAbsY | SbcDP | SbcDPI | SbcDPIX
+            | SbcDPIY | SbcDPIYLong | SbcDPLong | SbcDPX | SbcImm | SbcSR | SbcSRY => {
+                self.exe_sbc(data)
+            }
 
             Sec => self.exe_sec(),
             Sed => self.exe_sed(),
             Sei => self.exe_sei(),
             SepImm => self.exe_sep(data as u8),
-            
-            StaAbs | StaAbsLong | StaAbsX | StaAbsXLong | StaAbsY | StaDP |
-            StaDPI | StaDPIX | StaDPIY | StaDPIYLong | StaDPLong | StaDPX |
-            StaSR | StaSRY => self.exe_sta(low_addr, high_addr),
+
+            StaAbs | StaAbsLong | StaAbsX | StaAbsXLong | StaAbsY | StaDP | StaDPI | StaDPIX
+            | StaDPIY | StaDPIYLong | StaDPLong | StaDPX | StaSR | StaSRY => {
+                self.exe_sta(low_addr, high_addr)
+            }
 
             Stp => self.exe_stp(data),
 
@@ -185,7 +191,6 @@ impl Cpu {
             Wdm => self.exe_wdm(data),
             Xba => self.exe_xba(data),
             Xce => self.exe_xce(data),
-
         }
     }
 }

@@ -1,21 +1,20 @@
-pub mod memory;
 pub mod components;
-pub mod rgb;
-pub mod screenapp;
-pub mod ppu;
-pub mod sprite;
-pub mod scanline;
-pub mod tile;
 pub mod layer;
+pub mod memory;
+pub mod ppu;
+pub mod rgb;
+pub mod scanline;
+pub mod screenapp;
+pub mod sprite;
+pub mod tile;
 
-use std::{sync::{Mutex, Arc, RwLock}, thread, time::Instant};
-use std::time::Duration;
+use std::sync::{Arc, Mutex, RwLock};
 
-use crate::{arc_mut};
+use crate::arc_mut;
 use lazy_static::lazy_static;
 use pix_engine::prelude::{Engine, PixResult};
 
-use self::{memory::PpuMemory, screenapp::ScreenApp, scanline::Scanline};
+use self::{memory::PpuMemory, scanline::Scanline, screenapp::ScreenApp};
 
 lazy_static! {
     static ref V_BLANK: RwLock<bool> = RwLock::new(false);
@@ -26,7 +25,7 @@ lazy_static! {
 #[macro_export]
 macro_rules! fv_blanking {
     () => {{
-        use crate::ppu::{F_BLANK, V_BLANK};
+        use $crate::ppu::{F_BLANK, V_BLANK};
         *V_BLANK.read().unwrap() || *F_BLANK.read().unwrap()
     }};
 }
@@ -34,11 +33,10 @@ macro_rules! fv_blanking {
 #[macro_export]
 macro_rules! h_blanking {
     () => {{
-        use crate::ppu::H_BLANK;
+        use $crate::ppu::H_BLANK;
         *H_BLANK.read().unwrap()
     }};
 }
-
 
 const SCREEN_WIDTH: usize = 256;
 const NTSC_SCREEN_HEIGHT: usize = 224;
@@ -49,7 +47,6 @@ pub struct Ppu {
     memory: Arc<Mutex<PpuMemory>>,
     scanline: Scanline,
 }
-
 
 impl Ppu {
     pub fn new() -> Self {
@@ -65,24 +62,21 @@ impl Ppu {
     }
 
     pub fn run(&mut self) -> PixResult<()> {
-
-       
-        loop {
-            let t = Instant::now();
-            self.tick();
-            println!("t: {0:?}", t.elapsed());
-            thread::sleep(Duration::from_millis(10))
-        }
+        // loop {
+        //     let t = Instant::now();
+        //     self.tick();
+        //     println!("t: {0:?}", t.elapsed());
+        //     thread::sleep(Duration::from_millis(10))
+        // }
 
         let mut engine = Engine::builder()
-        .dimensions(SCREEN_WIDTH as u32, NTSC_SCREEN_HEIGHT as u32)
-        .title("MyApp")
-        .show_frame_rate()
-        .resizable()
-        // .target_frame_rate(60)
-        .build()?;
+            .dimensions(SCREEN_WIDTH as u32, NTSC_SCREEN_HEIGHT as u32)
+            .title("MyApp")
+            .show_frame_rate()
+            .resizable()
+            // .target_frame_rate(60)
+            .build()?;
 
         engine.run(&mut self.screen)
-
     }
 }

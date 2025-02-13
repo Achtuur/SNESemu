@@ -1,11 +1,11 @@
-use bitflags::{bitflags, BitFlags};
+use bitflags::bitflags;
 
 bitflags! {
     #[derive(Debug, Clone, Copy)]
     /// Status flags for SNES CPU
     ///
-    /// Status flags can also be unions, 
-    /// so checking for example the negative and overflow flags at the 
+    /// Status flags can also be unions,
+    /// so checking for example the negative and overflow flags at the
     /// same time can be done with `cpu.status.contains(ProcessorStatusFlags::Negative | ProcessorStatusFlags::Overflow)`
     pub struct ProcessorStatusFlags: u16 {
         /// Flag to check if WAI was called (not actually in snes!)
@@ -33,7 +33,6 @@ bitflags! {
     }
 }
 
-
 impl ProcessorStatusFlags {
     pub fn new() -> Self {
         ProcessorStatusFlags::from_bits(0).unwrap()
@@ -55,7 +54,7 @@ impl ProcessorStatusFlags {
 
     pub fn set_flag(&mut self, flags: Self) {
         self.set(flags, true);
-    } 
+    }
 
     pub fn clear_flag(&mut self, flags: Self) {
         self.set(flags, false);

@@ -1,4 +1,4 @@
-use crate::{nth_bit, bit_slice, to_word, bit_set, fv_blanking, ppu::sprite::Sprite};
+use crate::{bit_set, bit_slice, fv_blanking, nth_bit, ppu::sprite::Sprite, to_word};
 
 pub struct Oam {
     bytes: [u8; 544],
@@ -13,7 +13,7 @@ pub struct Oam {
     /// Address of page zero
     pub page0_addr: usize,
     /// Address of page 1 is page0 + page1_offs
-    /// 
+    ///
     /// page1_offs is in 8kB increments
     pub page1_offs: usize,
 
@@ -35,52 +35,53 @@ impl Oam {
             bigobj_size: (16, 16),
             page0_addr: 0,
             page1_offs: 0,
-            highest_prio_obj: 0,          
+            highest_prio_obj: 0,
         }
     }
 
     /// Return data inside OAM currently as a vector of 128 sprites
-    /// 
+    ///
     /// Vector is ordered in sprite priority, it takes in to account the priority index for priority rotation
     pub fn as_sprites(&self) -> Vec<Sprite> {
         let mut i = self.highest_prio_obj;
-        (0..128).map(|_| {
-            let mut s = Sprite::new();
-            // Get 1st part of sprite info from first 512 bytes
-            let idx = 4 * i;
+        (0..128)
+            .map(|_| {
+                let mut s = Sprite::new();
+                // Get 1st part of sprite info from first 512 bytes
+                let idx = 4 * i;
 
-            // low 8 bits of x position
-            s.x = self.bytes[idx] as usize;
-            // y position
-            s.y = self.bytes[idx + 1] as usize;
+                // low 8 bits of x position
+                s.x = self.bytes[idx] as usize;
+                // y position
+                s.y = self.bytes[idx + 1] as usize;
 
-            // Attribute byte
-            let attr = self.bytes[idx + 3];
-            // Set tile index using 3rd byte and 1st bit of 4th byte
-            s.tile_index = self.bytes[idx + 2] as usize;
-            let tile_page = nth_bit!(attr, 0);
-            s.tile_index |= (tile_page as usize) << 8;
+                // Attribute byte
+                let attr = self.bytes[idx + 3];
+                // Set tile index using 3rd byte and 1st bit of 4th byte
+                s.tile_index = self.bytes[idx + 2] as usize;
+                let tile_page = nth_bit!(attr, 0);
+                s.tile_index |= (tile_page as usize) << 8;
 
-            // Other attribute bits
-            s.palette = bit_slice!(attr, 1, 3) as usize;
-            s.priority = bit_slice!(attr, 4, 5) as usize;
-            s.flip_h = bit_set!(attr, 6);
-            s.flip_v = bit_set!(attr, 7);
+                // Other attribute bits
+                s.palette = bit_slice!(attr, 1, 3) as usize;
+                s.priority = bit_slice!(attr, 4, 5) as usize;
+                s.flip_h = bit_set!(attr, 6);
+                s.flip_v = bit_set!(attr, 7);
 
-            // Get 2nd part of sprite info from last 512 bytes
-            let idx2 = 512 + i / 4;
-            let shift = (i % 4) * 2;
-            let byte = self.bytes[idx2];
+                // Get 2nd part of sprite info from last 512 bytes
+                let idx2 = 512 + i / 4;
+                let shift = (i % 4) * 2;
+                let byte = self.bytes[idx2];
 
-            s.x |= (nth_bit!(byte, shift) as usize) << 8;
-            s.big_size = bit_set!(byte, shift + 1);
+                s.x |= (nth_bit!(byte, shift) as usize) << 8;
+                s.big_size = bit_set!(byte, shift + 1);
 
-            i = (i + 1) % 128;
+                i = (i + 1) % 128;
 
-            return s;
-        }).collect::<Vec<Sprite>>()
+                s
+            })
+            .collect::<Vec<Sprite>>()
     }
-
 
     pub fn read(&mut self, addr: u16) -> Option<u8> {
         match addr {
@@ -90,7 +91,6 @@ impl Oam {
         }
     }
 
-
     pub fn write(&mut self, addr: u16, byte: u8) {
         match addr {
             // OBJSEL
@@ -99,15 +99,15 @@ impl Oam {
             0x2102 => {
                 self.oamaddl = byte;
                 self.process_oamadd();
-            },
+            }
             // OAMADDH
             0x2103 => {
                 self.oamaddh = byte;
                 self.process_oamadd();
-            },
+            }
             // OAMDATA
             0x2104 => self.write_data(byte),
-            
+
             _ => unreachable!(),
         }
     }
@@ -166,7 +166,7 @@ impl Oam {
     /// |       |   ++++-+++0- OAM priority rotation index
     /// |       +------------- OAM table select (0 = 256 word table, 1 = 16 word table)
     /// +--------------------- OAM priority rotation (1 = enable)
-    /// 
+    ///
     /// On write: Update OAMADD
     ///           internal_oamadd = (OAMADD & $1FF) << 1
     fn process_oamadd(&mut self) {
@@ -187,7 +187,7 @@ impl Oam {
         let pointer = to_word!(self.oamaddh, self.oamaddl) as usize;
         self.pointer = (pointer & 0x1FF) << 1;
     }
-    
+
     fn read_data(&mut self) -> Option<u8> {
         // Read val if blanking, else read nothing (emulate open bus)
         let val = if fv_blanking!() {

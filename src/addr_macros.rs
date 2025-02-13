@@ -1,6 +1,6 @@
 #[macro_export]
 /// Separates long address `$BBHHLL` as tuple `($BB, $HHLL)`
-/// 
+///
 /// Any bit above the 24th in `long_addr` is ignored
 macro_rules! separate_bank_hhll_addr {
     ($long_addr: expr) => {{
@@ -18,10 +18,9 @@ macro_rules! to_word {
     };
 }
 
-
 #[macro_export]
 /// Combines `pointer_bank ($BB)`, `pointer_high ($HH)`, `pointer_low ($LL)` into `$BBHHLL`
-/// 
+///
 /// Or combines `$bank ($BB)` and `$hhll ($HHLL)` into `$BBHHLL`
 macro_rules! to_long {
     ($bank: expr, $hh: expr, $ll: expr) => {{
@@ -30,18 +29,18 @@ macro_rules! to_long {
 
     ($bank: expr, $hhll: expr) => {
         to_long!($bank, ($hhll >> 8) as u8, $hhll as u8)
-    }
+    };
 }
 
 #[macro_export]
 /// Set bank of address specified by `$addr`
-/// 
-/// The lower 8 bits of `$bank` are used as the new bank, 
+///
+/// The lower 8 bits of `$bank` are used as the new bank,
 /// and the lower 16 bits of `$addr` makes up the rest of the address
 macro_rules! set_bb {
     ($addr: expr, $bank: expr) => {
         ($addr as u32) & 0x00FFFF | ((($bank as u32) & 0xFF) << 16)
-    }
+    };
 }
 
 #[macro_export]
@@ -51,14 +50,12 @@ macro_rules! set_hh {
     };
 }
 
-
 #[macro_export]
 macro_rules! set_ll {
     ($addr: expr, $ll: expr) => {
         ($addr as u32) & 0xFFFF00 | ($ll as u32) & 0xFF
     };
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -83,7 +80,7 @@ mod tests {
     fn test_separate_hhll_bank_address() {
         let addr = 0x123456;
         let (bb, hhll) = separate_bank_hhll_addr!(addr);
-        
+
         assert_eq!(bb, 0x12);
         assert_eq!(hhll, 0x3456);
     }

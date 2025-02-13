@@ -1,6 +1,6 @@
-use crate::{nth_bit, bit_slice, bit_set};
+use crate::{bit_set, bit_slice, nth_bit};
 
-/// Representation for a single tile of bg, 
+/// Representation for a single tile of bg,
 /// used as an abstraction layer for the data held in VRAM for a single tile
 pub struct Tile {
     pub v_flip: bool,

@@ -1,11 +1,12 @@
-use std::sync::{Arc, Mutex};
+use self::{
+    instructions::instructions::Instruction, memory::CpuMemory,
+    processorstatusflag::ProcessorStatusFlags,
+};
 
-use self::{processorstatusflag::ProcessorStatusFlags, instructions::instructions::Instruction, memory::CpuMemory};
-
-pub mod processorstatusflag;
-pub mod instructions;
 mod execute;
+pub mod instructions;
 pub mod memory;
+pub mod processorstatusflag;
 
 pub enum CpuError {
     PlaceHolder,
@@ -41,18 +42,18 @@ pub struct Cpu {
     y: u16,
 
     /// Direct page register
-    /// 
+    ///
     /// Holds the memory bank address the CPU is currently accessing
     dp: u16,
     /// Data bank register
-    /// 
+    ///
     /// Any data that is read from memory is first stored in this register
     dbr: u8,
 
     /// Memory read/write register, either holds last byte that is read from memory or the byte that should be written to memory
-    /// 
+    ///
     /// When `Cpu::mem_read(addr)` is called, mdr will be updated if the address specified by `addr` is not open bus, else it will keep the old value
-    /// 
+    ///
     /// When `Cpu::mem_write(addr)` is called, the byte in `mdr` will be written to the address specified by `addr`
     mdr: u8,
 
@@ -61,7 +62,6 @@ pub struct Cpu {
 
     /// Amount of cycles to wait before next instruction is called (simulates instructions taking x cycles)
     wait_cycles: usize,
-
 }
 
 impl Cpu {
@@ -113,8 +113,13 @@ impl Cpu {
             return self.execute_irq();
         }
         // IRQ pending and irq disabled AND WAI flag on -> execute instruction as normal
-        else if irq_pending && self.status.contains(ProcessorStatusFlags::IRQdisable | ProcessorStatusFlags::WaitForInterrupt) {
-            self.status.clear_flag(ProcessorStatusFlags::WaitForInterrupt);
+        else if irq_pending
+            && self
+                .status
+                .contains(ProcessorStatusFlags::IRQdisable | ProcessorStatusFlags::WaitForInterrupt)
+        {
+            self.status
+                .clear_flag(ProcessorStatusFlags::WaitForInterrupt);
         }
 
         // read & execute instruction
@@ -136,7 +141,7 @@ impl Cpu {
     /// Read from memory using a 24 bit address, result is stored in `self.mdr`
     pub fn mem_read_long(&mut self, low_addr: u32, high_addr: u32) -> u16 {
         let low_byte = self.mem_read(low_addr) as u16;
-        let high_byte = self.mem_read(high_addr) as u16; 
+        let high_byte = self.mem_read(high_addr) as u16;
         (high_byte << 8) | low_byte
     }
 
@@ -170,8 +175,8 @@ impl Cpu {
         }
     }
 
-    /// Returns accumulator value as either 16 bit or 8 bits depending on accumulator 8 bit flag. 
-    /// 
+    /// Returns accumulator value as either 16 bit or 8 bits depending on accumulator 8 bit flag.
+    ///
     /// 8 bit value is actually just 16 bit value ANDed with `0xF`
     pub fn get_acc(&self) -> u16 {
         match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
@@ -193,13 +198,17 @@ impl Cpu {
     pub fn set_acc_nz_flag(&mut self) {
         self.status.set(ProcessorStatusFlags::Zero, self.acc == 0);
         match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
-            true => self.status.set(ProcessorStatusFlags::Negative, (self.acc as i8) < 0),
-            false => self.status.set(ProcessorStatusFlags::Negative, (self.acc as i16) < 0),
+            true => self
+                .status
+                .set(ProcessorStatusFlags::Negative, (self.acc as i8) < 0),
+            false => self
+                .status
+                .set(ProcessorStatusFlags::Negative, (self.acc as i16) < 0),
         }
     }
 
-    /// Returns x register value as either 16 bit or 8 bits depending on x register 8 bit flag. 
-    /// 
+    /// Returns x register value as either 16 bit or 8 bits depending on x register 8 bit flag.
+    ///
     /// 8 bit value is actually just 16 bit value ANDed with `0xF`
     pub fn get_x(&self) -> u16 {
         match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
@@ -220,14 +229,18 @@ impl Cpu {
     pub fn set_x_nz_flag(&mut self) {
         self.status.set(ProcessorStatusFlags::Zero, self.x == 0);
         match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
-			true => self.status.set(ProcessorStatusFlags::Negative, (self.x as i8) < 0),
-            false => self.status.set(ProcessorStatusFlags::Negative, (self.x as i16) < 0),
-		}
+            true => self
+                .status
+                .set(ProcessorStatusFlags::Negative, (self.x as i8) < 0),
+            false => self
+                .status
+                .set(ProcessorStatusFlags::Negative, (self.x as i16) < 0),
+        }
     }
 
-    /// Returns y register value as either 16 bit or 8 bits depending on y register 8 bit flag. 
-    /// 
-    /// 8 bit value is actually just 16 bit value ANDed with `0yF`
+    /// Returns y register value as either 16 bit or 8 bits depending on y register 8 bit flag.
+    ///
+    /// 8 bit value is actually just 16 bit value ANDed with `0xF`
     pub fn get_y(&self) -> u16 {
         match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
             true => self.y & 0xF,
@@ -235,7 +248,7 @@ impl Cpu {
         }
     }
 
-    /// Set y, ANDS `val` with `0yF` if 8 bit mode for y register is enabled
+    /// Set y, ANDS `val` with `0xF` if 8 bit mode for y register is enabled
     pub fn set_y(&mut self, val: u16) {
         match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
             true => self.y = val & 0xF,
@@ -247,13 +260,17 @@ impl Cpu {
     pub fn set_y_nz_flag(&mut self) {
         self.status.set(ProcessorStatusFlags::Zero, self.y == 0);
         match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
-			true => self.status.set(ProcessorStatusFlags::Negative, (self.y as i8) < 0),
-            false => self.status.set(ProcessorStatusFlags::Negative, (self.y as i16) < 0),
-		}
+            true => self
+                .status
+                .set(ProcessorStatusFlags::Negative, (self.y as i8) < 0),
+            false => self
+                .status
+                .set(ProcessorStatusFlags::Negative, (self.y as i16) < 0),
+        }
     }
 
     /// Puts `byte` in `self.mdr` and then pushes it onto the stack, decrement stack pointer after
-    /// 
+    ///
     /// Locks `self.memory`
     pub fn push_byte_stack(&mut self, byte: u8) {
         self.mem_write(self.sp as u32, byte);
@@ -269,16 +286,15 @@ impl Cpu {
     }
 
     /// Push a long onto the stack, first pushes high byte, then low byte
-    /// 
+    ///
     /// if `sp = $1FFE` and `long = $#1234`, then `$1FFE = $#12` and `$1FFD = $#34`
     pub fn push_long_stack(&mut self, long: u16) {
         self.push_byte_stack((long >> 8) as u8);
         self.push_byte_stack(long as u8);
     }
 
-
     /// Pulls long from stack, assumption is that high byte is stored before low byte of long (see [push_long_stack])
-    /// 
+    ///
     /// It should be no problem if the lock is lost in between calls to [pull_byte_stack], as no other component of the SNES should read/write from stack or edit the stack pointer
     pub fn pull_long_stack(&mut self) -> u16 {
         let lower = self.pull_byte_stack() as u16;

@@ -27,7 +27,6 @@ impl Mode7 {
             latch: 0,
             hscroll: 0,
             vscroll: 0,
-            
         }
     }
 
@@ -62,5 +61,4 @@ impl Mode7 {
     pub fn write_vscroll(&mut self, byte: u8) {
         self.vscroll = self.write_latch(byte);
     }
-
 }

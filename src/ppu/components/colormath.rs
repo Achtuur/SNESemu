@@ -1,4 +1,7 @@
-use crate::{bit_set, bit_slice, ppu::{rgb::Rgba, layer::Layer}};
+use crate::{
+    bit_set, bit_slice,
+    ppu::{layer::Layer, rgb::Rgba},
+};
 
 enum Region {
     Enabled,
@@ -27,7 +30,7 @@ pub struct ColorMath {
     sub_transparent_region: Region,
     main_black_region: Region,
     operator_type: OperatorType,
-    
+
     pub addend: Addend,
     pub direct_color_mode: bool,
     pub obj_math_enable: bool,
@@ -52,17 +55,19 @@ impl ColorMath {
     }
 
     /// Applies color math to input layer and outputs Rgba value for this pixel
-    /// 
+    ///
     /// If math is not enabled for a layer, it simply outputs the main screen layer's color
-    /// 
+    ///
     /// If one of the screen's data is transparent, the output color is equal to the non-transparent screen
-    /// 
+    ///
     /// If both are transparent, the output is black
     pub fn apply_math(&self, main_layer: Layer, sub_layer: Layer) -> Rgba {
-
-        match (main_layer.inner_rgba() == Rgba::default(), sub_layer.inner_rgba() == Rgba::default()) {
+        match (
+            main_layer.inner_rgba() == Rgba::default(),
+            sub_layer.inner_rgba() == Rgba::default(),
+        ) {
             // Both are non transparent, move on to do math
-            (false, false) => {},
+            (false, false) => {}
             // Sub screen is transparent and main screen is non-transparent -> output main screen
             (false, true) => return main_layer.inner_rgba(),
             // Main screen is transparent and subscreen is non-transparent -> output sub screen
@@ -80,10 +85,10 @@ impl ColorMath {
 
             Layer::Bg4Low(_) | Layer::Bg4High(_) => self.bg_math_enable[3],
 
-            Layer::Sprite0(_, p) | Layer::Sprite1(_, p) | 
-            Layer::Sprite2(_, p) | Layer::Sprite3(_, p) => {
-                p >= 4 && p <= 7 && self.obj_math_enable
-            },
+            Layer::Sprite0(_, p)
+            | Layer::Sprite1(_, p)
+            | Layer::Sprite2(_, p)
+            | Layer::Sprite3(_, p) => (4..=7).contains(&p) && self.obj_math_enable,
 
             _ => unreachable!(),
         };
@@ -105,11 +110,11 @@ impl ColorMath {
     }
 
     /// Apply `self.region` on color switch that is obtained from window logic for mainscreen
-    /// 
+    ///
     /// # Inputs
-    /// 
+    ///
     /// * `clr_w`: Whether the 'color' layer is inside the window
-    /// 
+    ///
     /// # Returns
     ///
     /// * `Region::Enabled => true`
@@ -126,11 +131,11 @@ impl ColorMath {
     }
 
     /// Apply `self.region` on color switch that is obtained from window logic for subscreen
-    /// 
+    ///
     /// # Inputs
-    /// 
+    ///
     /// * `clr_w`: Whether the 'color' layer is inside the window
-    /// 
+    ///
     /// # Returns
     ///
     /// * `Region::Enabled => true`
@@ -154,7 +159,7 @@ impl ColorMath {
             0x2131 => self.write_cgadsub(byte),
             //COLDATA
             0x2132 => self.write_coldata(byte),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -163,7 +168,7 @@ impl ColorMath {
 
         self.addend = match bit_set!(byte, 1) {
             false => Addend::FixedColor,
-            true => Addend::Subscreen
+            true => Addend::Subscreen,
         };
 
         self.sub_transparent_region = match bit_slice!(byte, 4, 5) {
@@ -211,5 +216,4 @@ impl ColorMath {
             self.fixed_color.set_b(c);
         }
     }
-
 }

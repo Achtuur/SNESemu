@@ -1,8 +1,13 @@
-use pix_engine::{prelude::{Engine, PixResult, PixEngine, Color, Font}, state::PixState, shape::Point, random, line_};
 use pix_engine::color;
 use pix_engine::rgb;
+use pix_engine::{
+    prelude::{Color, PixEngine, PixResult},
+    random,
+    shape::Point,
+    state::PixState,
+};
 
-use super::{SCREEN_WIDTH, NTSC_SCREEN_HEIGHT, rgb::Rgba};
+use super::{rgb::Rgba, NTSC_SCREEN_HEIGHT, SCREEN_WIDTH};
 pub struct ScreenApp {
     scanline: usize,
     pixels: Vec<Rgba>,
@@ -12,7 +17,7 @@ impl ScreenApp {
     pub fn new() -> Self {
         ScreenApp {
             scanline: 0,
-            pixels: vec![Rgba::default(); (NTSC_SCREEN_HEIGHT * SCREEN_WIDTH) as usize],
+            pixels: vec![Rgba::default(); NTSC_SCREEN_HEIGHT * SCREEN_WIDTH],
         }
     }
 
@@ -24,8 +29,8 @@ impl ScreenApp {
 
     /// Set pixels for a single scanline
     pub fn set_scanline(&mut self, scanline: usize, pix: &[Rgba]) {
-        let i = scanline * SCREEN_WIDTH as usize;
-        self.pixels[i..i+SCREEN_WIDTH as usize].clone_from_slice(pix);
+        let i = scanline * SCREEN_WIDTH;
+        self.pixels[i..i + SCREEN_WIDTH].clone_from_slice(pix);
     }
 
     /// Set all pixels at once
@@ -64,7 +69,6 @@ impl PixEngine for ScreenApp {
     // Main update/render loop. Called as often as possible unless
     // `target_frame_rate` was set with a value. (Required)
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-
         self.render_screen(s);
 
         let mut i: u16 = 0;
@@ -73,19 +77,19 @@ impl PixEngine for ScreenApp {
         let mut l: u16 = 0;
 
         let v = (0..SCREEN_WIDTH * NTSC_SCREEN_HEIGHT)
-        .map(|_| {
-            i = i.wrapping_add(1) % Rgba::MAX_RGB_VALUE as u16;
-            j = (random!(10) + i * 10) % Rgba::MAX_RGB_VALUE as u16;
-            k = (random!(1) + j * 6) % Rgba::MAX_RGB_VALUE as u16;
-            l = (random!(8) + k * 7) % Rgba::MAX_RGB_VALUE as u16;
-            Rgba::new(i as u8, j as u8, k as u8, l as u8)
-        })
-        .collect::<Vec<Rgba>>();
+            .map(|_| {
+                i = i.wrapping_add(1) % Rgba::MAX_RGB_VALUE as u16;
+                j = (random!(10) + i * 10) % Rgba::MAX_RGB_VALUE as u16;
+                k = (random!(1) + j * 6) % Rgba::MAX_RGB_VALUE as u16;
+                l = (random!(8) + k * 7) % Rgba::MAX_RGB_VALUE as u16;
+                Rgba::new(i as u8, j as u8, k as u8, l as u8)
+            })
+            .collect::<Vec<Rgba>>();
 
         // self.set_scanline(self.scanline, &v);
         self.set_pixels(&v);
         self.scanline += 1;
-        self.scanline %= NTSC_SCREEN_HEIGHT as usize;
+        self.scanline %= NTSC_SCREEN_HEIGHT;
         Ok(())
     }
 

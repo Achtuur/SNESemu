@@ -1,10 +1,8 @@
-use super::{SCREEN_WIDTH, H_BLANK, NTSC_SCREEN_HEIGHT, V_BLANK};
-
+use super::{H_BLANK, NTSC_SCREEN_HEIGHT, SCREEN_WIDTH, V_BLANK};
 
 pub const HOR_SCANLINES: usize = 338;
 pub const NTSC_VER_SCANLINES: usize = 261;
 pub const PAL_VER_SCANLINES: usize = 311;
-
 
 /// This struct emulates the electron beam in a CRT tv,
 /// keeping track of current x and y position of the beam and setting V and H blank accordingly
@@ -12,7 +10,6 @@ pub struct Scanline {
     pub x: usize,
     pub y: usize,
     pub scanline_sprites: usize,
-
 }
 
 impl Scanline {
@@ -48,6 +45,5 @@ impl Scanline {
             *V_BLANK.write().unwrap() = false;
             self.y = 0;
         }
-
     }
 }

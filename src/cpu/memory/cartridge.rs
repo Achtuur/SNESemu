@@ -57,16 +57,16 @@ impl CartridgeMetadata {
             has_copier_bytes: false,
         }
     }
-    
+
     pub fn set_dev_id(&mut self, dev_id_bytes: &[u8]) {
         if self.dev_id.is_empty() {
             self.dev_id = std::str::from_utf8(dev_id_bytes).unwrap().to_string();
         }
     }
-    
+
     pub fn set_region(&mut self, region_id: u8) {
         use CartridgeRegion::*;
-        if matches!(self.region, Unidentified) {       
+        if matches!(self.region, Unidentified) {
             self.region = match region_id {
                 0x00 => Japan,
                 0x01 => NorthAmerica,
@@ -90,25 +90,25 @@ impl CartridgeMetadata {
             };
         }
     }
-    
+
     pub fn set_version(&mut self, version: u8) {
         if self.version == 0 {
             self.version = version;
         }
     }
-    
+
     pub fn set_title(&mut self, title_bytes: &[u8]) {
         if self.title.is_empty() {
             self.title = std::str::from_utf8(title_bytes).unwrap().to_string();
         }
     }
-    
+
     pub fn set_maker_code(&mut self, maker_code: String) {
         if self.maker_code.is_empty() {
             self.maker_code = maker_code;
         }
     }
-    
+
     pub fn set_game_code(&mut self, game_code: String) {
         if self.game_code.is_empty() {
             self.game_code = game_code;
@@ -129,4 +129,3 @@ impl CartridgeMetadata {
         }
     }
 }
-

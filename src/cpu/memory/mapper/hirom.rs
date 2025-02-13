@@ -11,72 +11,71 @@ const SRAM_BANK_SIZE: usize = 0x2000;
 /// HiROM mapper, more information can be found on [the snesdev wiki](https://snes.nesdev.org/wiki/Memory_map#HiROM)
 pub struct HiROM {
     /// Save RAM
-    /// 
+    ///
     /// Mapped in banks `0x70` to `0x7D` from `0x0000` to `0x7FFF`
-    /// 
+    ///
     /// Todo: change this to a hashmap/lis or something more memory efficient
     sram: Vec<u8>,
 
     /// Number of SRAM banks, depends on sram size and mapper
-    /// 
+    ///
     /// In HiROM, `sram_banks = ram_size_bytes / 0x2000`
     sram_banks: usize,
 
     /// ROM read from the cartridge
-    /// 
+    ///
     /// Mapped in banks `0x80 - 0xFF` from `0x8000 - 0xFFFF`, mirrored in `0x00 - 0x7D` from `0x8000 - 0xFFFF`
     rom: Vec<u8>,
 
     /// Number of ROM banks, depends on rom size and mapper
-    /// 
+    ///
     /// In LoROM, `rom_banks = rom_size_bytes / 0xFFFF`
     rom_banks: usize,
 }
 
 impl HiROM {
     pub fn new() -> Self {
-        HiROM { 
+        HiROM {
             sram: Vec::new(),
             rom: Vec::new(),
             sram_banks: 0,
             rom_banks: 0,
-            
         }
     }
 
     /// Read a byte from SRAM addressing range
     pub fn read_sram(&self, long_addr: u32) -> Option<u8> {
         if let Some(i) = self.sram_index_from_long_addr(long_addr) {
-            return Some(self.sram[i as usize]);
+            return Some(self.sram[i]);
         }
         None
     }
-    
+
     /// Write a byte to SRAM addressing range
     pub fn write_sram(&mut self, long_addr: u32, value: u8) {
         if let Some(i) = self.sram_index_from_long_addr(long_addr) {
-            self.sram[i as usize] = value;
+            self.sram[i] = value;
         }
     }
-    
+
     /// Returns index for internal sram vector based on `long_addr`
     fn sram_index_from_long_addr(&self, long_addr: u32) -> Option<usize> {
         let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
-        
+
         let bank_i = match bank {
             0x30..=0x3F => bank - 0x30,
             0xB0..=0xBF => bank - 0xB0,
-            _ => unreachable!()
+            _ => unreachable!(),
         } as usize;
-        
+
         // Mirror bank index if needed
         // With size of 2kB and 8 kB bank_i is always 0, meaning every bank is a mirror of the first one
         let bank_i = bank_i % self.sram_banks;
-        
+
         // Mirror hhll if needed (only applies to sram size of 2kB)
         // With HiROM, hhll cannot be mirrored, but it's kept in just in case :)
         let hhll_i = hhll as usize % self.get_sram_size();
-        
+
         let i = bank_i * SRAM_BANK_SIZE + hhll_i;
         Some(i)
     }
@@ -101,12 +100,11 @@ impl HiROM {
         // calculate final index using bank index and hhll index
         let i = bank_i * ROM_BANK_SIZE + hi_lo_byte_i;
 
-        Some(self.rom[i as usize])
+        Some(self.rom[i])
     }
 }
 
 impl Mappermode for HiROM {
-
     fn read(&self, long_addr: u32) -> Option<u8> {
         let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
         match (bank, hhll) {
@@ -149,7 +147,7 @@ impl Mappermode for HiROM {
     fn get_rom_size(&self) -> usize {
         self.rom.len()
     }
-    
+
     fn set_ram_size(&mut self, size: u8) {
         self.sram = vec![0; (1 << size) * 1024];
         self.sram_banks = std::cmp::max(1, self.get_sram_size() / SRAM_BANK_SIZE);

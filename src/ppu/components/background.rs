@@ -46,14 +46,13 @@ impl Background {
         }
     }
 
-
     /// Write to BGxSC register ($2107 to 210A for BG 1-4)
-    /// 
+    ///
     /// `AAAA AAYX`
-    /// 
+    ///
     /// * Tilemap VRAM address (A) (highest 5 bits)
-    /// * vertical tilemap count (Y) 
-    /// * horizontal tilemap count (X). 
+    /// * vertical tilemap count (Y)
+    /// * horizontal tilemap count (X).
     pub fn write_bgxsc_reg(&mut self, byte: u8) {
         self.tilemap_vram_addr = (byte as u16) << 10;
         self.vertical_tilemap_count = (byte >> 1) & 1;
@@ -61,7 +60,7 @@ impl Background {
     }
 
     /// Write to BGxyNBA register
-    /// 
+    ///
     /// Only lower bytes will be read so for BG2 and BG4
     /// this will have to be done outside this function
     pub fn write_base_address(&mut self, byte: u8) {
@@ -69,8 +68,7 @@ impl Background {
     }
 
     pub fn write_hscroll(&mut self, byte: u8, bglatch: u8) {
-        let ll = (bglatch & !SEVEN) as u16 | 
-        (self.scroll_x >> 8) & SEVEN as u16;
+        let ll = (bglatch & !SEVEN) as u16 | (self.scroll_x >> 8) & SEVEN as u16;
 
         let val = to_word!(byte, ll);
         self.scroll_x = val & 0x3FF;
@@ -100,9 +98,9 @@ impl Background {
     }
 
     /// Sets character size based on `size`
-    /// 
+    ///
     /// `size == 0` sets `self.char_size` to `8`
-    /// 
+    ///
     /// `size == 1` sets `self.char_size` to `16`
     pub fn set_char_size(&mut self, size: bool) {
         self.char_size = match size {

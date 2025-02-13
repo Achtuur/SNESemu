@@ -1,4 +1,4 @@
-use crate::{separate_bank_hhll_addr, set_ll, set_bb, set_hh};
+use crate::{separate_bank_hhll_addr, set_bb, set_hh, set_ll};
 
 /// Total bytes in RAM
 const RAM_SIZE: usize = 2 * 0xFFFF;
@@ -15,18 +15,18 @@ pub struct Ram {
 
 impl Ram {
     pub fn new() -> Self {
-        Ram { 
+        Ram {
             bytes: [0_u8; RAM_SIZE],
             pointer: 0,
         }
     }
 
     /// Read a byte from RAM
-    /// 
+    ///
     /// # Important
-    /// 
+    ///
     /// It is assumed this function is only called from `Memory::read()` meaning `long_addr` is assumed to always be within valid range with mirrors.
-    /// 
+    ///
     /// Ie, if `hhll > $2000` then `bank == $7E | $7F` and the other way around with the mirrored sections
     pub fn read(&mut self, long_addr: u32) -> Option<u8> {
         match long_addr {
@@ -37,11 +37,11 @@ impl Ram {
     }
 
     /// Write a byte to RAM
-    /// 
+    ///
     /// # Important
-    /// 
+    ///
     /// It is assumed this function is only called from `Memory::read()` meaning `long_addr` is assumed to always be within valid range with mirrors.
-    /// 
+    ///
     /// Ie, if `hhll > $2000` then `bank == $7E | $7F` and the other way around with the mirrored sections
     pub fn write(&mut self, long_addr: u32, byte: u8) {
         match long_addr {
@@ -56,7 +56,6 @@ impl Ram {
 
             _ => self.write_direct(long_addr, byte),
         }
-        
     }
 
     /// Returns index for internal bytes array from given long_addr
@@ -86,17 +85,10 @@ impl Ram {
     }
 
     fn read_direct(&self, long_addr: u32) -> Option<u8> {
-        let i = Self::index_from_long_addr(long_addr);
-        match Self::index_from_long_addr(long_addr) {
-            Some(i) => Some(self.bytes[i]),
-            None => None,
-        }
+        Self::index_from_long_addr(long_addr).map(|i| self.bytes[i])
     }
 
     fn write_direct(&mut self, long_addr: u32, byte: u8) {
-        match Self::index_from_long_addr(long_addr) {
-            Some(i) => self.bytes[i] = byte,
-            None => {},
-        }
+        Self::index_from_long_addr(long_addr).inspect(|i| self.bytes[*i] = byte);
     }
 }

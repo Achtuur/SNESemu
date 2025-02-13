@@ -2,14 +2,14 @@ use super::Mappermode;
 
 pub struct ExHiROM {
     /// Save RAM
-    /// 
+    ///
     /// Mapped in banks `0x70` to `0x7D` from `0x0000` to `0x7FFF`
-    /// 
+    ///
     /// Todo: change this to a hashmap/lis or something more memory efficient
     sram: Vec<u8>,
 
     /// ROM read from the cartridge
-    /// 
+    ///
     /// Mapped in banks `0x80 - 0xFF` from `0x8000 - 0xFFFF`, mirrored in `0x00 - 0x7D` from `0x8000 - 0xFFFF`
     rom: Vec<u8>,
 }

@@ -8,12 +8,12 @@ macro_rules! nth_bit {
     ($num: expr, $n: expr) => {{
         let m = $n as usize;
         ($num >> m) & 1
-    }}
+    }};
 }
 
 #[macro_export]
 /// Get bits nth to mth bit of num, including mth bit
-/// 
+///
 /// `bit_slice!(0b0110_1001, 0, 3)` returns `0b1001`
 macro_rules! bit_slice {
     ($num: expr, $n: literal, $m: literal) => {{
@@ -43,14 +43,14 @@ macro_rules! bit_slice {
 /// Check if nth bit is set
 macro_rules! bit_set {
     ($num: expr, $n: literal) => {{
-        use crate::nth_bit;
+        use $crate::nth_bit;
         nth_bit!($num, $n) == 1
     }};
 
     ($num: expr, $n: expr) => {{
-        use crate::nth_bit;
+        use $crate::nth_bit;
         nth_bit!($num, $n) == 1
-    }}
+    }};
 }
 
 #[macro_export]
@@ -64,14 +64,14 @@ macro_rules! bank_byte {
 macro_rules! high_byte {
     ($num: expr) => {
         ($num >> 8) as u8
-    }
+    };
 }
 
 #[macro_export]
 macro_rules! low_byte {
     ($num: expr) => {
         $num as u8
-    }
+    };
 }
 
 #[cfg(test)]

@@ -2,9 +2,7 @@ use core::ops::{Add, Sub};
 
 use crate::{bit_slice, nth_bit};
 
-
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Rgba {
     r: u8,
     g: u8,
@@ -14,14 +12,39 @@ pub struct Rgba {
 
 impl Rgba {
     pub const MAX_RGB_VALUE: u8 = 0b11111;
-    pub const BLACK:    Rgba = Rgba{ r: 0, g: 0, b: 0, a: 1};
-    pub const RED:      Rgba = Rgba{ r: Self::MAX_RGB_VALUE, g: 0, b: 0, a: 1};
-    pub const GREEN:    Rgba = Rgba{ r: 0, g: Self::MAX_RGB_VALUE, b: 0, a: 1};
-    pub const BLUE:     Rgba = Rgba{ r: 0, g: 0, b: Self::MAX_RGB_VALUE, a: 1};
-    pub const WHITE:    Rgba = Rgba{ r: Self::MAX_RGB_VALUE, g: Self::MAX_RGB_VALUE, b: Self::MAX_RGB_VALUE, a: Self::MAX_RGB_VALUE};
+    pub const BLACK: Rgba = Rgba {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 1,
+    };
+    pub const RED: Rgba = Rgba {
+        r: Self::MAX_RGB_VALUE,
+        g: 0,
+        b: 0,
+        a: 1,
+    };
+    pub const GREEN: Rgba = Rgba {
+        r: 0,
+        g: Self::MAX_RGB_VALUE,
+        b: 0,
+        a: 1,
+    };
+    pub const BLUE: Rgba = Rgba {
+        r: 0,
+        g: 0,
+        b: Self::MAX_RGB_VALUE,
+        a: 1,
+    };
+    pub const WHITE: Rgba = Rgba {
+        r: Self::MAX_RGB_VALUE,
+        g: Self::MAX_RGB_VALUE,
+        b: Self::MAX_RGB_VALUE,
+        a: Self::MAX_RGB_VALUE,
+    };
 
     pub fn new(r: u8, g: u8, b: u8, a: u8) -> Rgba {
-        Rgba {r, g, b, a}
+        Rgba { r, g, b, a }
     }
 
     /// Return Rgba struct from word in SNES CGRAM
@@ -62,8 +85,8 @@ impl Rgba {
     /// Returns `self` as `(r, g, b, a)` using 8 bits per color instead of 5
     pub fn as_highrange_rgba_tuple(&self) -> (u8, u8, u8, u8) {
         (
-            (255 * (self.r as u16) / Self::MAX_RGB_VALUE as u16) as u8, 
-            (255 * (self.g as u16) / Self::MAX_RGB_VALUE as u16) as u8, 
+            (255 * (self.r as u16) / Self::MAX_RGB_VALUE as u16) as u8,
+            (255 * (self.g as u16) / Self::MAX_RGB_VALUE as u16) as u8,
             (255 * (self.b as u16) / Self::MAX_RGB_VALUE as u16) as u8,
             (255 * (self.a as u16) / Self::MAX_RGB_VALUE as u16) as u8,
         )
@@ -87,19 +110,6 @@ impl Rgba {
     }
 }
 
-
-impl Default for Rgba {
-    fn default() -> Rgba {
-        Rgba {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 0,
-        }
-    }
-}
-
-
 impl Add for Rgba {
     type Output = Rgba;
     fn add(self, rhs: Self::Output) -> Self::Output {
@@ -119,7 +129,7 @@ impl Sub for Rgba {
             r: std::cmp::max(0, self.r - rhs.r),
             g: std::cmp::max(0, self.g - rhs.g),
             b: std::cmp::max(0, self.b - rhs.b),
-            a: self.a
+            a: self.a,
         }
     }
 }

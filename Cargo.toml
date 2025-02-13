@@ -6,17 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bitflags = "2.0.2"
+bitflags = "2.6.0"
 lazy_static = "1.4.0"
-pix-engine = "0.7.0"
+pix-engine = "0.8.0"
 
-[profile.release]
-opt-level = 3
-strip = "debuginfo"
-
-[profile.dev]
-opt-level = 0
-
-
-[profile.test]
-opt-level = 0

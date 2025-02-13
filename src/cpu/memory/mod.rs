@@ -1,23 +1,25 @@
+use std::sync::{Arc, Mutex};
 
-use std::sync::{Mutex, Arc};
+use crate::{apu::memory::ApuMemory, ppu::memory::PpuMemory, separate_bank_hhll_addr};
 
-use crate::{ppu::memory::PpuMemory, apu::memory::ApuMemory, separate_bank_hhll_addr};
+use self::{
+    cartridge::{CartridgeMetadata, CartridgeParseError},
+    mapper::{exhirom::ExHiROM, hirom::HiROM, lorom::LoROM, Mappermode},
+    ram::Ram,
+};
 
-use self::{mapper::{Mappermode, lorom::LoROM, hirom::HiROM, exhirom::ExHiROM}, cartridge::{CartridgeParseError, CartridgeMetadata}, ram::Ram};
-
-
+mod cartridge;
 mod mapper;
 mod ram;
-mod cartridge;
 
 /// Struct that represents all memory in the SNES, this is shared between CPU, PPU and APU as they all need to read/write to it
-/// 
+///
 /// Addresses in the SNES are represented by `$BBHHLL`, where `BB` is the bank byte, `HH` is the high byte and `LL` is the low byte.
-/// 
+///
 /// Quadrants are also specified in the same way [this video](https://www.youtube.com/watch?v=-U76YvWdnZM) explaning mapping does.
-/// 
+///
 /// Since rust does not support `u24` natively, `u32` will be used instead and the upper 8 bits are unused and ignored
-/// 
+///
 /// Source used: [snes wiki page](https://snes.nesdev.org/wiki/Memory_map)
 pub struct CpuMemory {
     mapper: Box<dyn Mappermode>,
@@ -49,63 +51,65 @@ impl CpuMemory {
 
     /// Insert cartridge means copying raw bytes to mapper and parsing cartridge info
     pub fn insert_cartridge(&mut self, raw_bytes: &[u8]) -> Result<(), CartridgeParseError> {
-
         // try parse with lorom
         let mut mapper = LoROM::new();
-        if let Ok(()) = self.try_parse(&mut mapper, raw_bytes) { 
+        if let Ok(()) = self.try_parse(&mut mapper, raw_bytes) {
             self.mapper = Box::new(mapper);
-            return Ok(()) 
+            return Ok(());
         }
         // try parse without first 512 bytes
-        if let Ok(()) = self.try_parse(&mut mapper, &raw_bytes[512..]) { 
+        if let Ok(()) = self.try_parse(&mut mapper, &raw_bytes[512..]) {
             self.mapper = Box::new(mapper);
             self.cartridge_metadata.has_copier_bytes = true;
-            return Ok(()) 
+            return Ok(());
         }
-        
+
         // try hirom next
         let mut mapper = HiROM::new();
-        if let Ok(()) = self.try_parse(&mut mapper, raw_bytes) { 
+        if let Ok(()) = self.try_parse(&mut mapper, raw_bytes) {
             self.mapper = Box::new(mapper);
-            return Ok(()) 
+            return Ok(());
         }
         // try parse without first 512 bytes
-        if let Ok(()) = self.try_parse(&mut mapper, &raw_bytes[512..]) { 
+        if let Ok(()) = self.try_parse(&mut mapper, &raw_bytes[512..]) {
             self.mapper = Box::new(mapper);
             self.cartridge_metadata.has_copier_bytes = true;
-            return Ok(()) 
+            return Ok(());
         }
 
         // try exhirom next
         let mut mapper = ExHiROM::new();
-        if let Ok(()) = self.try_parse(&mut mapper, raw_bytes) { 
+        if let Ok(()) = self.try_parse(&mut mapper, raw_bytes) {
             self.mapper = Box::new(mapper);
-            return Ok(()) 
+            return Ok(());
         }
         // try parse without first 512 bytes
-        if let Ok(()) = self.try_parse(&mut mapper, &raw_bytes[512..]) { 
+        if let Ok(()) = self.try_parse(&mut mapper, &raw_bytes[512..]) {
             self.mapper = Box::new(mapper);
             self.cartridge_metadata.has_copier_bytes = true;
-            return Ok(()) 
+            return Ok(());
         }
         Err(CartridgeParseError::HeaderNotFound)
     }
 
-    fn try_parse(&mut self, mapper: &mut impl Mappermode, raw_bytes: &[u8]) -> Result<(), CartridgeParseError> {
+    fn try_parse(
+        &mut self,
+        mapper: &mut impl Mappermode,
+        raw_bytes: &[u8],
+    ) -> Result<(), CartridgeParseError> {
         match mapper.try_parse(raw_bytes) {
             Ok(metadata) => {
                 self.cartridge_metadata = metadata;
                 Ok(())
-            },
+            }
             Err(e) => {
                 mapper.reset();
-                Err(e) 
-            },
+                Err(e)
+            }
         }
     }
 
-
-    /// Read a byte from memory using a 24 bit address, 
+    /// Read a byte from memory using a 24 bit address,
     pub fn read(&mut self, long_addr: u32) -> Option<u8> {
         let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
 
@@ -171,7 +175,7 @@ impl CpuMemory {
     }
 
     /// Get all bytes from sram
-    /// 
+    ///
     /// Can be used to perform save games
     pub fn get_sram_bytes(&self) -> Vec<u8> {
         self.mapper.get_sram_bytes()

@@ -18,48 +18,43 @@ impl CgRam {
             is_fvhblanking: false,
         }
     }
-    
+
     pub fn reset_rwcount(&mut self) {
         self.rw_count = false;
     }
 
     /// Read CGRAM from inside PPU
     pub fn read(&self, addr: u16) -> u16 {
-        self.bytes[(addr as usize) % CGRAM_SIZE as usize]
+        self.bytes[(addr as usize) % CGRAM_SIZE]
     }
-        
+
     /// Read CGRAM using registers in cpu address space
     pub fn read_register(&mut self, addr: u16) -> Option<u8> {
-        
         match addr {
             // CGADD
             0x2121 => None,
             // CGDATA
             0x2122 => None,
             // CGDATAREAD
-            0x213B => {
-                match self.word_address {
-                    0 => Some(0),
-                    _ => self.read_data(),
-                }
+            0x213B => match self.word_address {
+                0 => Some(0),
+                _ => self.read_data(),
             },
             _ => unreachable!(),
         }
     }
-    
+
     pub fn write_register(&mut self, addr: u16, byte: u8) {
         match addr {
             // CGADD
             0x2121 => self.write_word_address(byte),
             // CGDATA
-            0x2122 => {
-                match self.word_address {
-                    0 => {},
-                    _ => self.write_data(byte),
-                }
-            }
+            0x2122 => match self.word_address {
+                0 => {}
+                _ => self.write_data(byte),
+            },
             // CGDATAREAD
-            0x213B => {},
+            0x213B => {}
             _ => unreachable!(),
         }
     }
@@ -70,7 +65,6 @@ impl CgRam {
             self.rw_count = false;
         }
     }
-
 
     fn read_data(&mut self) -> Option<u8> {
         if !fv_blanking!() | h_blanking!() {

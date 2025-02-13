@@ -1,4 +1,4 @@
-use crate::{to_word, nth_bit, bit_slice, high_byte, low_byte, fv_blanking};
+use crate::{bit_slice, fv_blanking, high_byte, low_byte, nth_bit, to_word};
 
 const VRAM_SIZE: usize = 0x8000;
 
@@ -6,14 +6,14 @@ const VRAM_SIZE: usize = 0x8000;
 /// Increment mode for VRAM based on byte written to `$2115`
 enum IncrementMode {
     /// Increment when reading/writing to low VRAM byte
-    /// 
+    ///
     /// `$2118` for write and `$2139` for read respectively
-    LowByte, 
+    LowByte,
 
     /// Increment when reading/writing to high VRAM byte
-    /// 
+    ///
     /// `$2119` for write and `$213A` for read respectively
-    HighByte
+    HighByte,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -26,7 +26,7 @@ enum AddrRemap {
     /// Remap `rrrrrrrY YYcccccP -> rrrrrrrc ccccPYYY` (4bpp)
     FourBpp,
     /// Remap `rrrrrrYY YcccccPP -> rrrrrrcc cccPPYYY` (8bpp)
-    EightBpp
+    EightBpp,
 }
 
 pub struct Vram {
@@ -41,10 +41,9 @@ pub struct Vram {
     incr_amount: u8,
     addr_remap: AddrRemap,
 
-
-    vmain: u8, // $2115
-    vmaddl: u8, // $2116
-    vmaddh: u8, // $2117
+    vmain: u8,   // $2115
+    vmaddl: u8,  // $2116
+    vmaddh: u8,  // $2117
     vmdatal: u8, // $2118
     vmdatah: u8, // $2119
 
@@ -71,7 +70,7 @@ impl Vram {
     }
 
     /// Read directly from bytes, without using registers
-    /// 
+    ///
     /// This is only to be used inside the PPU, as other components cannot actually access this
     pub fn read(&self, addr: u16) -> u16 {
         self.bytes[addr as usize]
@@ -89,7 +88,7 @@ impl Vram {
                     self.update_pointer();
                 }
                 Some(val)
-            },
+            }
             // VMDATAHREAD
             0x213A => {
                 let val = high_byte!(self.latch);
@@ -99,7 +98,7 @@ impl Vram {
                     self.update_pointer();
                 }
                 Some(val)
-            },
+            }
 
             _ => None,
         }
@@ -115,13 +114,13 @@ impl Vram {
                 self.vmaddl = byte;
                 self.update_pointer();
                 self.latch = self.bytes[self.pointer];
-            },
+            }
             // VMADDH
             0x2117 => {
                 self.vmaddh = byte & 0x7F; //ignore high bit
                 self.update_pointer();
                 self.latch = self.bytes[self.pointer];
-            },
+            }
             // VMDATAL
             0x2118 => {
                 self.vmdatal = byte;
@@ -130,7 +129,7 @@ impl Vram {
                     self.increment_addr();
                     self.update_pointer();
                 }
-            },
+            }
             // VMDATAH
             0x2119 => {
                 self.vmdatah = byte;
@@ -139,9 +138,9 @@ impl Vram {
                     self.increment_addr();
                     self.update_pointer();
                 }
-            },
+            }
 
-            _ => {},
+            _ => {}
         }
     }
 
@@ -181,14 +180,14 @@ impl Vram {
             0b11 => AddrRemap::EightBpp,
             _ => unreachable!(),
         };
-        
+
         self.incr_mode = match byte >> 7 {
             0b0 => IncrementMode::LowByte,
             0b1 => IncrementMode::HighByte,
             _ => unreachable!(),
         };
     }
-    
+
     /// Helper function to write `VMDATAH << 8 | VMDATAL` to `self.bytes[pointer]`
     fn write_data(&mut self) {
         if !fv_blanking!() {
@@ -214,7 +213,7 @@ impl Vram {
 }
 
 /// Returns remapped address based on `remap`
-/// 
+///
 /// * `AddrRemap::NoRemap` -- None
 /// * `AddrRemap::TwoBpp` -- Remap rrrrrrrr YYYccccc -> rrrrrrrr cccccYYY
 /// * `AddrRemap::FourBpp` -- Remap rrrrrrrY YYcccccP -> rrrrrrrc ccccPYYY
@@ -226,7 +225,7 @@ fn get_remapped_address(remap: &AddrRemap, addrl: u8, addrh: u8) -> u16 {
             let y = bit_slice!(addrl, 5, 7);
             let ll = addrl << 3 | y;
             to_word!(addrh, ll)
-        },
+        }
         AddrRemap::FourBpp => {
             let p = nth_bit!(addrl, 0);
             let y = nth_bit!(addrh, 0) << 2 | bit_slice!(addrl, 6, 7);
@@ -234,7 +233,7 @@ fn get_remapped_address(remap: &AddrRemap, addrl: u8, addrh: u8) -> u16 {
             let ll = ((addrl << 2) & 0xF0) | p << 3 | y;
             let hh = (addrh & 0xFE) | c;
             to_word!(hh, ll)
-        },
+        }
         AddrRemap::EightBpp => {
             let p = bit_slice!(addrl, 0, 1);
             let y = bit_slice!(addrh, 0, 1) << 1 | nth_bit!(addrl, 7);
@@ -242,6 +241,6 @@ fn get_remapped_address(remap: &AddrRemap, addrl: u8, addrh: u8) -> u16 {
             let ll = ((addrl << 3) & 0xD0) | p << 3 | y;
             let hh = (addrh & 0xFC) | c;
             to_word!(hh, ll)
-        },
+        }
     }
 }

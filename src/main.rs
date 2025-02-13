@@ -1,17 +1,16 @@
 #![allow(dead_code)]
 
-mod ppu;
-mod cpu;
+pub mod addr_macros;
 mod apu;
 pub mod bit_macros;
-pub mod addr_macros;
+mod cpu;
+mod ppu;
 
 use apu::memory::ApuMemory;
 
 use ppu::memory::PpuMemory;
 
-use crate::{cpu::Cpu, ppu::Ppu, apu::Apu};
-
+use crate::{apu::Apu, cpu::Cpu, ppu::Ppu};
 
 #[macro_export]
 /// `arc_mut!(x) = Arc::new(Mutex::new(x))`

@@ -2,7 +2,6 @@ use crate::{bit_set, bit_slice, fv_blanking};
 
 use super::masklogic::MaskLogic;
 
-
 pub struct PpuState {
     pub force_blank: bool,
     pub brightness: u8,
@@ -28,13 +27,12 @@ pub struct PpuState {
     pub bg3_prio: bool,
 
     /// Background size per background.
-    /// 
+    ///
     /// False: 8x8, true: 16x16
     pub bg_size: [bool; 4],
 
     pub window_obj_masklogic: MaskLogic,
     pub window_clr_masklogic: MaskLogic,
-
 }
 
 impl PpuState {
@@ -78,7 +76,6 @@ impl PpuState {
                 self.bg_size[i] = bit_set!(byte, i + 4);
             }
         }
-        
     }
 
     /// Write to `$2106`
@@ -94,7 +91,7 @@ impl PpuState {
             self.enable_obj_main = bit_set!(byte, 5);
         }
     }
-    
+
     /// Write to `$212D`
     pub fn write_ts(&mut self, byte: u8) {
         if fv_blanking!() {
@@ -118,7 +115,7 @@ impl PpuState {
             self.enabled_window_obj_main = bit_set!(byte, 5);
         }
     }
-    
+
     /// Write to `$212F`
     pub fn write_tsw(&mut self, byte: u8) {
         if fv_blanking!() {

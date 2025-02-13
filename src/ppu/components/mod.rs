@@ -1,6 +1,6 @@
 pub mod background;
 pub mod colormath;
-pub mod mode7;
-pub mod window;
-pub mod ppustate;
 pub mod masklogic;
+pub mod mode7;
+pub mod ppustate;
+pub mod window;

@@ -1,12 +1,10 @@
-pub mod lorom;
-pub mod hirom;
 pub mod exhirom;
+pub mod hirom;
+pub mod lorom;
 
 use super::cartridge::{CartridgeMetadata, CartridgeParseError};
 
-
 pub trait Mappermode {
-
     /// Handles reading memory in the following regions:
     /// * Q1 upper half
     /// * Q2
@@ -36,52 +34,52 @@ pub trait Mappermode {
     fn get_sram_bytes(&self) -> Vec<u8>;
 
     /// Copy raw bytes to internal sram vector, overwrites any previously existing value!
-    /// 
+    ///
     /// Only for use when loading a save
     fn copy_bytes_to_sram(&mut self, bytes: &[u8]);
 
     /// Returns memory map mode number that is expected to be found in header
     fn get_memory_map_mode(&self) -> u8;
 
-
     /// Reset mapper to initial state
-    /// 
+    ///
     /// clears ram and rom completely
     fn reset(&mut self);
-    
+
     /// Try parse cartridge using this mapper mode
-    /// 
+    ///
     /// # Inputs
-    /// 
+    ///
     /// * `raw_bytes` - raw bytes from the cartridge
     fn try_parse(&mut self, raw_bytes: &[u8]) -> Result<CartridgeMetadata, CartridgeParseError> {
-
         /// Macro that does self.read(addr).unwrap()
         macro_rules! readf {
             ($addr: expr) => {
                 self.read($addr).unwrap()
-            }
+            };
         }
-        
+
         self.copy_bytes_to_rom(raw_bytes);
 
         let checksum = (readf!(0xFFDC) as u16) << 8 | readf!(0xFFDD) as u16;
         let checksum_compl = (readf!(0xFFDE) as u16) << 8 | readf!(0xFFDF) as u16;
 
         if checksum + checksum_compl != 0xFFFF {
-            return Err(CartridgeParseError::ChecksumMismatch)
+            return Err(CartridgeParseError::ChecksumMismatch);
         }
 
         let mut metadata = CartridgeMetadata::new();
 
-        // header version 3 
+        // header version 3
         if readf!(0xFFDA) == 0x33 {
             // First two bytes are developer ID
             let dev_id = &[readf!(0x00FFB0), readf!(0x00FFB1)]; // raw bytes
             metadata.set_dev_id(dev_id);
-            
+
             // Next four bytes are game code
-            let game_code = (0..4).map(|offset| readf!(0xFFB2 + offset)).collect::<Vec<u8>>();
+            let game_code = (0..4)
+                .map(|offset| readf!(0xFFB2 + offset))
+                .collect::<Vec<u8>>();
             let game_code = std::str::from_utf8(&game_code).unwrap().to_string();
 
             let ex_flash_size = readf!(0xFFBC); // 1 << exflash_size kB
@@ -91,19 +89,23 @@ pub trait Mappermode {
 
             metadata.set_game_code(game_code);
             // metadata.set_chipset_subtype(chipset_subtype);
-
         }
         // header version 2
         else if readf!(0xFFD4) == 0 && (0..15).all(|offset| readf!(0xFFB0 + offset) == 0x00) {
             let chipset_subtype = readf!(0xFFBF);
         }
-        
+
         // Normal header - starts at $FFC0
 
-        let game_name = (0..21).map(|offset| readf!(0xFFC0 + offset)).collect::<Vec<u8>>();
+        let game_name = (0..21)
+            .map(|offset| readf!(0xFFC0 + offset))
+            .collect::<Vec<u8>>();
 
         // check if every character except the last is either a space or a capital letter
-        if game_name[0..20].iter().any(|byte| (*byte != 0x20 && *byte < 0x41) || *byte > 0x5A) {
+        if game_name[0..20]
+            .iter()
+            .any(|byte| (*byte != 0x20 && *byte < 0x41) || *byte > 0x5A)
+        {
             return Err(CartridgeParseError::InvalidGameName);
         }
 
@@ -115,16 +117,16 @@ pub trait Mappermode {
         let map_mode = readf!(0xFFD5);
 
         if map_mode & 0x0F != self.get_memory_map_mode() {
-            return Err(CartridgeParseError::WrongMapperMode)
+            return Err(CartridgeParseError::WrongMapperMode);
         }
 
         let cart_type = readf!(0xFFD6);
-        
+
         let rom_size = readf!(0xFFD7); // 1 << rom_size kB
 
         if (1 << rom_size) >= raw_bytes.len() {
-            return Err(CartridgeParseError::RomSizeMismatch)
-        } 
+            return Err(CartridgeParseError::RomSizeMismatch);
+        }
 
         metadata.set_rom_size(rom_size);
 
@@ -144,5 +146,4 @@ pub trait Mappermode {
 
         Ok(metadata)
     }
-
 }

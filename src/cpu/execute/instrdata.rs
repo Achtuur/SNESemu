@@ -1,5 +1,10 @@
-use crate::{cpu::{instructions::{AddressingMode, instructions::Instruction}, Cpu}, to_long};
-
+use crate::{
+    cpu::{
+        instructions::{instructions::Instruction, AddressingMode},
+        Cpu,
+    },
+    to_long,
+};
 
 /// Container for holding data that an instruction can take as input
 pub struct InstrData {
@@ -15,37 +20,42 @@ pub struct InstrData {
 
 impl InstrData {
     pub fn new(data: u16, low_addr: u32, high_addr: u32, long_addr: u32) -> Self {
-        InstrData { low_addr, high_addr, long_addr, data }
+        InstrData {
+            low_addr,
+            high_addr,
+            long_addr,
+            data,
+        }
     }
 }
 
 impl Cpu {
     /// Returns `InstrData` struct based on instruction addressing mode
-    /// 
+    ///
     /// Source: [6502.org](http://www.6502.org/tutorials/65c816opcodes.html)
     pub fn get_instruction_data(&mut self, instr: &Instruction) -> InstrData {
         use AddressingMode::*;
-        
+
         let (arg0, arg1, arg2) = match instr.get_length() {
             1 => (0, 0, 0), // Implied
             2 => {
                 let arg0 = self.mem_read(self.get_pc_addr());
                 (arg0, 0, 0)
-            },
+            }
             3 => {
                 let arg0 = self.mem_read(self.get_pc_addr());
                 let arg1 = self.mem_read(self.get_pc_addr());
                 (arg0, arg1, 0)
-            },
+            }
             4 => {
                 let arg0 = self.mem_read(self.get_pc_addr());
                 let arg1 = self.mem_read(self.get_pc_addr());
                 let arg2 = self.mem_read(self.get_pc_addr());
                 (arg0, arg1, arg2)
             }
-            _ => unreachable!("No instruction has more than 3 arguments")
+            _ => unreachable!("No instruction has more than 3 arguments"),
         };
-        
+
         match instr.get_addressing_mode() {
             Absolute => self.get_absolute_data(arg0, arg1),
             AbsoluteX => self.get_absolutex_data(arg0, arg1),
@@ -73,9 +83,9 @@ impl Cpu {
             Move => self.get_move_data(arg0, arg1),
         }
     }
-    
+
     /// $OP $LL $HH
-    /// 
+    ///
     /// # Returns
     /// * data: value in $rrHHLL
     /// * low_addr: $rrHHLL
@@ -83,14 +93,14 @@ impl Cpu {
     fn get_absolute_data(&mut self, arg0: u8, arg1: u8) -> InstrData {
         let low_addr = to_long!(self.pbr, arg1, arg0);
         let high_addr = low_addr.wrapping_add(1);
-        
+
         let data = self.mem_read_long(low_addr, high_addr);
-        
+
         InstrData::new(data, low_addr, high_addr, 0)
     }
-    
+
     /// $OP $LL $HH
-    /// 
+    ///
     /// # Returns
     /// * data: value in $rrHHLL
     /// * low_addr: $rrHHLL
@@ -99,14 +109,14 @@ impl Cpu {
         let low_addr = to_long!(self.pbr, arg1, arg0);
         let low_addr = low_addr.wrapping_add(self.x as u32);
         let high_addr = low_addr.wrapping_add(1);
-        
+
         let data = self.mem_read_long(low_addr, high_addr);
-        
+
         InstrData::new(data, low_addr, high_addr, 0)
     }
-    
+
     /// $OP $LL $HH
-    /// 
+    ///
     /// # Returns
     /// * data: value in $rrHHLL
     /// * low_addr: $rrHHLL
@@ -115,71 +125,69 @@ impl Cpu {
         let low_addr = to_long!(self.pbr, arg1, arg0);
         let low_addr = low_addr.wrapping_add(self.y as u32);
         let high_addr = low_addr.wrapping_add(1);
-        
+
         let data = self.mem_read_long(low_addr, high_addr);
-        
+
         InstrData::new(data, low_addr, high_addr, 0)
     }
-    
+
     /// $OP $LL $HH
-    /// 
+    ///
     /// reads `$ll = $00HHLL` and `$hh = $00HHLL + 1`
-    /// 
+    ///
     /// # Returns
     /// * low_addr: `$rrhhll`
     fn get_absolute_indirect_data(&mut self, arg0: u8, arg1: u8) -> InstrData {
         let low_pointer = to_long!(0, arg1, arg0);
         let high_pointer = low_pointer.wrapping_add(1);
-        
+
         let hhll = self.mem_read_long(low_pointer, high_pointer) as u32;
         let dest_addr = to_long!(self.pbr, hhll);
         let dest_addr = ((self.pbr as u32) << 16) | hhll;
-        
+
         InstrData::new(0, dest_addr, 0, 0)
-        
     }
-    
+
     /// $OP $LL $HH
-    /// 
+    ///
     /// reads `$ll = $00HHLL + X` and `$hh = $00HHLL + 1 + X`
-    /// 
+    ///
     /// # Returns
     /// * low_addr: `$rrhhll`
     fn get_absolute_indirectx_data(&mut self, arg0: u8, arg1: u8) -> InstrData {
         let low_pointer = to_long!(0, arg1, arg0);
         let high_pointer = low_pointer.wrapping_add(1).wrapping_add(self.x as u32);
-        
+
         let hhll = self.mem_read_long(low_pointer, high_pointer) as u32;
         let dest_addr = ((self.pbr as u32) << 16) | hhll;
-        
+
         InstrData::new(0, dest_addr, 0, 0)
-        
     }
-    
+
     /// $OP $LL $HH
-    /// 
+    ///
     /// reads `$ll = $00HHLL`, `$mm = $00HHLL + 1` and `$hh = $00HHLL + 2`
-    /// 
+    ///
     /// # Returns
     /// * low_addr: `$hhmmll`
     fn get_absolute_indirect_long_data(&mut self, arg0: u8, arg1: u8) -> InstrData {
         let low_pointer = ((arg1 as u32) << 8) | (arg0 as u32);
         let mid_pointer = low_pointer.wrapping_add(1);
         let high_pointer = low_pointer.wrapping_add(2);
-        
+
         let mmll = self.mem_read_long(low_pointer, high_pointer) as u32;
         let hh = self.mem_read(high_pointer) as u32;
         let dest_addr = (hh << 16) | mmll;
-        
+
         InstrData::new(0, dest_addr, 0, 0)
     }
-    
+
     /// $OP $LL
-    /// 
+    ///
     /// reads `$dl = D + $LL` and `$dh = D + $LL + 1`
-    /// 
+    ///
     /// `$dl` and `$dh` wrap around 16 bytes, meaning that if `D = $FF00` and `$LL = $FF` then low_addr = `$00FFFF` and high_addr = `$000000`
-    /// 
+    ///
     /// # Returns
     /// * data: value in `$dh` as high byte, value in `$dl` as low byte
     /// * low_addr: `$dl`
@@ -187,17 +195,17 @@ impl Cpu {
     fn get_direct_data(&mut self, arg0: u8) -> InstrData {
         let low_addr = self.dp.wrapping_add(arg0 as u16);
         let high_addr = low_addr.wrapping_add(1);
-        
+
         let data = self.mem_read_long(low_addr as u32, high_addr as u32);
         InstrData::new(data, low_addr as u32, high_addr as u32, 0)
     }
-    
+
     /// $OP $LL
-    /// 
+    ///
     /// reads `$dl = D + $LL + X` and `$dh = D + $LL + 1 + X`
-    /// 
+    ///
     /// `$dl` and `$dh` wrap around 16 bytes, meaning that if `D = $FF00` and `$LL = $FF` then low_addr = `$00FFFF` and high_addr = `$000000`
-    /// 
+    ///
     /// # Returns
     /// * data: value in `$dh` as high byte, value in `$dl` as low byte
     /// * low_addr: `$dl`
@@ -205,18 +213,18 @@ impl Cpu {
     fn get_directx_data(&mut self, arg0: u8) -> InstrData {
         let low_addr = self.dp.wrapping_add(arg0 as u16).wrapping_add(self.x);
         let high_addr = low_addr.wrapping_add(1);
-        
+
         let data = self.mem_read_long(low_addr as u32, high_addr as u32);
         InstrData::new(data, low_addr as u32, high_addr as u32, 0)
     }
-    
+
     /// $OP $LL
-    /// 
+    ///
     /// reads `$dl = D + $LL + Y` and `$dh = D + $LL + 1 + Y`
-    /// 
+    ///
     /// `$dl` and `$dh` wrap around 16 bytes, meaning that if `D = $FF00` and `$LL = $FF`
     ///  then low_addr = `$00FFFF` and high_addr = `$000000`
-    /// 
+    ///
     /// # Returns
     /// * data: value in `$dh` as high byte, value in `$dl` as low byte
     /// * low_addr: `$dl`
@@ -224,7 +232,7 @@ impl Cpu {
     fn get_directy_data(&mut self, arg0: u8) -> InstrData {
         let low_addr = self.dp.wrapping_add(arg0 as u16).wrapping_add(self.y);
         let high_addr = low_addr.wrapping_add(1);
-        
+
         let data = self.mem_read_long(low_addr as u32, high_addr as u32);
         InstrData::new(data, low_addr as u32, high_addr as u32, 0)
     }
@@ -346,10 +354,10 @@ impl Cpu {
     }
 
     /// $OP $TT $SS
-    /// 
+    ///
     /// * Source address = $SSXXXX where $XXXX is value of X register
     /// * Destination address = $TTYYYY where $YYYY is value of Y register
-    /// 
+    ///
     /// # Returns
     /// * `low_addr`: source address
     /// * `high_addr`: destination address
@@ -367,7 +375,7 @@ impl Cpu {
         let data = self.mem_read_long(low_addr as u32, high_addr as u32);
         InstrData::new(data, low_addr as u32, high_addr as u32, 0)
     }
-    
+
     fn get_stackrelativey_data(&mut self, arg0: u8) -> InstrData {
         let pointer_lo: u16 = self.sp.wrapping_add(arg0 as u16);
         let pointer_hi: u16 = pointer_lo.wrapping_add(1);
@@ -382,4 +390,3 @@ impl Cpu {
         InstrData::new(data, low_addr, high_addr, 0)
     }
 }
-
