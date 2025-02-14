@@ -1,15 +1,13 @@
 use crate::{
-    nth_bit,
-    ppu::{tile::Tile, SCREEN_WIDTH},
+    nth_bit, ppu::tile::Tile, rgb::Rgba, snes::{NTSC_SCREEN_HEIGHT, SCREEN_WIDTH}
 };
 
 use super::{
     components::{background::Background, colormath::Addend},
     layer::{Layer, LayerStruct},
     memory::PpuMemory,
-    rgb::Rgba,
     sprite::Sprite,
-    Ppu, NTSC_SCREEN_HEIGHT,
+    Ppu,
 };
 
 macro_rules! invert_if {
@@ -31,17 +29,20 @@ enum TileMapQuadrant {
 
 impl Ppu {
     /// Single clock cycle of ppu
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self) -> Option<(usize, usize, Rgba)> {
         // draw pixel at current scanline position
-        if self.scanline.x < SCREEN_WIDTH && self.scanline.y < NTSC_SCREEN_HEIGHT {
-            self.draw_pixel();
-        }
+        let clr = if self.scanline.x < SCREEN_WIDTH && self.scanline.y < NTSC_SCREEN_HEIGHT {
+            Some(self.draw_pixel())
+        } else {
+            None
+        };
         // move scanline to next position
         self.scanline.goto_next();
+        clr
     }
 
     /// Draw pixel on position denoted by current state of `self.scanline`
-    fn draw_pixel(&mut self) {
+    fn draw_pixel(&mut self) -> (usize, usize, Rgba) {
         let mem = self.memory.lock().unwrap();
 
         let x_in_w1 =
@@ -144,8 +145,7 @@ impl Ppu {
             .colormath
             .apply_math(main_screen_layer, sub_screen_layer);
 
-        self.screen
-            .set_pixel(self.scanline.x, self.scanline.y, pixel_color);
+        (self.scanline.x, self.scanline.y, pixel_color)
     }
 
     fn get_layers(&self, mem: &PpuMemory) -> LayerStruct {

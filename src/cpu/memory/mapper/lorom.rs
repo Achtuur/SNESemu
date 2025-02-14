@@ -100,7 +100,7 @@ impl LoROM {
         // calculate final index using bank index and hhll index
         let i = bank_i * ROM_BANK_SIZE + hi_lo_byte_i;
 
-        // println!("${:#06X?} = rom[{:?}] = #{:#04X?}", long_addr, i, self.rom[i as usize]);
+        println!("${:#06X?} = rom[{:?}] = #{:#04X?}", long_addr, i, self.rom[i as usize]);
         Some(self.rom[i])
     }
 }

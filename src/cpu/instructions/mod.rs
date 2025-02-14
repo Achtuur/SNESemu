@@ -1,233 +1,456 @@
-use self::instructions::Instruction;
+use addressing::AddressingMode;
 
-pub mod arithmetic;
-pub mod branch;
-pub mod flag;
-pub mod interrupt;
-pub mod jump;
-pub mod loadstore;
-pub mod logical;
-pub mod r#move;
-pub mod other;
-pub mod stack;
-pub mod transfer;
 
-pub mod instructions;
+pub(crate) mod arithmetic;
+pub(crate) mod branch;
+pub(crate) mod flag;
+pub(crate) mod interrupt;
+pub(crate) mod jump;
+pub(crate) mod loadstore;
+pub(crate) mod logical;
+pub(crate) mod move_instr;
+pub(crate) mod other;
+pub(crate) mod stack;
+pub(crate) mod transfer;
+pub(crate) mod addressing;
 
-pub enum AddressingMode {
-    /// Argument is absolute 2 bytes
-    Absolute,
-    /// Argument is absolute 2 bytes, indexed with X
-    AbsoluteX,
-    /// Argument is absolute 2 bytes, indexed with Y
-    AbsoluteY,
-    /// Argument is memory address specified with 2 bytes (same bank)
-    AbsoluteIndirect,
-    AbsoluteIndirectX,
-    /// Argument is memory address specified with 3 bytes
-    AbsoluteIndirectLong,
-    /// Argument is memory address is zero-based memory address (ie `LDA $XX` would read `$0000XX`)
-    Direct,
-    /// Argument is memory address is zero-based memory address (ie `LDA $XX` would read `$0000XX`) indexed by X
-    DirectX,
-    /// Argument is memory address is zero-based memory address (ie `LDA $XX` would read `$0000XX`) indexed by Y
-    DirectY,
-    /// Argument is implied
-    Implied,
-    /// Argument is 1 byte constant
-    Immediate,
-    /// Argument is 2 byte constant
-    ImmediateLong,
-    /// Argument is memory address that is inside memory address specified by argument (ie `LDA $XX` would read memory address in `$0000XX`)
-    Indirect,
-    /// Argument is memory address that is inside memory address specified by argument (ie `LDA $XX` would read memory address in `$0000XX`) indexed by X
-    IndirectX,
-    /// Argument is memory address that is inside memory address specified by argument (ie `LDA $XX` would read memory address in `$0000XX`) indexed by Y
-    IndirectY,
-    IndirectLong,
-    IndirectLongY,
-    /// Argument is absolute 3 bytes
-    Long,
-    /// Argument is absolute 3 bytes, indexed with X
-    LongX,
-    /// Argument is 1 byte address relative to pc
-    Relative,
-    /// Argument is 2 byte address relative to pc
-    RelativeLong,
-    /// Stack is used as lower 2 bytes of address, argument is address relative to stack. Eg, stack pointer is `$1FF0` then `LDA $05, s` loads `$001FF5`
-    StackRelative,
-    /// Stack is used as lower 2 bytes of address, argument is address relative to stack. Eg, stack pointer is `$1FF0` then `LDA $05, s` loads `$001FF5` plus Y
-    StackRelativeY,
-    /// Used only for `MVN` and `MVP` instructions, explained in those implementations in more detail
-    Move,
+// pub mod instructions;
+
+#[derive(Clone, Copy, Debug)]
+pub enum Instruction {
+    Adc(AddressingMode),
+    And(AddressingMode),
+    Asl(AddressingMode),
+    Asla,
+    Blt,
+    Bge,
+    Beq,
+    Bit(AddressingMode),
+    Bmi,
+    Bne,
+    Bpl,
+    Bra,
+    Brk,
+    Brl,
+    Bvc,
+    Bvs,
+    Clc,
+    Cld,
+    Cli,
+    Clv,
+    Cmp(AddressingMode),
+    Cop,
+    Cpx(AddressingMode),
+    Cpy(AddressingMode),
+    Dea,
+    Dec(AddressingMode),
+    Dex,
+    Dey,
+    Eor(AddressingMode),
+    Ina,
+    Inc(AddressingMode),
+    Inx,
+    Iny,
+    Jmp(AddressingMode),
+    Jml(AddressingMode),
+    Jsr(AddressingMode),
+    /// addressingmode = absolutelong
+    Jsl,
+    Lda(AddressingMode),
+    Ldx(AddressingMode),
+    Ldy(AddressingMode),
+    Lsr(AddressingMode),
+    Lsra,
+    Mvn,
+    Mvp,
+    Nop,
+    Ora(AddressingMode),
+    Pea,
+    Pei,
+    Per,
+    Pha,
+    Phb,
+    Phd,
+    Phk,
+    Php,
+    Phx,
+    Phy,
+    Pla,
+    Plb,
+    Pld,
+    Plp,
+    Plx,
+    Ply,
+    Rep,
+    Rol(AddressingMode),
+    Rola,
+    Rora,
+    Ror(AddressingMode),
+    Rti,
+    Rtl,
+    Rts,
+    Sbc(AddressingMode),
+    Sec,
+    Sed,
+    Sei,
+    Sep,
+    Sta(AddressingMode),
+    Stp,
+    Stx(AddressingMode),
+    Sty(AddressingMode),
+    Stz(AddressingMode),
+    Tax,
+    Tay,
+    Tcd,
+    Tcs,
+    Tdc,
+    Trb(AddressingMode),
+    Tsb(AddressingMode),
+    Tsc,
+    Tsx,
+    Txa,
+    Txs,
+    Txy,
+    Tya,
+    Tyx,
+    Wai,
+    Wdm,
+    Xba,
+    Xce,
 }
 
+
 impl Instruction {
-    /// Length of this instruction in bytes, includes op code and all arguments
-    ///
-    /// ADC #$21 #$33 would have a length of 3
-    pub fn get_length(&self) -> usize {
-        use Instruction::*;
+    pub fn byte_length(&self) -> usize {
+        1 + self.addressing_mode().byte_length()
+    }
+
+    pub fn cycle_count(&self) -> usize {
+        self.addressing_mode().cycle_count()
+    }
+
+    pub fn addressing_mode(&self) -> AddressingMode {
         match self {
-            Asl | Clc | Cld | Cli | Clv | Dea | Dex | Dey | Ina | Inx | Iny | Lsr | Nop | Pha
-            | Phb | Phd | Phk | Php | Phx | Phy | Pla | Plb | Pld | Plp | Plx | Ply | Rol | Ror
-            | Rti | Rtl | Rts | Sec | Sed | Sei | Stp | Tax | Tay | Tcd | Tcs | Tdc | Tsc | Tsx
-            | Txa | Txs | Txy | Tya | Tyx | Wai | Xba | Xce => 1,
-            AdcDPIX | AdcSR | AdcDP | AdcDPLong | AdcImm | AdcDPIY | AdcDPI | AdcSRY | AdcDPX
-            | AdcDPIYLong | AndDPIX | AndSR | AndDP | AndDPLong | AndImm | AndDPIY | AndDPI
-            | AndSRY | AndDPX | AndDPIYLong | AslDP | AslDPX | Blt | Bge | Beq | BitDP | BitDPX
-            | BitImm | Bmi | Bne | Bpl | Bra | Brk | Bvc | Bvs | CmpDPIX | CmpSR | CmpDP
-            | CmpDPLong | CmpImm | CmpDPIY | CmpDPI | CmpSRY | CmpDPX | CmpDPIYLong | Cop
-            | CpxImm | CpxDP | CpyImm | CpyDP | DecDP | DecDPX | EorDPIX | EorSR | EorDP
-            | EorDPLong | EorImm | EorDPIY | EorDPI | EorSRY | EorDPX | EorDPIYLong | IncDP
-            | IncDPX | LdaDPIX | LdaSR | LdaDP | LdaDPLong | LdaImm | LdaDPIY | LdaDPI | LdaSRY
-            | LdaDPX | LdaDPIYLong | LdxImm | LdxDP | LdxDPY | LdyImm | LdyDP | LdyDPX | LsrDP
-            | LsrDPX | OraDPIX | OraSR | OraDP | OraDPLong | OraImm | OraDPIY | OraDPI | OraSRY
-            | OraDPX | OraDPIYLong | Pei | RepImm | RolDP | RolDPX | RorDP | RorDPX | SbcDPIX
-            | SbcSR | SbcDP | SbcDPLong | SbcImm | SbcDPIY | SbcDPI | SbcSRY | SbcDPX
-            | SbcDPIYLong | SepImm | StaDPIX | StaSR | StaDP | StaDPLong | StaDPIY | StaDPI
-            | StaSRY | StaDPX | StaDPIYLong | StxDP | StxDPY | StyDP | StyDPX | StzDP | StzDPX
-            | TrbDP | TsbDP | Wdm => 2,
-            AdcAbs | AdcAbsY | AdcAbsX | AndAbs | AndAbsY | AndAbsX | AslAbs | AslAbsX | BitAbs
-            | BitAbsX | Brl | CmpAbs | CmpAbsY | CmpAbsX | CpxAbs | CpyAbs | DecAbs | DecAbsX
-            | EorAbs | EorAbsY | EorAbsX | IncAbs | IncAbsX | JmpAbs | JmpIndirect | JmpAbsIX
-            | Jml | JsrAbs | JsrAbsIX | LdaAbs | LdaAbsY | LdaAbsX | LdxAbs | LdxAbsY | LdyAbs
-            | LdyAbsX | LsrAbs | LsrAbsX | Mvn | Mvp | OraAbs | OraAbsY | OraAbsX | Pea | Per
-            | RolAbs | RolAbsX | RorAbs | RorAbsX | SbcAbs | SbcAbsY | SbcAbsX | StaAbs
-            | StaAbsY | StaAbsX | StxAbs | StyAbs | StzAbs | StzAbsX | TrbAbs | TsbAbs => 3,
-            AdcAbsLong | AdcAbsXLong | AndAbsLong | AndAbsXLong | CmpAbsLong | CmpAbsXLong
-            | EorAbsLong | EorAbsXLong | JmlAbsLong | JslAbsLong | LdaAbsLong | LdaAbsXLong
-            | OraAbsLong | OraAbsXLong | SbcAbsLong | SbcAbsXLong | StaAbsLong | StaAbsXLong => 4,
+            Self::Adc(mode)
+            | Self::And(mode)
+            | Self::Asl(mode)
+            | Self::Bit(mode)
+            | Self::Cmp(mode)
+            | Self::Cpx(mode)
+            | Self::Cpy(mode)
+            | Self::Dec(mode)
+            | Self::Eor(mode)
+            | Self::Inc(mode)
+            | Self::Jmp(mode)
+            | Self::Jsr(mode)
+            | Self::Jml(mode)
+            | Self::Lda(mode)
+            | Self::Ldx(mode)
+            | Self::Ldy(mode)
+            | Self::Lsr(mode)
+            | Self::Ora(mode)
+            | Self::Rol(mode)
+            | Self::Ror(mode)
+            | Self::Sbc(mode)
+            | Self::Sta(mode)
+            | Self::Stx(mode)
+            | Self::Sty(mode)
+            | Self::Stz(mode)
+            | Self::Trb(mode)
+            | Self::Tsb(mode) => *mode,
+
+            Self::Asla
+            | Self::Lsra
+            | Self::Rola
+            | Self::Rora => AddressingMode::Accumulator,
+            Self::Jsl => AddressingMode::AbsoluteLong,
+            Self::Mvn
+            | Self::Mvp => AddressingMode::Move,
+
+            // Branch instructions
+            Self::Blt
+            | Self::Bge
+            | Self::Beq
+            | Self::Bmi
+            | Self::Bne
+            | Self::Bpl
+            | Self::Bra
+            | Self::Bvc
+            | Self::Bvs => AddressingMode::Relative,
+
+            Self::Brl => AddressingMode::RelativeLong,
+
+            Self::Rep | Self::Sep => AddressingMode::Immediate,
+
+            Self::Brk | Self::Clc | Self::Cld | Self::Cli | Self::Clv | Self::Cop | Self::Dea | Self::Dex | Self::Dey | Self::Ina | Self::Inx | Self::Iny
+            | Self::Nop | Self::Pea | Self::Pei | Self::Per | Self::Pha | Self::Phb | Self::Phd | Self::Phk | Self::Php | Self::Phx | Self::Phy | Self::Pla | Self::Plb | Self::Pld
+            | Self::Plp | Self::Plx | Self::Ply | Self::Rti | Self::Rtl | Self::Rts | Self::Sec | Self::Sed | Self::Sei | Self::Stp | Self::Tax | Self::Tay
+            | Self::Tcd | Self::Tcs | Self::Tdc | Self::Tsc | Self::Tsx | Self::Txa | Self::Txs | Self::Txy | Self::Tya | Self::Tyx | Self::Wai | Self::Wdm | Self::Xba | Self::Xce => {
+                AddressingMode::Implied
+            }
         }
     }
 
-    /// Get cycle duration of this instruction. This cycle time is then added to the cpu after instruction completes to sync with ie PPU
-    pub fn get_cycle_time(&self) -> usize {
-        use Instruction::*;
-        match self {
-            Wdm => 0,
-            Mvn | Mvp => 1,
-            AdcImm | AndImm | Asl | Blt | Bge | Beq | BitImm | Bmi | Bne | Bpl | Bvc | Bvs
-            | Clc | Cld | Cli | Clv | CmpImm | CpxImm | CpyImm | Dea | Dex | Dey | EorImm | Ina
-            | Inx | Iny | LdaImm | LdxImm | LdyImm | Lsr | Nop | OraImm | Rol | Ror | SbcImm
-            | Sec | Sed | Sei | Tax | Tay | Tcd | Tcs | Tdc | Tsc | Tsx | Txa | Txs | Txy | Tya
-            | Tyx | Xce => 2,
-            AdcDP | AndDP | BitDP | Bra | CmpDP | CpxDP | CpyDP | EorDP | JmpAbs | LdaDP
-            | LdxDP | LdyDP | OraDP | Pha | Phb | Phk | Php | Phx | Phy | RepImm | SbcDP
-            | SepImm | StaDP | Stp | StxDP | StyDP | StzDP | Wai | Xba => 3,
-            AdcSR | AdcAbs | AdcDPX | AdcAbsY | AdcAbsX | AndSR | AndAbs | AndDPX | AndAbsY
-            | AndAbsX | BitAbs | BitDPX | BitAbsX | Brl | CmpSR | CmpAbs | CmpDPX | CmpAbsY
-            | CmpAbsX | CpxAbs | CpyAbs | EorSR | EorAbs | EorDPX | EorAbsY | EorAbsX
-            | JmlAbsLong | LdaSR | LdaAbs | LdaDPX | LdaAbsY | LdaAbsX | LdxAbs | LdxDPY
-            | LdxAbsY | LdyAbs | LdyDPX | LdyAbsX | OraSR | OraAbs | OraDPX | OraAbsY | OraAbsX
-            | Phd | Pla | Plb | Plp | Plx | Ply | SbcSR | SbcAbs | SbcDPX | SbcAbsY | SbcAbsX
-            | StaSR | StaAbs | StaDPX | StxAbs | StxDPY | StyAbs | StyDPX | StzDPX | StzAbs => 4,
-            AdcAbsLong | AdcDPIY | AdcDPI | AdcAbsXLong | AndAbsLong | AndDPIY | AndDPI
-            | AndAbsXLong | AslDP | CmpAbsLong | CmpDPIY | CmpDPI | CmpAbsXLong | DecDP
-            | EorAbsLong | EorDPIY | EorDPI | EorAbsXLong | IncDP | JmpIndirect | LdaAbsLong
-            | LdaDPIY | LdaDPI | LdaAbsXLong | LsrDP | OraAbsLong | OraDPIY | OraDPI
-            | OraAbsXLong | Pea | Pld | RolDP | RorDP | SbcAbsLong | SbcDPIY | SbcDPI
-            | SbcAbsXLong | StaAbsLong | StaDPI | StaAbsY | StaAbsX | StaAbsXLong | StzAbsX
-            | TrbDP | TsbDP => 5,
-            AdcDPIX | AdcDPLong | AdcDPIYLong | AndDPIX | AndDPLong | AndDPIYLong | AslAbs
-            | AslDPX | CmpDPIX | CmpDPLong | CmpDPIYLong | DecAbs | DecDPX | EorDPIX
-            | EorDPLong | EorDPIYLong | IncAbs | IncDPX | JmpAbsIX | Jml | JsrAbs | LdaDPIX
-            | LdaDPLong | LdaDPIYLong | LsrAbs | LsrDPX | OraDPIX | OraDPLong | OraDPIYLong
-            | Pei | Per | RolAbs | RolDPX | RorAbs | RorDPX | Rti | Rtl | Rts | SbcDPIX
-            | SbcDPLong | SbcDPIYLong | StaDPIX | StaDPLong | StaDPIY | StaDPIYLong | TrbAbs
-            | TsbAbs => 6,
-            AdcSRY | AndSRY | AslAbsX | Brk | CmpSRY | Cop | DecAbsX | EorSRY | IncAbsX
-            | LdaSRY | LsrAbsX | OraSRY | RolAbsX | RorAbsX | SbcSRY | StaSRY => 7,
-            JslAbsLong | JsrAbsIX => 8,
-        }
-    }
 
-    pub fn get_addressing_mode(&self) -> AddressingMode {
-        use AddressingMode::*;
-        use Instruction::*;
-        match self {
-            AdcDPIX | AndDPIX | CmpDPIX | EorDPIX | LdaDPIX | OraDPIX | SbcDPIX | StaDPIX => {
-                IndirectX
-            }
-
-            AdcSR | AndSR | CmpSR | EorSR | LdaSR | OraSR | SbcSR | StaSR => StackRelative,
-
-            AdcDP | AndDP | AslDP | BitDP | CmpDP | CpxDP | CpyDP | DecDP | EorDP | IncDP
-            | LdaDP | LdxDP | LdyDP | LsrDP | OraDP | RolDP | RorDP | SbcDP | StaDP | StxDP
-            | StyDP | StzDP | TrbDP | TsbDP => Direct,
-
-            AdcDPLong | AndDPLong | CmpDPLong | EorDPLong | LdaDPLong | OraDPLong | SbcDPLong
-            | StaDPLong => IndirectLong,
-
-            AdcImm | AndImm | BitImm | CmpImm | CpxImm | CpyImm | EorImm | LdaImm | LdxImm
-            | LdyImm | OraImm | RepImm | SbcImm | SepImm => Immediate,
-
-            AdcAbs | AndAbs | AslAbs | BitAbs | CmpAbs | CpxAbs | CpyAbs | DecAbs | EorAbs
-            | IncAbs | JmpAbs | JsrAbs | LdaAbs | LdxAbs | LdyAbs | LsrAbs | OraAbs | RolAbs
-            | RorAbs | SbcAbs | StaAbs | StxAbs | StyAbs | StzAbs | TrbAbs | TsbAbs => Absolute,
-
-            AdcAbsLong | AndAbsLong | CmpAbsLong | EorAbsLong | JmlAbsLong | JslAbsLong
-            | LdaAbsLong | OraAbsLong | SbcAbsLong | StaAbsLong => Long,
-
-            AdcDPIY | AndDPIY | CmpDPIY | EorDPIY | LdaDPIY | OraDPIY | SbcDPIY | StaDPIY => {
-                IndirectY
-            }
-
-            AdcDPI | AndDPI | CmpDPI | EorDPI | LdaDPI | OraDPI | SbcDPI | StaDPI => Indirect,
-
-            AdcSRY | AndSRY | CmpSRY | EorSRY | LdaSRY | OraSRY | SbcSRY | StaSRY => StackRelativeY,
-
-            AdcDPX | AndDPX | AslDPX | BitDPX | CmpDPX | DecDPX | EorDPX | IncDPX | LdaDPX
-            | LdyDPX | LsrDPX | OraDPX | RolDPX | RorDPX | SbcDPX | StaDPX | StyDPX | StzDPX => {
-                DirectX
-            }
-
-            AdcDPIYLong | AndDPIYLong | CmpDPIYLong | EorDPIYLong | LdaDPIYLong | OraDPIYLong
-            | SbcDPIYLong | StaDPIYLong => IndirectLongY,
-
-            AdcAbsY | AndAbsY | CmpAbsY | EorAbsY | LdaAbsY | LdxAbsY | OraAbsY | SbcAbsY
-            | StaAbsY => AbsoluteY,
-
-            AdcAbsX | AndAbsX | AslAbsX | BitAbsX | CmpAbsX | DecAbsX | EorAbsX | IncAbsX
-            | LdaAbsX | LdyAbsX | LsrAbsX | OraAbsX | RolAbsX | RorAbsX | SbcAbsX | StaAbsX
-            | StzAbsX => AbsoluteX,
-            AdcAbsXLong | AndAbsXLong | CmpAbsXLong | EorAbsXLong | LdaAbsXLong | OraAbsXLong
-            | SbcAbsXLong | StaAbsXLong => LongX,
-
-            Asl | Brk | Clc | Cld | Cli | Clv | Cop | Dea | Dex | Dey | Ina | Inx | Iny | Lsr
-            | Nop | Pea | Pei | Per | Pha | Phb | Phd | Phk | Php | Phx | Phy | Pla | Plb | Pld
-            | Plp | Plx | Ply | Rol | Ror | Rti | Rtl | Rts | Sec | Sed | Sei | Stp | Tax | Tay
-            | Tcd | Tcs | Tdc | Tsc | Tsx | Txa | Txs | Txy | Tya | Tyx | Wai | Wdm | Xba | Xce => {
-                Implied
-            }
-
-            Blt | Bge | Beq | Bmi | Bne | Bpl | Bra | Bvc | Bvs => Relative,
-
-            Brl => RelativeLong,
-
-            JmpIndirect => AbsoluteIndirect,
-
-            JmpAbsIX | JsrAbsIX => AbsoluteIndirectX,
-
-            Jml => AbsoluteIndirectLong,
-
-            LdxDPY | StxDPY => DirectY,
-
-            Mvn | Mvp => Move,
-        }
-    }
-
-    /// Returns true if this instruction writes back to memory during its execution
-    ///
-    /// In that case, the instruction should get passed an address instead of the data
-    pub fn writes_back(&self) -> bool {
-        use Instruction::*;
-        match self {
-            IncAbs | IncAbsX | IncDP | IncDPX | DecAbs | DecAbsX | DecDP | DecDPX | AslAbs
-            | AslAbsX | AslDP | AslDPX | LsrAbs | LsrAbsX | LsrDP | LsrDPX | RorAbs | RorAbsX
-            | RorDP | RorDPX | RolAbs | RolAbsX | RolDP | RolDPX | TrbAbs | TrbDP | TsbAbs
-            | TsbDP => true,
-            _ => false,
+    /// Returns `Instruction` enum variant from op code
+    pub fn from_op(op: u8) -> Instruction {
+        match op {
+            0x61 => Instruction::Adc(AddressingMode::IndirectX),
+            0x63 => Instruction::Adc(AddressingMode::StackRelative),
+            0x65 => Instruction::Adc(AddressingMode::Direct),
+            0x67 => Instruction::Adc(AddressingMode::IndirectLong),
+            0x69 => Instruction::Adc(AddressingMode::Immediate),
+            0x6D => Instruction::Adc(AddressingMode::Absolute),
+            0x6F => Instruction::Adc(AddressingMode::AbsoluteLong),
+            0x71 => Instruction::Adc(AddressingMode::IndirectY),
+            0x72 => Instruction::Adc(AddressingMode::Indirect),
+            0x73 => Instruction::Adc(AddressingMode::StackRelativeY),
+            0x75 => Instruction::Adc(AddressingMode::DirectX),
+            0x77 => Instruction::Adc(AddressingMode::IndirectLongY),
+            0x79 => Instruction::Adc(AddressingMode::AbsoluteY),
+            0x7D => Instruction::Adc(AddressingMode::AbsoluteX),
+            0x7F => Instruction::Adc(AddressingMode::AbsoluteLongX),
+            0x21 => Instruction::And(AddressingMode::IndirectX),
+            0x23 => Instruction::And(AddressingMode::StackRelative),
+            0x25 => Instruction::And(AddressingMode::Direct),
+            0x27 => Instruction::And(AddressingMode::IndirectLong),
+            0x29 => Instruction::And(AddressingMode::Immediate),
+            0x2D => Instruction::And(AddressingMode::Absolute),
+            0x2F => Instruction::And(AddressingMode::AbsoluteLong),
+            0x31 => Instruction::And(AddressingMode::IndirectY),
+            0x32 => Instruction::And(AddressingMode::Indirect),
+            0x33 => Instruction::And(AddressingMode::StackRelativeY),
+            0x35 => Instruction::And(AddressingMode::DirectX),
+            0x37 => Instruction::And(AddressingMode::IndirectLongY),
+            0x39 => Instruction::And(AddressingMode::AbsoluteY),
+            0x3D => Instruction::And(AddressingMode::AbsoluteX),
+            0x3F => Instruction::And(AddressingMode::AbsoluteLongX),
+            0x06 => Instruction::Asl(AddressingMode::Direct),
+            0x0A => Instruction::Asla,
+            0x0E => Instruction::Asl(AddressingMode::Absolute),
+            0x16 => Instruction::Asl(AddressingMode::DirectX),
+            0x1E => Instruction::Asl(AddressingMode::AbsoluteX),
+            0x90 => Instruction::Blt,
+            0xB0 => Instruction::Bge,
+            0xF0 => Instruction::Beq,
+            0x24 => Instruction::Bit(AddressingMode::Direct),
+            0x2C => Instruction::Bit(AddressingMode::Absolute),
+            0x34 => Instruction::Bit(AddressingMode::DirectX),
+            0x3C => Instruction::Bit(AddressingMode::AbsoluteX),
+            0x89 => Instruction::Bit(AddressingMode::Immediate),
+            0x30 => Instruction::Bmi,
+            0xD0 => Instruction::Bne,
+            0x10 => Instruction::Bpl,
+            0x80 => Instruction::Bra,
+            0x00 => Instruction::Brk,
+            0x82 => Instruction::Brl,
+            0x50 => Instruction::Bvc,
+            0x70 => Instruction::Bvs,
+            0x18 => Instruction::Clc,
+            0xD8 => Instruction::Cld,
+            0x58 => Instruction::Cli,
+            0xB8 => Instruction::Clv,
+            0xC1 => Instruction::Cmp(AddressingMode::IndirectX),
+            0xC3 => Instruction::Cmp(AddressingMode::StackRelative),
+            0xC5 => Instruction::Cmp(AddressingMode::Direct),
+            0xC7 => Instruction::Cmp(AddressingMode::IndirectLong),
+            0xC9 => Instruction::Cmp(AddressingMode::Immediate),
+            0xCD => Instruction::Cmp(AddressingMode::Absolute),
+            0xCF => Instruction::Cmp(AddressingMode::AbsoluteLong),
+            0xD1 => Instruction::Cmp(AddressingMode::IndirectY),
+            0xD2 => Instruction::Cmp(AddressingMode::Indirect),
+            0xD3 => Instruction::Cmp(AddressingMode::StackRelativeY),
+            0xD5 => Instruction::Cmp(AddressingMode::DirectX),
+            0xD7 => Instruction::Cmp(AddressingMode::IndirectLongY),
+            0xD9 => Instruction::Cmp(AddressingMode::AbsoluteY),
+            0xDD => Instruction::Cmp(AddressingMode::AbsoluteX),
+            0xDF => Instruction::Cmp(AddressingMode::AbsoluteLongX),
+            0x02 => Instruction::Cop,
+            0xE0 => Instruction::Cpx(AddressingMode::Immediate),
+            0xE4 => Instruction::Cpx(AddressingMode::Direct),
+            0xEC => Instruction::Cpx(AddressingMode::Absolute),
+            0xC0 => Instruction::Cpy(AddressingMode::Immediate),
+            0xC4 => Instruction::Cpy(AddressingMode::Direct),
+            0xCC => Instruction::Cpy(AddressingMode::Absolute),
+            0x3A => Instruction::Dea,
+            0xC6 => Instruction::Dec(AddressingMode::Direct),
+            0xCE => Instruction::Dec(AddressingMode::Absolute),
+            0xD6 => Instruction::Dec(AddressingMode::DirectX),
+            0xDE => Instruction::Dec(AddressingMode::AbsoluteX),
+            0xCA => Instruction::Dex,
+            0x88 => Instruction::Dey,
+            0x41 => Instruction::Eor(AddressingMode::IndirectX),
+            0x43 => Instruction::Eor(AddressingMode::StackRelative),
+            0x45 => Instruction::Eor(AddressingMode::Direct),
+            0x47 => Instruction::Eor(AddressingMode::IndirectLong),
+            0x49 => Instruction::Eor(AddressingMode::Immediate),
+            0x4D => Instruction::Eor(AddressingMode::Absolute),
+            0x4F => Instruction::Eor(AddressingMode::AbsoluteLong),
+            0x51 => Instruction::Eor(AddressingMode::IndirectY),
+            0x52 => Instruction::Eor(AddressingMode::Indirect),
+            0x53 => Instruction::Eor(AddressingMode::StackRelativeY),
+            0x55 => Instruction::Eor(AddressingMode::DirectX),
+            0x57 => Instruction::Eor(AddressingMode::IndirectLongY),
+            0x59 => Instruction::Eor(AddressingMode::AbsoluteY),
+            0x5D => Instruction::Eor(AddressingMode::AbsoluteX),
+            0x5F => Instruction::Eor(AddressingMode::AbsoluteLongX),
+            0x1A => Instruction::Ina,
+            0xE6 => Instruction::Inc(AddressingMode::Direct),
+            0xEE => Instruction::Inc(AddressingMode::Absolute),
+            0xF6 => Instruction::Inc(AddressingMode::DirectX),
+            0xFE => Instruction::Inc(AddressingMode::AbsoluteX),
+            0xE8 => Instruction::Inx,
+            0xC8 => Instruction::Iny,
+            0x4C => Instruction::Jmp(AddressingMode::Absolute),
+            0x5C => Instruction::Jml(AddressingMode::AbsoluteLong),
+            0x6C => Instruction::Jmp(AddressingMode::Indirect),
+            0x7C => Instruction::Jmp(AddressingMode::AbsoluteIndirectX),
+            0xDC => Instruction::Jml(AddressingMode::AbsoluteIndirectLong),
+            0x20 => Instruction::Jsr(AddressingMode::Absolute),
+            0x22 => Instruction::Jsl,
+            0xFC => Instruction::Jsr(AddressingMode::AbsoluteIndirectX),
+            0xA1 => Instruction::Lda(AddressingMode::IndirectX),
+            0xA3 => Instruction::Lda(AddressingMode::StackRelative),
+            0xA5 => Instruction::Lda(AddressingMode::Direct),
+            0xA7 => Instruction::Lda(AddressingMode::IndirectLong),
+            0xA9 => Instruction::Lda(AddressingMode::Immediate),
+            0xAD => Instruction::Lda(AddressingMode::Absolute),
+            0xAF => Instruction::Lda(AddressingMode::AbsoluteLong),
+            0xB1 => Instruction::Lda(AddressingMode::IndirectY),
+            0xB2 => Instruction::Lda(AddressingMode::Indirect),
+            0xB3 => Instruction::Lda(AddressingMode::StackRelativeY),
+            0xB5 => Instruction::Lda(AddressingMode::DirectX),
+            0xB7 => Instruction::Lda(AddressingMode::IndirectLongY),
+            0xB9 => Instruction::Lda(AddressingMode::AbsoluteY),
+            0xBD => Instruction::Lda(AddressingMode::AbsoluteX),
+            0xBF => Instruction::Lda(AddressingMode::AbsoluteLongX),
+            0xA2 => Instruction::Ldx(AddressingMode::Immediate),
+            0xA6 => Instruction::Ldx(AddressingMode::Direct),
+            0xAE => Instruction::Ldx(AddressingMode::Absolute),
+            0xB6 => Instruction::Ldx(AddressingMode::DirectY),
+            0xBE => Instruction::Ldx(AddressingMode::AbsoluteY),
+            0xA0 => Instruction::Ldy(AddressingMode::Immediate),
+            0xA4 => Instruction::Ldy(AddressingMode::Direct),
+            0xAC => Instruction::Ldy(AddressingMode::Absolute),
+            0xB4 => Instruction::Ldy(AddressingMode::DirectX),
+            0xBC => Instruction::Ldy(AddressingMode::AbsoluteX),
+            0x46 => Instruction::Lsr(AddressingMode::Direct),
+            0x4A => Instruction::Lsra,
+            0x4E => Instruction::Lsr(AddressingMode::Absolute),
+            0x56 => Instruction::Lsr(AddressingMode::DirectX),
+            0x5E => Instruction::Lsr(AddressingMode::AbsoluteX),
+            0x54 => Instruction::Mvn,
+            0x44 => Instruction::Mvp,
+            0xEA => Instruction::Nop,
+            0x01 => Instruction::Ora(AddressingMode::IndirectX),
+            0x03 => Instruction::Ora(AddressingMode::StackRelative),
+            0x05 => Instruction::Ora(AddressingMode::Direct),
+            0x07 => Instruction::Ora(AddressingMode::IndirectLong),
+            0x09 => Instruction::Ora(AddressingMode::Immediate),
+            0x0D => Instruction::Ora(AddressingMode::Absolute),
+            0x0F => Instruction::Ora(AddressingMode::AbsoluteLong),
+            0x11 => Instruction::Ora(AddressingMode::IndirectY),
+            0x12 => Instruction::Ora(AddressingMode::Indirect),
+            0x13 => Instruction::Ora(AddressingMode::StackRelativeY),
+            0x15 => Instruction::Ora(AddressingMode::DirectX),
+            0x17 => Instruction::Ora(AddressingMode::IndirectLongY),
+            0x19 => Instruction::Ora(AddressingMode::AbsoluteY),
+            0x1D => Instruction::Ora(AddressingMode::AbsoluteX),
+            0x1F => Instruction::Ora(AddressingMode::AbsoluteLongX),
+            0xF4 => Instruction::Pea,
+            0xD4 => Instruction::Pei,
+            0x62 => Instruction::Per,
+            0x48 => Instruction::Pha,
+            0x8B => Instruction::Phb,
+            0x0B => Instruction::Phd,
+            0x4B => Instruction::Phk,
+            0x08 => Instruction::Php,
+            0xDA => Instruction::Phx,
+            0x5A => Instruction::Phy,
+            0x68 => Instruction::Pla,
+            0xAB => Instruction::Plb,
+            0x2B => Instruction::Pld,
+            0x28 => Instruction::Plp,
+            0xFA => Instruction::Plx,
+            0x7A => Instruction::Ply,
+            0xC2 => Instruction::Rep,
+            0x26 => Instruction::Rol(AddressingMode::Direct),
+            0x2A => Instruction::Rola,
+            0x2E => Instruction::Rol(AddressingMode::Absolute),
+            0x36 => Instruction::Rol(AddressingMode::DirectX),
+            0x3E => Instruction::Rol(AddressingMode::AbsoluteX),
+            0x66 => Instruction::Ror(AddressingMode::Direct),
+            0x6A => Instruction::Rora,
+            0x6E => Instruction::Ror(AddressingMode::Absolute),
+            0x76 => Instruction::Ror(AddressingMode::DirectX),
+            0x7E => Instruction::Ror(AddressingMode::AbsoluteX),
+            0x40 => Instruction::Rti,
+            0x6B => Instruction::Rtl,
+            0x60 => Instruction::Rts,
+            0xE1 => Instruction::Sbc(AddressingMode::IndirectX),
+            0xE3 => Instruction::Sbc(AddressingMode::StackRelative),
+            0xE5 => Instruction::Sbc(AddressingMode::Direct),
+            0xE7 => Instruction::Sbc(AddressingMode::IndirectLong),
+            0xE9 => Instruction::Sbc(AddressingMode::Immediate),
+            0xED => Instruction::Sbc(AddressingMode::Absolute),
+            0xEF => Instruction::Sbc(AddressingMode::AbsoluteLong),
+            0xF1 => Instruction::Sbc(AddressingMode::IndirectY),
+            0xF2 => Instruction::Sbc(AddressingMode::Indirect),
+            0xF3 => Instruction::Sbc(AddressingMode::StackRelativeY),
+            0xF5 => Instruction::Sbc(AddressingMode::DirectX),
+            0xF7 => Instruction::Sbc(AddressingMode::IndirectLongY),
+            0xF9 => Instruction::Sbc(AddressingMode::AbsoluteY),
+            0xFD => Instruction::Sbc(AddressingMode::AbsoluteX),
+            0xFF => Instruction::Sbc(AddressingMode::AbsoluteLongX),
+            0x38 => Instruction::Sec,
+            0xF8 => Instruction::Sed,
+            0x78 => Instruction::Sei,
+            0xE2 => Instruction::Sep,
+            0x81 => Instruction::Sta(AddressingMode::IndirectX),
+            0x83 => Instruction::Sta(AddressingMode::StackRelative),
+            0x85 => Instruction::Sta(AddressingMode::Direct),
+            0x87 => Instruction::Sta(AddressingMode::IndirectLong),
+            0x8D => Instruction::Sta(AddressingMode::Absolute),
+            0x8F => Instruction::Sta(AddressingMode::AbsoluteLong),
+            0x91 => Instruction::Sta(AddressingMode::IndirectY),
+            0x92 => Instruction::Sta(AddressingMode::Indirect),
+            0x93 => Instruction::Sta(AddressingMode::StackRelativeY),
+            0x95 => Instruction::Sta(AddressingMode::DirectX),
+            0x97 => Instruction::Sta(AddressingMode::IndirectLongY),
+            0x99 => Instruction::Sta(AddressingMode::AbsoluteY),
+            0x9D => Instruction::Sta(AddressingMode::AbsoluteX),
+            0x9F => Instruction::Sta(AddressingMode::AbsoluteLongX),
+            0xDB => Instruction::Stp,
+            0x86 => Instruction::Stx(AddressingMode::Direct),
+            0x8E => Instruction::Stx(AddressingMode::Absolute),
+            0x96 => Instruction::Stx(AddressingMode::DirectY),
+            0x84 => Instruction::Sty(AddressingMode::Direct),
+            0x8C => Instruction::Sty(AddressingMode::Absolute),
+            0x94 => Instruction::Sty(AddressingMode::DirectX),
+            0x64 => Instruction::Stz(AddressingMode::Direct),
+            0x74 => Instruction::Stz(AddressingMode::DirectX),
+            0x9C => Instruction::Stz(AddressingMode::Absolute),
+            0x9E => Instruction::Stz(AddressingMode::AbsoluteX),
+            0xAA => Instruction::Tax,
+            0xA8 => Instruction::Tay,
+            0x5B => Instruction::Tcd,
+            0x1B => Instruction::Tcs,
+            0x7B => Instruction::Tdc,
+            0x14 => Instruction::Trb(AddressingMode::Direct),
+            0x1C => Instruction::Trb(AddressingMode::Absolute),
+            0x04 => Instruction::Tsb(AddressingMode::Direct),
+            0x0C => Instruction::Tsb(AddressingMode::Absolute),
+            0x3B => Instruction::Tsc,
+            0xBA => Instruction::Tsx,
+            0x8A => Instruction::Txa,
+            0x9A => Instruction::Txs,
+            0x9B => Instruction::Txy,
+            0x98 => Instruction::Tya,
+            0xBB => Instruction::Tyx,
+            0xCB => Instruction::Wai,
+            0x42 => Instruction::Wdm,
+            0xEB => Instruction::Xba,
+            0xFB => Instruction::Xce,
         }
     }
 }

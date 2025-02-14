@@ -1,6 +1,6 @@
 use crate::{
     bit_set, bit_slice,
-    ppu::{layer::Layer, rgb::Rgba},
+    ppu::layer::Layer, rgb::Rgba,
 };
 
 enum Region {

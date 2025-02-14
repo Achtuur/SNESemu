@@ -23,9 +23,9 @@ macro_rules! to_word {
 ///
 /// Or combines `$bank ($BB)` and `$hhll ($HHLL)` into `$BBHHLL`
 macro_rules! to_long {
-    ($bank: expr, $hh: expr, $ll: expr) => {{
+    ($bank: expr, $hh: expr, $ll: expr) => {
         (($bank as u32) << 16) | (($hh as u32) << 8) | ($ll as u32)
-    }};
+    };
 
     ($bank: expr, $hhll: expr) => {
         to_long!($bank, ($hhll >> 8) as u8, $hhll as u8)

@@ -23,7 +23,7 @@ impl Cpu {
         self.x = self.x.wrapping_add(1);
         self.y = self.y.wrapping_add(1);
         self.acc = self.acc.wrapping_sub(1);
-        if self.get_acc() != 0xFFFF {
+        if self.acc() != 0xFFFF {
             //decrement by 3 to counteract the increment by 3 that happens after execution (thus keeping pc at this instruction)
             self.pc = self.pc.wrapping_sub(3);
         }
@@ -51,7 +51,7 @@ impl Cpu {
         self.x = self.x.wrapping_sub(1);
         self.y = self.y.wrapping_sub(1);
         self.acc = self.acc.wrapping_sub(1);
-        if self.get_acc() != 0xFFFF {
+        if self.acc() != 0xFFFF {
             //decrement by 3 to counteract the increment by 3 that happens after execution (thus keeping pc at this instruction)
             self.pc = self.pc.wrapping_sub(3);
         }

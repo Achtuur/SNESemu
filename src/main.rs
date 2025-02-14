@@ -1,14 +1,16 @@
-#![allow(dead_code)]
-
 pub mod addr_macros;
 mod apu;
 pub mod bit_macros;
 mod cpu;
 mod ppu;
+mod snes;
+pub mod rgb;
 
 use apu::memory::ApuMemory;
 
+use pix_engine::engine::Engine;
 use ppu::memory::PpuMemory;
+use snes::{SnesApp, NTSC_SCREEN_HEIGHT, SCREEN_WIDTH};
 
 use crate::{apu::Apu, cpu::Cpu, ppu::Ppu};
 
@@ -21,23 +23,6 @@ macro_rules! arc_mut {
 }
 
 fn main() {
-    // let rom = include_bytes!("../resources/rom/Legend of Zelda, The - A Link to the Past.smc");
-    let rom = include_bytes!("../resources/rom/Super Mario World.smc");
-
-    let mut cpu = Cpu::new();
-    let mut ppu = Ppu::new();
-    let mut apu = Apu::new();
-
-    let ppumem = arc_mut!(PpuMemory::new());
-    cpu.memory.set_ppumemory_ref(ppumem.clone());
-    ppu.set_ppumemory_ref(ppumem);
-
-    let apumem = arc_mut!(ApuMemory::new());
-    cpu.memory.set_apumemory_ref(apumem.clone());
-    apu.set_apumemory_ref(apumem);
-
-    let _ = cpu.memory.insert_cartridge(rom);
-    println!("{:#?}", cpu.memory.cartridge_metadata);
-
-    ppu.run();
+    let mut snes = SnesApp::new();
+    snes.run().unwrap()
 }

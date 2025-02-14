@@ -1,4 +1,5 @@
-use super::rgb::Rgba;
+use crate::rgb::Rgba;
+
 
 #[derive(Debug, Copy, Clone)]
 /// Layer that the SNES PPU uses when drawing on screen.

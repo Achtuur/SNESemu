@@ -3,7 +3,7 @@ use crate::cpu::{processorstatusflag::ProcessorStatusFlags, Cpu};
 impl Cpu {
     /// AND Accumulator with Memory (DP Indexed Indirect,X)
     pub fn exe_and(&mut self, data: u16) {
-        self.set_acc(self.get_acc() & data);
+        self.set_acc(self.acc() & data);
         self.set_acc_nz_flag();
     }
 
@@ -12,7 +12,7 @@ impl Cpu {
     /// For some godforsaken reason the BIT instruction with immediate addressing mode only affects the Z flag.
     pub fn exe_bit_imm(&mut self, data: u16) {
         self.status
-            .set(ProcessorStatusFlags::Zero, (self.get_acc() & data) == 0);
+            .set(ProcessorStatusFlags::Zero, (self.acc() & data) == 0);
     }
 
     /// Test Bits (Direct Page)
@@ -28,47 +28,42 @@ impl Cpu {
         self.status
             .set(ProcessorStatusFlags::Negative, (data >> n) == 1);
 
-        let and = self.get_acc() & data;
+        let and = self.acc() & data;
         self.status.set(ProcessorStatusFlags::Zero, and == 0);
     }
 
-    /// Compare Accumulator with Memory (DP Indexed Indirect,X)
-    pub fn exe_cmp(&mut self, data: u16) {
-        let cmp = self.get_acc().wrapping_sub(data);
-        self.status.set(ProcessorStatusFlags::Carry, cmp <= 0);
-        self.status.set(ProcessorStatusFlags::Zero, cmp == 0);
-        self.status
-            .set(ProcessorStatusFlags::Negative, (cmp as i8) < 0);
-    }
-
-    /// Compare Index Register X with Memory (Immediate)
-    pub fn exe_cpx(&mut self, data: u16) {
-        let (cmp, overflowed) = self.get_x().overflowing_sub(data);
-        // let cmp = self.get_x().wrapping_sub(data);
+    pub fn exe_cmp_instr(&mut self, reg: u16, data: u16) {
+        let (cmp, overflowed) = reg.overflowing_sub(data);
         self.status.set(ProcessorStatusFlags::Carry, overflowed);
         self.status.set(ProcessorStatusFlags::Zero, cmp == 0);
         self.status
             .set(ProcessorStatusFlags::Negative, (cmp as i8) < 0);
     }
 
+    /// Compare Accumulator with Memory (DP Indexed Indirect,X)
+    pub fn exe_cmp(&mut self, data: u16) {
+        self.exe_cmp_instr(self.acc(), data);
+    }
+
+    /// Compare Index Register X with Memory (Immediate)
+    pub fn exe_cpx(&mut self, data: u16) {
+        self.exe_cmp_instr(self.x(), data);
+    }
+
     /// Compare Index Register Y with Memory (Immediate)
     pub fn exe_cpy(&mut self, data: u16) {
-        let cmp = self.get_y().wrapping_sub(data);
-        self.status.set(ProcessorStatusFlags::Carry, cmp <= 0);
-        self.status.set(ProcessorStatusFlags::Zero, cmp == 0);
-        self.status
-            .set(ProcessorStatusFlags::Negative, (cmp as i8) < 0);
+        self.exe_cmp_instr(self.y(), data);
     }
 
     /// Exclusive-OR Accumulator with Memory (DP Indexed Indirect,X)
     pub fn exe_eor(&mut self, data: u16) {
-        self.set_acc(self.get_acc() ^ data);
+        self.set_acc(self.acc() ^ data);
         self.set_acc_nz_flag();
     }
 
     /// OR Accumulator with Memory (DP Indexed Indirect,X)
     pub fn exe_ora(&mut self, data: u16) {
-        self.set_acc(self.get_acc() | data);
+        self.set_acc(self.acc() | data);
         self.set_acc_nz_flag();
     }
 
@@ -108,12 +103,12 @@ impl Cpu {
 
         let c = self.carry();
         self.status
-            .set(ProcessorStatusFlags::Carry, (self.get_acc() & 0x01) == 1);
-        self.set_acc((self.get_acc() << 1) | c);
+            .set(ProcessorStatusFlags::Carry, (self.acc() & 0x01) == 1);
+        self.set_acc((self.acc() << 1) | c);
         self.status
-            .set(ProcessorStatusFlags::Zero, self.get_acc() == 0);
+            .set(ProcessorStatusFlags::Zero, self.acc() == 0);
         self.status
-            .set(ProcessorStatusFlags::Negative, (self.get_acc() >> b) == 1);
+            .set(ProcessorStatusFlags::Negative, (self.acc() >> b) == 1);
     }
 
     /// Rotate Memory or Accumulator Right (Direct Page)
@@ -153,12 +148,12 @@ impl Cpu {
 
         let c = self.carry();
         self.status
-            .set(ProcessorStatusFlags::Carry, (self.get_acc() & 0x01) == 1);
-        self.set_acc((self.get_acc() >> 1) | (c << b));
+            .set(ProcessorStatusFlags::Carry, (self.acc() & 0x01) == 1);
+        self.set_acc((self.acc() >> 1) | (c << b));
         self.status
-            .set(ProcessorStatusFlags::Zero, self.get_acc() == 0);
+            .set(ProcessorStatusFlags::Zero, self.acc() == 0);
         self.status
-            .set(ProcessorStatusFlags::Negative, (self.get_acc() >> b) == 1);
+            .set(ProcessorStatusFlags::Negative, (self.acc() >> b) == 1);
     }
 
     /// Test and Reset Memory Bits Against Accumulator (Direct Page)
@@ -166,14 +161,14 @@ impl Cpu {
         match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
             true => {
                 let mut val = self.mem_read(low_addr);
-                let and = self.get_acc() as u8 & val;
+                let and = self.acc() as u8 & val;
                 self.status.set(ProcessorStatusFlags::Zero, and == 0);
                 val &= !and;
                 self.mem_write(low_addr, val);
             }
             false => {
                 let mut val = self.mem_read_long(low_addr, high_addr);
-                let and = self.get_acc() & val;
+                let and = self.acc() & val;
                 self.status.set(ProcessorStatusFlags::Zero, and == 0);
                 val &= !and;
                 self.mem_write_long(low_addr, high_addr, val);
@@ -186,14 +181,14 @@ impl Cpu {
         match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
             true => {
                 let mut val = self.mem_read(low_addr);
-                let and = self.get_acc() as u8 & val;
+                let and = self.acc() as u8 & val;
                 self.status.set(ProcessorStatusFlags::Zero, and == 0);
                 val |= and;
                 self.mem_write(low_addr, val);
             }
             false => {
                 let mut val = self.mem_read_long(low_addr, high_addr);
-                let and = self.get_acc() & val;
+                let and = self.acc() & val;
                 self.status.set(ProcessorStatusFlags::Zero, and == 0);
                 val |= and;
                 self.mem_write_long(low_addr, high_addr, val);

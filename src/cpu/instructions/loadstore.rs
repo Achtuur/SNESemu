@@ -10,17 +10,17 @@ impl Cpu {
                 let val = self.mem_read(low_addr);
                 self.set_acc(val as u16);
                 self.status
-                    .set(ProcessorStatusFlags::Negative, (self.get_acc() >> 7) == 1);
+                    .set(ProcessorStatusFlags::Negative, (self.acc() >> 7) == 1);
             }
             false => {
                 let val = self.mem_read_long(low_addr, high_addr);
                 self.set_acc(val);
                 self.status
-                    .set(ProcessorStatusFlags::Negative, (self.get_acc() >> 15) == 1);
+                    .set(ProcessorStatusFlags::Negative, (self.acc() >> 15) == 1);
             }
         }
         self.status
-            .set(ProcessorStatusFlags::Zero, self.get_acc() == 0);
+            .set(ProcessorStatusFlags::Zero, self.acc() == 0);
     }
 
     /// Load Index Register X from Memory (Immediate)
@@ -30,17 +30,17 @@ impl Cpu {
                 let val = self.mem_read(low_addr);
                 self.set_x(val as u16);
                 self.status
-                    .set(ProcessorStatusFlags::Negative, (self.get_x() >> 7) == 1);
+                    .set(ProcessorStatusFlags::Negative, (self.x() >> 7) == 1);
             }
             false => {
                 let val = self.mem_read_long(low_addr, high_addr);
                 self.set_x(val);
                 self.status
-                    .set(ProcessorStatusFlags::Negative, (self.get_x() >> 15) == 1);
+                    .set(ProcessorStatusFlags::Negative, (self.x() >> 15) == 1);
             }
         }
         self.status
-            .set(ProcessorStatusFlags::Zero, self.get_x() == 0);
+            .set(ProcessorStatusFlags::Zero, self.x() == 0);
     }
 
     /// Load Index Register Y from Memory (Immediate)
@@ -50,28 +50,28 @@ impl Cpu {
                 let val = self.mem_read(low_addr);
                 self.set_y(val as u16);
                 self.status
-                    .set(ProcessorStatusFlags::Negative, (self.get_y() >> 7) == 1);
+                    .set(ProcessorStatusFlags::Negative, (self.y() >> 7) == 1);
             }
             false => {
                 let val = self.mem_read_long(low_addr, high_addr);
                 self.set_y(val);
                 self.status
-                    .set(ProcessorStatusFlags::Negative, (self.get_y() >> 15) == 1);
+                    .set(ProcessorStatusFlags::Negative, (self.y() >> 15) == 1);
             }
         }
         self.status
-            .set(ProcessorStatusFlags::Zero, self.get_y() == 0);
+            .set(ProcessorStatusFlags::Zero, self.y() == 0);
     }
 
     /// Store Accumulator to Memory (DP Indexed Indirect,X)
     pub fn exe_sta(&mut self, low_addr: u32, high_addr: u32) {
         match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
             true => {
-                self.mem_write(low_addr, self.get_acc() as u8);
+                self.mem_write(low_addr, self.acc() as u8);
             }
 
             false => {
-                self.mem_write_long(low_addr, high_addr, self.get_acc());
+                self.mem_write_long(low_addr, high_addr, self.acc());
             }
         }
     }
@@ -80,11 +80,11 @@ impl Cpu {
     pub fn exe_stx(&mut self, low_addr: u32, high_addr: u32) {
         match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
             true => {
-                self.mem_write(low_addr, self.get_x() as u8);
+                self.mem_write(low_addr, self.x() as u8);
             }
 
             false => {
-                self.mem_write_long(low_addr, high_addr, self.get_x());
+                self.mem_write_long(low_addr, high_addr, self.x());
             }
         }
     }
@@ -93,11 +93,11 @@ impl Cpu {
     pub fn exe_sty(&mut self, low_addr: u32, high_addr: u32) {
         match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
             true => {
-                self.mem_write(low_addr, self.get_y() as u8);
+                self.mem_write(low_addr, self.y() as u8);
             }
 
             false => {
-                self.mem_write_long(low_addr, high_addr, self.get_y());
+                self.mem_write_long(low_addr, high_addr, self.y());
             }
         }
     }

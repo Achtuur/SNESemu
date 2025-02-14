@@ -86,11 +86,11 @@ impl Cpu {
 
     /// Add binary numbers
     fn exe_adc_bin(&mut self, data: u16) -> u16 {
-        let sum = self.get_acc().wrapping_add(data).wrapping_add(self.carry());
+        let sum = self.acc().wrapping_add(data).wrapping_add(self.carry());
 
         // If acc > sum, then sum wraps around u8/u16 limit, meaning carry should be propogated
         self.status
-            .set(ProcessorStatusFlags::Carry, self.get_acc() > sum);
+            .set(ProcessorStatusFlags::Carry, self.acc() > sum);
 
         // amount of bits to shift left to find if number is negative
         let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
@@ -102,8 +102,8 @@ impl Cpu {
 
         self.status.set(
             ProcessorStatusFlags::Overflow,
-            (self.get_acc() >> b) == 1 && (data >> b) == 1 && (sum >> b) == 0
-                || (self.get_acc() >> b) == 0 && (data >> b) == 0 && (sum >> b) == 1,
+            (self.acc() >> b) == 1 && (data >> b) == 1 && (sum >> b) == 0
+                || (self.acc() >> b) == 0 && (data >> b) == 0 && (sum >> b) == 1,
         );
 
         sum
@@ -116,7 +116,7 @@ impl Cpu {
                 let mut val = self.mem_read(low_addr);
                 self.status
                     .set(ProcessorStatusFlags::Carry, (val >> 7) == 1);
-                val >>= 1;
+                val <<= 1;
                 self.status.set(ProcessorStatusFlags::Zero, val == 0);
                 self.status
                     .set(ProcessorStatusFlags::Negative, (val >> 7) == 1);
@@ -147,13 +147,13 @@ impl Cpu {
                 .status
                 .set(ProcessorStatusFlags::Carry, (self.acc >> 15) == 1),
         }
-        self.set_acc(self.get_acc() << 1);
+        self.set_acc(self.acc() << 1);
         self.set_acc_nz_flag();
     }
 
     /// Decrement (Accumulator)
     pub fn exe_dea(&mut self) {
-        self.set_acc(self.get_acc().wrapping_sub(1));
+        self.set_acc(self.acc().wrapping_sub(1));
         self.set_acc_nz_flag();
     }
 
@@ -179,19 +179,19 @@ impl Cpu {
 
     /// Decrement Index Register X (Implied)
     pub fn exe_dex(&mut self) {
-        self.set_x(self.get_x().wrapping_sub(1));
+        self.set_x(self.x().wrapping_sub(1));
         self.set_x_nz_flag();
     }
 
     /// Decrement Index Register Y (Implied)
     pub fn exe_dey(&mut self) {
-        self.set_y(self.get_y().wrapping_sub(1));
+        self.set_y(self.y().wrapping_sub(1));
         self.set_y_nz_flag();
     }
 
     /// Increment (Accumulator)
     pub fn exe_ina(&mut self) {
-        self.set_acc(self.get_acc().wrapping_add(1));
+        self.set_acc(self.acc().wrapping_add(1));
         self.set_acc_nz_flag()
     }
 
@@ -217,13 +217,13 @@ impl Cpu {
 
     /// Increment Index Register X (Implied)
     pub fn exe_inx(&mut self) {
-        self.set_x(self.get_x().wrapping_add(1));
+        self.set_x(self.x().wrapping_add(1));
         self.set_x_nz_flag();
     }
 
     /// Increment Index Register Y (Implied)
     pub fn exe_iny(&mut self) {
-        self.set_y(self.get_y().wrapping_add(1));
+        self.set_y(self.y().wrapping_add(1));
         self.set_y_nz_flag();
     }
 
@@ -234,7 +234,7 @@ impl Cpu {
                 let mut val = self.mem_read(low_addr);
                 self.status
                     .set(ProcessorStatusFlags::Carry, (val & 0x01) == 1);
-                val <<= 1;
+                val >>= 1;
                 self.status.set(ProcessorStatusFlags::Zero, val == 0);
                 self.status
                     .set(ProcessorStatusFlags::Negative, (val >> 7) == 1);
@@ -256,7 +256,7 @@ impl Cpu {
     pub fn exe_lsra(&mut self) {
         self.status
             .set(ProcessorStatusFlags::Carry, (self.acc & 0x1) == 1);
-        self.set_acc(self.get_acc() >> 1);
+        self.set_acc(self.acc() >> 1);
         self.set_acc_nz_flag();
     }
 
@@ -370,14 +370,14 @@ impl Cpu {
 
     fn exe_sbc_bin(&mut self, data: u16) -> u16 {
         let sum = self
-            .get_acc()
+            .acc()
             .wrapping_sub(data)
             .wrapping_sub(1)
             .wrapping_add(self.carry());
 
         // If acc < sum, then sum wraps around 0, meaning carry should be propogated
         self.status
-            .set(ProcessorStatusFlags::Carry, self.get_acc() < sum);
+            .set(ProcessorStatusFlags::Carry, self.acc() < sum);
 
         // amount of bits to shift left to find if number is negative
         let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
@@ -389,8 +389,8 @@ impl Cpu {
 
         self.status.set(
             ProcessorStatusFlags::Overflow,
-            (self.get_acc() >> b) == 1 && (data >> b) == 0 && (sum >> b) == 0
-                || (self.get_acc() >> b) == 0 && (data >> b) == 1 && (sum >> b) == 1,
+            (self.acc() >> b) == 1 && (data >> b) == 0 && (sum >> b) == 0
+                || (self.acc() >> b) == 0 && (data >> b) == 1 && (sum >> b) == 1,
         );
 
         sum

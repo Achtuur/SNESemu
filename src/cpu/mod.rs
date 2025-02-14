@@ -1,5 +1,6 @@
-use self::{
-    instructions::instructions::Instruction, memory::CpuMemory,
+use instructions::Instruction;
+
+use self::{ memory::CpuMemory,
     processorstatusflag::ProcessorStatusFlags,
 };
 
@@ -124,8 +125,7 @@ impl Cpu {
 
         // read & execute instruction
         let op = self.mem_read(self.get_pc_addr());
-        let instr = Instruction::from_op(op);
-        self.execute_instruction(instr)
+        self.execute_op(op)
     }
 
     /// Returns pc long address
@@ -178,7 +178,7 @@ impl Cpu {
     /// Returns accumulator value as either 16 bit or 8 bits depending on accumulator 8 bit flag.
     ///
     /// 8 bit value is actually just 16 bit value ANDed with `0xF`
-    pub fn get_acc(&self) -> u16 {
+    pub fn acc(&self) -> u16 {
         match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
             true => self.acc & 0xF,
             false => self.acc,
@@ -210,7 +210,7 @@ impl Cpu {
     /// Returns x register value as either 16 bit or 8 bits depending on x register 8 bit flag.
     ///
     /// 8 bit value is actually just 16 bit value ANDed with `0xF`
-    pub fn get_x(&self) -> u16 {
+    pub fn x(&self) -> u16 {
         match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
             true => self.x & 0xF,
             false => self.x,
@@ -241,7 +241,7 @@ impl Cpu {
     /// Returns y register value as either 16 bit or 8 bits depending on y register 8 bit flag.
     ///
     /// 8 bit value is actually just 16 bit value ANDed with `0xF`
-    pub fn get_y(&self) -> u16 {
+    pub fn y(&self) -> u16 {
         match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
             true => self.y & 0xF,
             false => self.y,

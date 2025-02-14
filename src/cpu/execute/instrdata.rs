@@ -1,7 +1,6 @@
 use crate::{
     cpu::{
-        instructions::{instructions::Instruction, AddressingMode},
-        Cpu,
+        instructions::{addressing::AddressingMode, Instruction}, Cpu
     },
     to_long,
 };
@@ -34,9 +33,7 @@ impl Cpu {
     ///
     /// Source: [6502.org](http://www.6502.org/tutorials/65c816opcodes.html)
     pub fn get_instruction_data(&mut self, instr: &Instruction) -> InstrData {
-        use AddressingMode::*;
-
-        let (arg0, arg1, arg2) = match instr.get_length() {
+        let (arg0, arg1, arg2) = match instr.byte_length() {
             1 => (0, 0, 0), // Implied
             2 => {
                 let arg0 = self.mem_read(self.get_pc_addr());
@@ -56,31 +53,32 @@ impl Cpu {
             _ => unreachable!("No instruction has more than 3 arguments"),
         };
 
-        match instr.get_addressing_mode() {
-            Absolute => self.get_absolute_data(arg0, arg1),
-            AbsoluteX => self.get_absolutex_data(arg0, arg1),
-            AbsoluteY => self.get_absolutey_data(arg0, arg1),
-            AbsoluteIndirect => self.get_absolute_indirect_data(arg0, arg1),
-            AbsoluteIndirectX => self.get_absolute_indirectx_data(arg0, arg1),
-            AbsoluteIndirectLong => self.get_absolute_indirect_long_data(arg0, arg1),
-            Direct => self.get_direct_data(arg0),
-            DirectX => self.get_directx_data(arg0),
-            DirectY => self.get_directy_data(arg0),
-            Implied => InstrData::new(0, 0, 0, 0),
-            Immediate => self.get_immediate(arg0),
-            ImmediateLong => self.get_immediate_long(arg0, arg1),
-            Indirect => self.get_indirect_data(arg0),
-            IndirectX => self.get_indirectx_data(arg0),
-            IndirectY => self.get_indirecty_data(arg0),
-            IndirectLong => self.get_indirect_long_data(arg0),
-            IndirectLongY => self.get_indirecty_long_data(arg0),
-            Long => self.get_long_data(arg0, arg1, arg2),
-            LongX => self.get_longx_data(arg0, arg1, arg2),
-            Relative => self.get_relative_data(arg0),
-            RelativeLong => self.get_relative_long_data(arg0, arg1),
-            StackRelative => self.get_stackrelative_data(arg0),
-            StackRelativeY => self.get_stackrelativey_data(arg0),
-            Move => self.get_move_data(arg0, arg1),
+        match instr.addressing_mode() {
+            AddressingMode::Accumulator => InstrData::new(0, 0, 0, 0),
+            AddressingMode::Absolute => self.get_absolute_data(arg0, arg1),
+            AddressingMode::AbsoluteX => self.get_absolutex_data(arg0, arg1),
+            AddressingMode::AbsoluteY => self.get_absolutey_data(arg0, arg1),
+            AddressingMode::AbsoluteIndirect => self.get_absolute_indirect_data(arg0, arg1),
+            AddressingMode::AbsoluteIndirectX => self.get_absolute_indirectx_data(arg0, arg1),
+            AddressingMode::AbsoluteIndirectLong => self.get_absolute_indirect_long_data(arg0, arg1),
+            AddressingMode::Direct => self.get_direct_data(arg0),
+            AddressingMode::DirectX => self.get_directx_data(arg0),
+            AddressingMode::DirectY => self.get_directy_data(arg0),
+            AddressingMode::Implied => InstrData::new(0, 0, 0, 0),
+            AddressingMode::Immediate => self.get_immediate(arg0),
+            AddressingMode::ImmediateLong => self.get_immediate_long(arg0, arg1),
+            AddressingMode::Indirect => self.get_indirect_data(arg0),
+            AddressingMode::IndirectX => self.get_indirectx_data(arg0),
+            AddressingMode::IndirectY => self.get_indirecty_data(arg0),
+            AddressingMode::IndirectLong => self.get_indirect_long_data(arg0),
+            AddressingMode::IndirectLongY => self.get_indirecty_long_data(arg0),
+            AddressingMode::AbsoluteLong => self.get_long_data(arg0, arg1, arg2),
+            AddressingMode::AbsoluteLongX => self.get_longx_data(arg0, arg1, arg2),
+            AddressingMode::Relative => self.get_relative_data(arg0),
+            AddressingMode::RelativeLong => self.get_relative_long_data(arg0, arg1),
+            AddressingMode::StackRelative => self.get_stackrelative_data(arg0),
+            AddressingMode::StackRelativeY => self.get_stackrelativey_data(arg0),
+            AddressingMode::Move => self.get_move_data(arg0, arg1),
         }
     }
 

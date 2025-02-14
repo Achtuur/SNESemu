@@ -2,19 +2,17 @@ pub mod components;
 pub mod layer;
 pub mod memory;
 pub mod ppu;
-pub mod rgb;
 pub mod scanline;
-pub mod screenapp;
 pub mod sprite;
 pub mod tile;
 
 use std::sync::{Arc, Mutex, RwLock};
 
-use crate::arc_mut;
+use crate::{arc_mut, snes::{NTSC_SCREEN_HEIGHT, SCREEN_WIDTH}};
 use lazy_static::lazy_static;
 use pix_engine::prelude::{Engine, PixResult};
 
-use self::{memory::PpuMemory, scanline::Scanline, screenapp::ScreenApp};
+use self::{memory::PpuMemory, scanline::Scanline};
 
 lazy_static! {
     static ref V_BLANK: RwLock<bool> = RwLock::new(false);
@@ -38,12 +36,8 @@ macro_rules! h_blanking {
     }};
 }
 
-const SCREEN_WIDTH: usize = 256;
-const NTSC_SCREEN_HEIGHT: usize = 224;
-const PAL_SCREEN_HEIGHT: usize = 239;
 /// Picture processing unit handles visual stuff
 pub struct Ppu {
-    screen: ScreenApp,
     memory: Arc<Mutex<PpuMemory>>,
     scanline: Scanline,
 }
@@ -51,7 +45,6 @@ pub struct Ppu {
 impl Ppu {
     pub fn new() -> Self {
         Ppu {
-            screen: ScreenApp::new(),
             scanline: Scanline::new(),
             memory: arc_mut!(PpuMemory::new()),
         }
@@ -59,24 +52,5 @@ impl Ppu {
 
     pub fn set_ppumemory_ref(&mut self, memref: Arc<Mutex<PpuMemory>>) {
         self.memory = memref;
-    }
-
-    pub fn run(&mut self) -> PixResult<()> {
-        // loop {
-        //     let t = Instant::now();
-        //     self.tick();
-        //     println!("t: {0:?}", t.elapsed());
-        //     thread::sleep(Duration::from_millis(10))
-        // }
-
-        let mut engine = Engine::builder()
-            .dimensions(SCREEN_WIDTH as u32, NTSC_SCREEN_HEIGHT as u32)
-            .title("MyApp")
-            .show_frame_rate()
-            .resizable()
-            // .target_frame_rate(60)
-            .build()?;
-
-        engine.run(&mut self.screen)
     }
 }
