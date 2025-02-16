@@ -2,7 +2,12 @@ pub mod exhirom;
 pub mod hirom;
 pub mod lorom;
 
-use super::cartridge::{CartridgeMetadata, CartridgeParseError};
+use crate::cpu::{CartridgeParseError, CpuResult};
+
+use super::cartridge::{CartridgeMapperType, CartridgeMetadata};
+
+use crate::cpu::CpuError;
+
 
 pub trait Mappermode {
     /// Handles reading memory in the following regions:
@@ -19,131 +24,128 @@ pub trait Mappermode {
     /// * Q4
     fn write(&mut self, long_addr: u32, value: u8);
 
-    /// Copy raw bytes to internal rom vector
-    fn copy_bytes_to_rom(&mut self, bytes: &[u8]);
+    // /// Copy raw bytes to internal rom vector
+    // fn copy_bytes_to_rom(&mut self, bytes: &[u8]);
 
-    fn get_rom_size(&self) -> usize;
-
-    /// Set size of ram where size indicates `1 << size` kB of ram
-    fn set_ram_size(&mut self, size: u8);
+    fn rom_size(&self) -> usize;
 
     /// Returns size of sram in bytes
-    fn get_sram_size(&self) -> usize;
+    fn sram_size(&self) -> usize;
 
     /// Returns all bytes currently in SRAM, ordered from lowest to highest address
-    fn get_sram_bytes(&self) -> Vec<u8>;
+    fn sram_bytes(&self) -> &[u8];
 
     /// Copy raw bytes to internal sram vector, overwrites any previously existing value!
     ///
     /// Only for use when loading a save
     fn copy_bytes_to_sram(&mut self, bytes: &[u8]);
 
-    /// Returns memory map mode number that is expected to be found in header
-    fn get_memory_map_mode(&self) -> u8;
-
     /// Reset mapper to initial state
     ///
     /// clears ram and rom completely
     fn reset(&mut self);
+}
 
-    /// Try parse cartridge using this mapper mode
-    ///
-    /// # Inputs
-    ///
-    /// * `raw_bytes` - raw bytes from the cartridge
-    fn try_parse(&mut self, raw_bytes: &[u8]) -> Result<CartridgeMetadata, CartridgeParseError> {
-        /// Macro that does self.read(addr).unwrap()
-        macro_rules! readf {
-            ($addr: expr) => {
-                self.read($addr).unwrap()
-            };
-        }
 
-        self.copy_bytes_to_rom(raw_bytes);
+#[derive(Debug)]
+pub enum CpuMemoryMapper<'m> {
+    LoROM(lorom::LoROM<'m>),
+    HiROM(hirom::HiROM<'m>),
+    ExHiROM(exhirom::ExHiROM<'m>),
+}
 
-        let checksum = (readf!(0xFFDC) as u16) << 8 | readf!(0xFFDD) as u16;
-        let checksum_compl = (readf!(0xFFDE) as u16) << 8 | readf!(0xFFDF) as u16;
 
-        if checksum + checksum_compl != 0xFFFF {
-            return Err(CartridgeParseError::ChecksumMismatch);
-        }
-
-        let mut metadata = CartridgeMetadata::new();
-
-        // header version 3
-        if readf!(0xFFDA) == 0x33 {
-            // First two bytes are developer ID
-            let dev_id = &[readf!(0x00FFB0), readf!(0x00FFB1)]; // raw bytes
-            metadata.set_dev_id(dev_id);
-
-            // Next four bytes are game code
-            let game_code = (0..4)
-                .map(|offset| readf!(0xFFB2 + offset))
-                .collect::<Vec<u8>>();
-            let game_code = std::str::from_utf8(&game_code).unwrap().to_string();
-
-            let ex_flash_size = readf!(0xFFBC); // 1 << exflash_size kB
-            let ex_ram_size = readf!(0xFFBD); // 1 << ex_ram_size kB
-
-            let chipset_subtype = readf!(0xFFBF);
-
-            metadata.set_game_code(game_code);
-            // metadata.set_chipset_subtype(chipset_subtype);
-        }
-        // header version 2
-        else if readf!(0xFFD4) == 0 && (0..15).all(|offset| readf!(0xFFB0 + offset) == 0x00) {
-            let chipset_subtype = readf!(0xFFBF);
-        }
-
-        // Normal header - starts at $FFC0
-
-        let game_name = (0..21)
-            .map(|offset| readf!(0xFFC0 + offset))
-            .collect::<Vec<u8>>();
-
-        // check if every character except the last is either a space or a capital letter
-        if game_name[0..20]
-            .iter()
-            .any(|byte| (*byte != 0x20 && *byte < 0x41) || *byte > 0x5A)
-        {
-            return Err(CartridgeParseError::InvalidGameName);
-        }
-
-        metadata.set_title(&game_name);
-
-        // map mode: 001smmmm
-        //              |++++ - Map mode (0: lorom, 1: hirom, 2: exhirom)
-        //              +------ Speed: (0: slow, 1: fast)
-        let map_mode = readf!(0xFFD5);
-
-        if map_mode & 0x0F != self.get_memory_map_mode() {
-            return Err(CartridgeParseError::WrongMapperMode);
-        }
-
-        let cart_type = readf!(0xFFD6);
-
-        let rom_size = readf!(0xFFD7); // 1 << rom_size kB
-
-        if (1 << rom_size) >= raw_bytes.len() {
-            return Err(CartridgeParseError::RomSizeMismatch);
-        }
-
-        metadata.set_rom_size(rom_size);
-
-        let ram_size = readf!(0xFFD8); // 1 << ram_size kB
-        self.set_ram_size(ram_size);
-
-        metadata.set_ram_size(ram_size);
-
-        let country = readf!(0xFFD9);
-        metadata.set_region(country);
-
-        let dev_id = readf!(0xFFDA);
-        metadata.set_dev_id(&[dev_id]);
-
-        let version = readf!(0xFFDB);
-        metadata.set_version(version);
-
-        Ok(metadata)
+impl std::default::Default for CpuMemoryMapper<'_> {
+    fn default() -> Self {
+        Self::LoROM(lorom::LoROM::new(&[], 0))
     }
 }
+
+impl<'m> CpuMemoryMapper<'m> {
+    pub fn from_cartridge_data(cart_data: &CartridgeMetadata<'m>) -> CpuResult<Self> {
+        let rom = cart_data.rom_bytes;
+        let sram_size = cart_data.ram_size;
+        let mapper = match cart_data.mapper {
+            Some(CartridgeMapperType::LoROM) => Self::LoROM(lorom::LoROM::new(rom, sram_size)),
+            Some(CartridgeMapperType::HiROM) => Self::HiROM(hirom::HiROM::new(rom, sram_size)),
+            Some(CartridgeMapperType::ExHiROM) => {
+                Self::ExHiROM(exhirom::ExHiROM::new(rom, sram_size))
+            }
+            _ => return Err(CartridgeParseError::WrongMapperMode(0).into()),
+        };
+        Ok(mapper)
+    }
+}
+
+/// Implements the Peripheral trait for `$enum`.
+///
+/// This is equivalent to writing out a match statement for each variant of `$enum`.
+/// It basically saves a lot of writing when adding drivers
+macro_rules! impl_trait {
+    ($enum: ident, [$($variants: ident),+]) => {
+        // use $crate::cpu::memory::Mappermode;
+        #[allow(unused)] // some methods could be useful later on
+        impl $enum<'_> {
+            pub(crate) fn read(&self, long_addr: u32) -> Option<u8> {
+                match self {
+                    $(Self::$variants(x) => Mappermode::read(x, long_addr)),+
+                }
+            }
+
+            pub(crate) fn write(&mut self, long_addr: u32, value: u8) {
+                match self {
+                    $(Self::$variants(x) => Mappermode::write(x, long_addr, value)),+
+                }
+            }
+
+            pub(crate) fn rom_size(&self) -> usize {
+                match self {
+                    $(Self::$variants(x) => Mappermode::rom_size(x)),+
+                }
+            }
+
+            pub(crate) fn sram_size(&self) -> usize {
+                match self {
+                    $(Self::$variants(x) => Mappermode::sram_size(x)),+
+                }
+            }
+
+            pub(crate) fn sram_bytes(&self) -> &[u8] {
+                match self {
+                    $(Self::$variants(x) => Mappermode::sram_bytes(x)),+
+                }
+            }
+
+            pub(crate) fn copy_bytes_to_sram(&mut self, bytes: &[u8]) {
+                match self {
+                    $(Self::$variants(x) => Mappermode::copy_bytes_to_sram(x, bytes)),+
+                }
+            }
+
+            pub(crate) fn reset(&mut self) {
+                match self {
+                    $(Self::$variants(x) => Mappermode::reset(x)),+
+                }
+            }
+        }
+
+        impl std::fmt::Display for CpuMemoryMapper<'_> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    $(
+                        Self::$variants(_) => write!(f,
+                            "{}: rom[{:#06X}], sram[{:#04X}]",
+                            stringify!($variants), self.rom_size(), self.sram_size()
+                        )
+                    ),+
+                }
+            }
+        }
+    }
+}
+
+impl_trait!(CpuMemoryMapper, [
+    LoROM,
+    HiROM,
+    ExHiROM
+]);

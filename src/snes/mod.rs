@@ -14,6 +14,7 @@ use screen::Screen;
 use crate::apu::memory::ApuMemory;
 use crate::apu::Apu;
 use crate::arc_mut;
+use crate::cpu::memory::CpuMemory;
 use crate::cpu::Cpu;
 use crate::ppu::memory::PpuMemory;
 use crate::ppu::Ppu;
@@ -23,14 +24,14 @@ use super::{rgb::Rgba};
 pub(crate) const SCREEN_WIDTH: usize = 256;
 pub(crate) const NTSC_SCREEN_HEIGHT: usize = 224;
 pub(crate) const PAL_SCREEN_HEIGHT: usize = 239;
-pub struct SnesApp {
-    cpu: Cpu,
+pub struct SnesApp<'mem> {
+    cpu: Cpu<'mem>,
     ppu: Ppu,
     apu: Apu,
     screen: Screen,
 }
 
-impl SnesApp {
+impl<'mem> SnesApp<'mem> {
     pub fn new() -> Self {
         SnesApp {
             cpu: Cpu::new(),
@@ -57,7 +58,7 @@ impl SnesApp {
     }
 }
 
-impl PixEngine for SnesApp {
+impl PixEngine for SnesApp<'_> {
     // Set up application state and initial settings. `PixState` contains
     // engine specific state and utility methods for actions like getting mouse
     // coordinates, drawing shapes, etc. (Optional)
@@ -65,6 +66,7 @@ impl PixEngine for SnesApp {
         self.screen.init(s)?;
 
         let rom = include_bytes!("../../resources/rom/Super Mario World.smc");
+        self.cpu.memory = CpuMemory::from_cartridge(rom)?;
 
         let ppumem = arc_mut!(PpuMemory::new());
         self.cpu.memory.set_ppumemory_ref(ppumem.clone());
@@ -73,8 +75,12 @@ impl PixEngine for SnesApp {
         let apumem = arc_mut!(ApuMemory::new());
         self.cpu.memory.set_apumemory_ref(apumem.clone());
         self.apu.set_apumemory_ref(apumem);
-        self.cpu.memory.insert_cartridge(rom).unwrap();
-        println!("{:#?}", self.cpu.memory.cartridge_metadata);
+
+        // go to reset state
+        self.cpu.reset();
+        // self.ppu.reset();
+        // self.apu.reset();
+
 
         // Set the background to GRAY and clear the screen.
         s.background(Color::BLACK);

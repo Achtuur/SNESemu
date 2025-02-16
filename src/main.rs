@@ -23,6 +23,10 @@ macro_rules! arc_mut {
 }
 
 fn main() {
+    tracing_subscriber::fmt()
+    .with_max_level(tracing::Level::TRACE)
+    .init();
+
     let mut snes = SnesApp::new();
     snes.run().unwrap()
 }

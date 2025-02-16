@@ -1,6 +1,6 @@
 use crate::cpu::{processorstatusflag::ProcessorStatusFlags, Cpu};
 
-impl Cpu {
+impl Cpu<'_> {
     /// Push Effective Absolute Address (Stack (Absolute))
     pub fn exe_pea(&mut self, data: u16) {
         self.push_long_stack(data);
@@ -25,7 +25,7 @@ impl Cpu {
 
     /// Push Accumulator (Stack (Push))
     pub fn exe_pha(&mut self, data: u16) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => self.push_byte_stack(self.acc as u8),
             false => self.push_long_stack(self.acc),
         }
@@ -69,7 +69,7 @@ impl Cpu {
 
     /// Pull Accumulator (Stack (Pull))
     pub fn exe_pla(&mut self, data: u16) {
-        self.acc = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        self.acc = match self.is_emulation_mode() {
             true => self.pull_byte_stack() as u16,
             false => self.pull_long_stack(),
         };
@@ -79,7 +79,7 @@ impl Cpu {
             self.status.set_flag(ProcessorStatusFlags::Zero)
         }
 
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => self
                 .status
                 .set(ProcessorStatusFlags::Accumulator8bit, (self.acc as i8) < 0),
@@ -143,7 +143,7 @@ impl Cpu {
             self.status.set_flag(ProcessorStatusFlags::Zero)
         }
 
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => self
                 .status
                 .set(ProcessorStatusFlags::Accumulator8bit, (self.x as i8) < 0),
@@ -165,7 +165,7 @@ impl Cpu {
             self.status.set_flag(ProcessorStatusFlags::Zero)
         }
 
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => self
                 .status
                 .set(ProcessorStatusFlags::Accumulator8bit, (self.y as i8) < 0),

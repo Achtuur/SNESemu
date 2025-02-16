@@ -51,7 +51,7 @@ pub enum AddressingMode {
 
 impl AddressingMode {
     /// Byte length of the ARGUMENT of an instruction with this addressing mode
-    pub fn byte_length(&self) -> usize {
+    pub fn byte_length(&self, acc_8_bit: bool) -> usize {
         match self {
             Self::Accumulator => 0,
             Self::Implied => 0,
@@ -77,8 +77,10 @@ impl AddressingMode {
             | Self::AbsoluteLongX
             | Self::AbsoluteIndirectLong => 3,
 
-            Self::Immediate => 1,
-            Self::ImmediateLong => 2,
+            Self::Immediate if acc_8_bit => 1,
+            Self::Immediate => 2,
+            Self::ImmediateLong if acc_8_bit => 2,
+            Self::ImmediateLong => 3,
 
             Self::Relative => 1,
             Self::RelativeLong => 2,

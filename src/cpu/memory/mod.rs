@@ -1,16 +1,20 @@
 use std::sync::{Arc, Mutex};
 
+use mapper::CpuMemoryMapper;
+
 use crate::{apu::memory::ApuMemory, ppu::memory::PpuMemory, separate_bank_hhll_addr};
 
 use self::{
-    cartridge::{CartridgeMetadata, CartridgeParseError},
+    cartridge::{CartridgeMetadata},
     mapper::{exhirom::ExHiROM, hirom::HiROM, lorom::LoROM, Mappermode},
     ram::Ram,
 };
 
-mod cartridge;
-mod mapper;
-mod ram;
+use super::{CartridgeParseError, CpuError, CpuResult};
+
+pub(crate) mod cartridge;
+pub(crate) mod mapper;
+pub(crate) mod ram;
 
 /// Struct that represents all memory in the SNES, this is shared between CPU, PPU and APU as they all need to read/write to it
 ///
@@ -21,24 +25,67 @@ mod ram;
 /// Since rust does not support `u24` natively, `u32` will be used instead and the upper 8 bits are unused and ignored
 ///
 /// Source used: [snes wiki page](https://snes.nesdev.org/wiki/Memory_map)
-pub struct CpuMemory {
-    mapper: Box<dyn Mappermode>,
-    pub cartridge_metadata: CartridgeMetadata,
+pub struct CpuMemory<'m> {
+    mapper: CpuMemoryMapper<'m>,
     ram: Ram,
     ppu_memory: Arc<Mutex<PpuMemory>>,
     apu_memory: Arc<Mutex<ApuMemory>>,
 }
 
-impl CpuMemory {
+impl<'m> CpuMemory<'m> {
     pub fn new() -> Self {
         CpuMemory {
-            // default to lorom mapper, this should probably be changed to be an Option<Box<dyn Mappermode>>
-            mapper: Box::new(LoROM::new()),
-            cartridge_metadata: CartridgeMetadata::new(),
+            mapper: CpuMemoryMapper::default(),
             ram: Ram::new(),
             ppu_memory: Arc::new(Mutex::new(PpuMemory::new())),
             apu_memory: Arc::new(Mutex::new(ApuMemory::new())),
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.mapper.reset();
+        self.ram.reset();
+        // self.ppu_memory.lock().unwrap().reset();
+        // self.apu_memory.lock().unwrap().reset();
+    }
+
+
+    pub fn from_cartridge(cartridge_bytes: &'m [u8]) -> CpuResult<Self> {
+        let mapper = Self::parse_cartridge(cartridge_bytes)?;
+        tracing::info!("Using mapper: {}", mapper);
+        Ok(Self {
+            mapper,
+            ram: Ram::new(),
+            ppu_memory: Arc::new(Mutex::new(PpuMemory::new())),
+            apu_memory: Arc::new(Mutex::new(ApuMemory::new())),
+        })
+    }
+
+    fn parse_cartridge(cartridge_bytes: &'m [u8]) -> CpuResult<CpuMemoryMapper<'m>> {
+        tracing::debug!("Reading cartridge without copier bytes...");
+        match CartridgeMetadata::try_parse(cartridge_bytes) {
+            Ok(meta) => {
+                tracing::info!("Loaded cartridge: {} ({})", meta.title, meta.rom_size);
+                return CpuMemoryMapper::from_cartridge_data(&meta)
+            },
+            Err(e) => {
+                tracing::debug!("Failed to parse cartridge: {}", e);
+            }
+        }
+
+        // copier bytes
+        tracing::debug!("Reading cartridge with copier bytes...");
+        match CartridgeMetadata::try_parse(&cartridge_bytes[512..]) {
+            Ok(meta) => {
+                tracing::info!("Loaded cartridge: {} ({})", meta.title, meta.rom_size);
+                return CpuMemoryMapper::from_cartridge_data(&meta)
+            },
+            Err(e) => {
+                tracing::debug!("Failed to parse cartridge: {}", e);
+            }
+        }
+
+        Err(CartridgeParseError::HeaderNotFound.into())
     }
 
     pub fn set_ppumemory_ref(&mut self, memref: Arc<Mutex<PpuMemory>>) {
@@ -47,66 +94,6 @@ impl CpuMemory {
 
     pub fn set_apumemory_ref(&mut self, memref: Arc<Mutex<ApuMemory>>) {
         self.apu_memory = memref;
-    }
-
-    /// Insert cartridge means copying raw bytes to mapper and parsing cartridge info
-    pub fn insert_cartridge(&mut self, raw_bytes: &[u8]) -> Result<(), CartridgeParseError> {
-        // try parse with lorom
-        let mut mapper = LoROM::new();
-        if let Ok(()) = self.try_parse(&mut mapper, raw_bytes) {
-            self.mapper = Box::new(mapper);
-            return Ok(());
-        }
-        // try parse without first 512 bytes
-        if let Ok(()) = self.try_parse(&mut mapper, &raw_bytes[512..]) {
-            self.mapper = Box::new(mapper);
-            self.cartridge_metadata.has_copier_bytes = true;
-            return Ok(());
-        }
-
-        // try hirom next
-        let mut mapper = HiROM::new();
-        if let Ok(()) = self.try_parse(&mut mapper, raw_bytes) {
-            self.mapper = Box::new(mapper);
-            return Ok(());
-        }
-        // try parse without first 512 bytes
-        if let Ok(()) = self.try_parse(&mut mapper, &raw_bytes[512..]) {
-            self.mapper = Box::new(mapper);
-            self.cartridge_metadata.has_copier_bytes = true;
-            return Ok(());
-        }
-
-        // try exhirom next
-        let mut mapper = ExHiROM::new();
-        if let Ok(()) = self.try_parse(&mut mapper, raw_bytes) {
-            self.mapper = Box::new(mapper);
-            return Ok(());
-        }
-        // try parse without first 512 bytes
-        if let Ok(()) = self.try_parse(&mut mapper, &raw_bytes[512..]) {
-            self.mapper = Box::new(mapper);
-            self.cartridge_metadata.has_copier_bytes = true;
-            return Ok(());
-        }
-        Err(CartridgeParseError::HeaderNotFound)
-    }
-
-    fn try_parse(
-        &mut self,
-        mapper: &mut impl Mappermode,
-        raw_bytes: &[u8],
-    ) -> Result<(), CartridgeParseError> {
-        match mapper.try_parse(raw_bytes) {
-            Ok(metadata) => {
-                self.cartridge_metadata = metadata;
-                Ok(())
-            }
-            Err(e) => {
-                mapper.reset();
-                Err(e)
-            }
-        }
     }
 
     /// Read a byte from memory using a 24 bit address,
@@ -120,7 +107,7 @@ impl CpuMemory {
             (0x7E..=0x7F, 0x0000..=0xFFFF) | // Main region of WRAM
             (0x00..=0x3F, 0x2180..=0x2183) | // WM registers
             (0x80..=0xBF, 0x2180..=0x2183) => self.ram.read(long_addr),
-            
+
             // PPU, APU registers
             (0x00..=0x3F, 0x2000..=0x213F) |
             (0x80..=0xBF, 0x2000..=0x213F) => self.ppu_memory.lock().unwrap().read(hhll),
@@ -128,11 +115,17 @@ impl CpuMemory {
 
             // Controller
             (0x00..=0x3F, 0x4000..=0x41FF) |
-            (0x80..=0xBF, 0x4000..=0x41FF) => todo!(),
+            (0x80..=0xBF, 0x4000..=0x41FF) => {
+                tracing::trace!("Reading unimplemented controller registers, returning None");
+                None
+            },
 
             // CPU, DMA
             (0x00..=0x3F, 0x4200..=0x5FFF) |
-            (0x80..=0xBF, 0x4200..=0x5FFF) => todo!(),
+            (0x80..=0xBF, 0x4200..=0x5FFF) => {
+                tracing::trace!("Reading unimplemented DMA registers, returning None");
+                None
+            },
 
 
             // Rest of space is dependant on mapper, so mapper will deal with it
@@ -151,7 +144,7 @@ impl CpuMemory {
             (0x7E..=0x7F, 0x0000..=0xFFFF) | // Main region of WRAM
             (0x00..=0x3F, 0x2180..=0x2183) | // WM registers
             (0x80..=0xBF, 0x2180..=0x2183) => self.ram.write(long_addr, byte),
-            
+
             // PPU
             (0x00..=0x3F, 0x2000..=0x213F) |
             (0x80..=0xBF, 0x2000..=0x213F) => self.ppu_memory.lock().unwrap().write(hhll, byte),
@@ -161,23 +154,20 @@ impl CpuMemory {
 
             // Controller
             (0x00..=0x3F, 0x4000..=0x41FF) |
-            (0x80..=0xBF, 0x4000..=0x41FF) => todo!(),
+            (0x80..=0xBF, 0x4000..=0x41FF) => {
+                tracing::trace!("Writing unimplemented controller registers, ignoring");
+            },
 
             // CPU, DMA
             (0x00..=0x3F, 0x4200..=0x5FFF) |
-            (0x80..=0xBF, 0x4200..=0x5FFF) => todo!(),
+            (0x80..=0xBF, 0x4200..=0x5FFF) => {
+                tracing::trace!("Writing unimplemented DMA registers, ignoring");
+            },
 
 
             // Rest of space is dependant on mapper, so mapper will deal with it
             _ => self.mapper.write(long_addr, byte),
 
         }
-    }
-
-    /// Get all bytes from sram
-    ///
-    /// Can be used to perform save games
-    pub fn get_sram_bytes(&self) -> Vec<u8> {
-        self.mapper.get_sram_bytes()
     }
 }

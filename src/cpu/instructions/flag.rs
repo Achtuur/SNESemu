@@ -1,6 +1,6 @@
 use crate::cpu::{processorstatusflag::ProcessorStatusFlags, Cpu};
 
-impl Cpu {
+impl Cpu<'_> {
     /// Clear Carry (Implied)
     pub fn exe_clc(&mut self) {
         self.status.clear_flag(ProcessorStatusFlags::Carry);

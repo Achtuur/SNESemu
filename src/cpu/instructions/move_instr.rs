@@ -1,6 +1,6 @@
 use crate::cpu::Cpu;
 
-impl Cpu {
+impl Cpu<'_> {
     /// Block Move Negative (Block Move)
     ///
     /// Instruction only works in 16 bit mode for both acc and X, Y registers

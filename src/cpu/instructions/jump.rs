@@ -1,6 +1,6 @@
 use crate::cpu::Cpu;
 
-impl Cpu {
+impl Cpu<'_> {
     /// Jump (Absolute)
     pub fn exe_jmp(&mut self, long_addr: u32) {
         self.pc = long_addr as u16;

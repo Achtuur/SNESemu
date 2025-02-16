@@ -33,11 +33,15 @@ bitflags! {
     }
 }
 
-impl ProcessorStatusFlags {
-    pub fn new() -> Self {
-        ProcessorStatusFlags::from_bits(0).unwrap()
+impl Default for ProcessorStatusFlags {
+    fn default() -> Self {
+        let mut flag = ProcessorStatusFlags::from_bits(0).unwrap();
+        flag.set_flag(ProcessorStatusFlags::Accumulator8bit);
+        flag
     }
+}
 
+impl ProcessorStatusFlags {
     pub fn set_bits(&mut self, bits: u8) {
         let flag = ProcessorStatusFlags::from_bits(bits as u16).unwrap();
         self.set_flag(flag);

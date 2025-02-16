@@ -1,6 +1,6 @@
 use crate::cpu::{processorstatusflag::ProcessorStatusFlags, Cpu};
 
-impl Cpu {
+impl Cpu<'_> {
     /// Add With Carry (DP Indexed Indirect,X)
     pub fn exe_adc(&mut self, data: u16) {
         let sum = match self.status.contains(ProcessorStatusFlags::Decimal) {
@@ -15,7 +15,7 @@ impl Cpu {
 
     /// Add BCD numbers
     fn exe_adc_bcd(&mut self, data: u16) -> u16 {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             //8 bit addition
             true => {
                 let data = data as u8;
@@ -93,7 +93,7 @@ impl Cpu {
             .set(ProcessorStatusFlags::Carry, self.acc() > sum);
 
         // amount of bits to shift left to find if number is negative
-        let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        let b = match self.is_emulation_mode() {
             //8 bit
             true => 7,
             //16 bit
@@ -111,7 +111,7 @@ impl Cpu {
 
     /// Arithmetic Shift Left (Direct Page)
     pub fn exe_asl(&mut self, low_addr: u32, high_addr: u32) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => {
                 let mut val = self.mem_read(low_addr);
                 self.status
@@ -139,7 +139,7 @@ impl Cpu {
     ///
     /// the asla name was made up by me to differentiate it from asl
     pub fn exe_asla(&mut self) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => self
                 .status
                 .set(ProcessorStatusFlags::Carry, (self.acc >> 7) == 1),
@@ -159,7 +159,7 @@ impl Cpu {
 
     /// Decrement (Direct Page)
     pub fn exe_dec(&mut self, low_addr: u32, high_addr: u32) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => {
                 let val = self.mem_read(low_addr).wrapping_sub(1);
                 self.status.set(ProcessorStatusFlags::Zero, val == 0);
@@ -197,7 +197,7 @@ impl Cpu {
 
     /// Increment (Direct Page)
     pub fn exe_inc(&mut self, low_addr: u32, high_addr: u32) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => {
                 let val = self.mem_read(low_addr).wrapping_sub(1);
                 self.status.set(ProcessorStatusFlags::Zero, val == 0);
@@ -229,7 +229,7 @@ impl Cpu {
 
     /// Logical Shift Memory or Accumulator Right (Direct Page)
     pub fn exe_lsr(&mut self, low_addr: u32, high_addr: u32) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => {
                 let mut val = self.mem_read(low_addr);
                 self.status
@@ -272,7 +272,7 @@ impl Cpu {
     }
 
     fn exe_sbc_bcd(&mut self, data: u16) -> u16 {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             //8 bit addition
             true => {
                 let data = data as u8;
@@ -380,7 +380,7 @@ impl Cpu {
             .set(ProcessorStatusFlags::Carry, self.acc() < sum);
 
         // amount of bits to shift left to find if number is negative
-        let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        let b = match self.is_emulation_mode() {
             //8 bit
             true => 7,
             //16 bit

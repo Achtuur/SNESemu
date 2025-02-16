@@ -1,8 +1,8 @@
 use crate::{
     cpu::{
-        instructions::{addressing::AddressingMode, Instruction}, Cpu
+        instructions::{addressing::AddressingMode, Instruction}, processorstatusflag::ProcessorStatusFlags, Cpu
     },
-    to_long,
+    to_long, to_word,
 };
 
 /// Container for holding data that an instruction can take as input
@@ -28,26 +28,26 @@ impl InstrData {
     }
 }
 
-impl Cpu {
+impl Cpu<'_> {
     /// Returns `InstrData` struct based on instruction addressing mode
     ///
     /// Source: [6502.org](http://www.6502.org/tutorials/65c816opcodes.html)
     pub fn get_instruction_data(&mut self, instr: &Instruction) -> InstrData {
-        let (arg0, arg1, arg2) = match instr.byte_length() {
+        let (arg0, arg1, arg2) = match instr.byte_length(self.is_emulation_mode()) {
             1 => (0, 0, 0), // Implied
             2 => {
-                let arg0 = self.mem_read(self.get_pc_addr());
+                let arg0 = self.read_pc();
                 (arg0, 0, 0)
             }
             3 => {
-                let arg0 = self.mem_read(self.get_pc_addr());
-                let arg1 = self.mem_read(self.get_pc_addr());
+                let arg0 = self.read_pc();
+                let arg1 = self.read_pc();
                 (arg0, arg1, 0)
             }
             4 => {
-                let arg0 = self.mem_read(self.get_pc_addr());
-                let arg1 = self.mem_read(self.get_pc_addr());
-                let arg2 = self.mem_read(self.get_pc_addr());
+                let arg0 = self.read_pc();
+                let arg1 = self.read_pc();
+                let arg2 = self.read_pc();
                 (arg0, arg1, arg2)
             }
             _ => unreachable!("No instruction has more than 3 arguments"),
@@ -65,8 +65,8 @@ impl Cpu {
             AddressingMode::DirectX => self.get_directx_data(arg0),
             AddressingMode::DirectY => self.get_directy_data(arg0),
             AddressingMode::Implied => InstrData::new(0, 0, 0, 0),
-            AddressingMode::Immediate => self.get_immediate(arg0),
-            AddressingMode::ImmediateLong => self.get_immediate_long(arg0, arg1),
+            AddressingMode::Immediate => self.get_immediate(arg0, arg1),
+            AddressingMode::ImmediateLong => self.get_immediate_long(arg0, arg1, arg2),
             AddressingMode::Indirect => self.get_indirect_data(arg0),
             AddressingMode::IndirectX => self.get_indirectx_data(arg0),
             AddressingMode::IndirectY => self.get_indirecty_data(arg0),
@@ -173,7 +173,7 @@ impl Cpu {
         let mid_pointer = low_pointer.wrapping_add(1);
         let high_pointer = low_pointer.wrapping_add(2);
 
-        let mmll = self.mem_read_long(low_pointer, high_pointer) as u32;
+        let mmll = self.mem_read_long(low_pointer, mid_pointer) as u32;
         let hh = self.mem_read(high_pointer) as u32;
         let dest_addr = (hh << 16) | mmll;
 
@@ -309,11 +309,12 @@ impl Cpu {
         InstrData::new(data, low_addr, high_addr, 0)
     }
 
-    fn get_immediate(&mut self, arg0: u8) -> InstrData {
-        InstrData::new(arg0 as u16, 0, 0, 0)
+    fn get_immediate(&mut self, arg0: u8, arg1: u8) -> InstrData {
+        let w = to_word!(arg1, arg0);
+        InstrData::new(w, 0, 0, 0)
     }
 
-    fn get_immediate_long(&mut self, arg0: u8, arg1: u8) -> InstrData {
+    fn get_immediate_long(&mut self, arg0: u8, arg1: u8, arg2: u8) -> InstrData {
         let data = (arg1 as u16) << 8 | (arg0 as u16);
         InstrData::new(data, 0, 0, 0)
     }
@@ -333,11 +334,17 @@ impl Cpu {
     }
 
     fn get_relative_data(&mut self, arg0: u8) -> InstrData {
-        let target_addr = if (arg0 >> 7) == 1 {
-            self.pc.wrapping_add(2).wrapping_add(arg0 as u16)
+        let target_addr = if (arg0 & 0x8) > 0 {
+            // I need to treat arg as an i8
+            // `as i8 as i16` keeps the sign properly,
+            // `0xEA as i8 as i16` becomes `0xFFEA`
+            // casting to i16 directly gives `0x00EA`, which is not what we want
+            // type conversions make sure that the final result is a u16
+            (self.pc as i16).wrapping_add(arg0 as i8 as i16) as u16
         } else {
-            self.pc.wrapping_sub(254).wrapping_add(arg0 as u16)
+            self.pc.wrapping_add(arg0 as u16)
         };
+        // let target_addr = self.pc.wrapping_add(arg0 as u16);
 
         let target_addr = to_long!(self.pbr, target_addr);
         InstrData::new(0, target_addr, 0, 0)
@@ -386,5 +393,20 @@ impl Cpu {
 
         let data = self.mem_read_long(low_addr, high_addr);
         InstrData::new(data, low_addr, high_addr, 0)
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_conv() {
+        let b = 0xEA;
+        println!("b as i8: {0:X?}", b as i8);
+        println!("b as i8 as i16: {0:04X?}", b as i8 as i16);
+        println!("b as i8: {}", b as i8);
+        println!("b as i8 as i16: {}", b as i8 as i16);
     }
 }

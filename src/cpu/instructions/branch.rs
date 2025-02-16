@@ -1,6 +1,6 @@
 use crate::cpu::{processorstatusflag::ProcessorStatusFlags, Cpu};
 
-impl Cpu {
+impl Cpu<'_> {
     fn branch(&mut self, target_addr: u32) {
         self.pc = target_addr as u16;
     }

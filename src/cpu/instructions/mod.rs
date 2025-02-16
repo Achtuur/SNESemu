@@ -121,8 +121,12 @@ pub enum Instruction {
 
 
 impl Instruction {
-    pub fn byte_length(&self) -> usize {
-        1 + self.addressing_mode().byte_length()
+    pub fn byte_length(&self, acc_8_bit: bool) -> usize {
+        match self {
+            // Always 2, regardless of emulation mode
+            Self::Rep | Self::Sep => 2,
+            _ => 1 + self.addressing_mode().byte_length(acc_8_bit)
+        }
     }
 
     pub fn cycle_count(&self) -> usize {

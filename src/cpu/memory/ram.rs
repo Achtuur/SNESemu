@@ -21,6 +21,11 @@ impl Ram {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.bytes = [0_u8; RAM_SIZE];
+        self.pointer = 0;
+    }
+
     /// Read a byte from RAM
     ///
     /// # Important
@@ -62,13 +67,13 @@ impl Ram {
     fn index_from_long_addr(long_addr: u32) -> Option<usize> {
         let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
         let bank_i = match bank {
-            0x00..=0x3F | 0x7E | 0x80..=0xBF => 0_u16,
-            0x7F => 1_u16,
+            0x00..=0x3F | 0x7E | 0x80..=0xBF => 0,
+            0x7F => 1,
             _ => return None,
         };
 
-        let hhll_i = hhll;
-        let i = (bank_i * RAM_BANK_SIZE + hhll_i) as usize;
+        let hhll_i = hhll as usize;
+        let i = bank_i * RAM_BANK_SIZE as usize + hhll_i;
         Some(i)
     }
 

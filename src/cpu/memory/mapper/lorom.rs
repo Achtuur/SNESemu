@@ -9,7 +9,8 @@ const ROM_BANK_SIZE: usize = 0x8000;
 const SRAM_BANK_SIZE: usize = 0x8000;
 
 /// LoROM mapper, more information can be found on [the snesdev wiki](https://snes.nesdev.org/wiki/Memory_map#LoROM)
-pub struct LoROM {
+#[derive(Debug)]
+pub struct LoROM<'m> {
     /// Save RAM
     ///
     /// Mapped in banks `0x70` to `0x7D` from `0x0000` to `0x7FFF`
@@ -25,7 +26,7 @@ pub struct LoROM {
     /// ROM read from the cartridge
     ///
     /// Mapped in banks `0x80 - 0xFF` from `0x8000 - 0xFFFF`, mirrored in `0x00 - 0x7D` from `0x8000 - 0xFFFF`
-    rom: Vec<u8>,
+    rom: &'m [u8],
 
     /// Number of ROM banks, depends on rom size and mapper
     ///
@@ -33,13 +34,17 @@ pub struct LoROM {
     rom_banks: usize,
 }
 
-impl LoROM {
-    pub fn new() -> Self {
-        LoROM {
-            sram: Vec::new(),
-            rom: Vec::new(),
-            sram_banks: 0,
-            rom_banks: 0,
+impl<'m> LoROM<'m> {
+    pub fn new(rom: &'m [u8], sram_size: usize) -> Self {
+        // let rom_vec = rom.to_vec();
+        let rom_banks = std::cmp::max(1, rom.len() / ROM_BANK_SIZE);
+        let sram = vec![0; sram_size * 1024];
+        let sram_banks = std::cmp::max(1, sram.len() / SRAM_BANK_SIZE);
+        Self {
+            rom,
+            sram,
+            rom_banks,
+            sram_banks,
         }
     }
 
@@ -73,7 +78,7 @@ impl LoROM {
         let bank_i = bank_i % self.sram_banks;
 
         // Mirror hhll if needed (only applies to sram size of 2kB)
-        let hhll_i = hhll as usize % self.get_sram_size();
+        let hhll_i = hhll as usize % self.sram.len();
 
         let i = bank_i * SRAM_BANK_SIZE + hhll_i;
         Some(i)
@@ -100,23 +105,23 @@ impl LoROM {
         // calculate final index using bank index and hhll index
         let i = bank_i * ROM_BANK_SIZE + hi_lo_byte_i;
 
-        println!("${:#06X?} = rom[{:?}] = #{:#04X?}", long_addr, i, self.rom[i as usize]);
+        println!("${:#06X?} = rom[{:#04X?}] = #{:#04X?}", long_addr, i, self.rom[i as usize]);
         Some(self.rom[i])
     }
 }
 
-impl Mappermode for LoROM {
+impl Mappermode for LoROM<'_> {
     fn read(&self, long_addr: u32) -> Option<u8> {
         let (bank, hhll) = separate_bank_hhll_addr!(long_addr);
         match (bank, hhll) {
             // SRAM
             (0x70..=0x7D | 0xF0..=0xFF, 0x0000..=0x7FFF) => self.read_sram(long_addr),
-            
+
             // ROM
             (0x00..=0x7D, 0x8000..=0xFFFF) | // upper Q1, Q2 mirrors
             (0x80..=0xFF, 0x8000..=0xFFFF) | // Actual rom in upper Q3, Q4
             (0xC0..=0xF0, 0x0000..=0x7FFF) => self.read_rom(long_addr),
-            
+
             _ => None
         }
     }
@@ -126,53 +131,50 @@ impl Mappermode for LoROM {
         match (bank, hhll) {
             // SRAM
             (0x70..=0x7D | 0xF0..=0xFF, 0x0000..=0x7FFF) => self.write_sram(long_addr, value),
-            
+
             // ROM
             (0x00..=0x7D, 0x8000..=0xFFFF) | // upper Q1, Q2 mirrors
             (0x80..=0xFF, 0x8000..=0xFFFF) | // Actual rom in upper Q3, Q4
             (0xC0..=0xF0, 0x0000..=0x7FFF) =>  {}
-            
+
             _ => {}
         }
     }
 
-    fn copy_bytes_to_rom(&mut self, bytes: &[u8]) {
-        for byte in bytes {
-            self.rom.push(*byte);
-        }
-        self.rom_banks = std::cmp::max(1, self.get_rom_size() / ROM_BANK_SIZE);
-    }
+    // fn copy_bytes_to_rom(&mut self, bytes: &[u8]) {
+    //     self.rom = bytes.to_vec();
+    //     self.rom_banks = std::cmp::max(1, self.get_rom_size() / ROM_BANK_SIZE);
+    // }
 
-    fn get_rom_size(&self) -> usize {
+    fn rom_size(&self) -> usize {
         self.rom.len()
     }
 
-    fn set_ram_size(&mut self, size: u8) {
-        self.sram = vec![0; (1 << size) * 1024];
-        self.sram_banks = std::cmp::max(1, self.get_sram_size() / SRAM_BANK_SIZE);
-    }
+    // fn set_ram_size(&mut self, size: usize) {
+    //     self.sram = vec![0; size * 1024];
+    //     self.sram_banks = std::cmp::max(1, self.get_sram_size() / SRAM_BANK_SIZE);
+    // }
 
-    fn get_sram_size(&self) -> usize {
+    fn sram_size(&self) -> usize {
         self.sram.len()
     }
 
-    fn get_memory_map_mode(&self) -> u8 {
-        0x00
-    }
+    // fn get_memory_map_mode(&self) -> u8 {
+    //     0x00
+    // }
 
     fn reset(&mut self) {
-        self.rom = Vec::new();
-        self.sram = Vec::new();
+        // don't want to reallocate
+        for x in self.sram.iter_mut() {
+            *x = 0;
+        }
     }
 
-    fn get_sram_bytes(&self) -> Vec<u8> {
-        self.sram.clone()
+    fn sram_bytes(&self) -> &[u8] {
+        &self.sram
     }
 
     fn copy_bytes_to_sram(&mut self, bytes: &[u8]) {
-        self.sram = Vec::new();
-        for byte in bytes {
-            self.sram.push(*byte);
-        }
+        self.sram = bytes.to_vec();
     }
 }

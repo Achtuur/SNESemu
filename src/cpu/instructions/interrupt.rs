@@ -1,6 +1,6 @@
 use crate::cpu::{processorstatusflag::ProcessorStatusFlags, Cpu};
 
-impl Cpu {
+impl Cpu<'_> {
     pub fn exe_interrupt(&mut self, interrupt_vector: u32) {
         self.push_byte_stack(self.pbr);
         self.push_long_stack(self.pc.wrapping_add(2));

@@ -1,6 +1,7 @@
 use super::Mappermode;
 
-pub struct ExHiROM {
+#[derive(Debug)]
+pub struct ExHiROM<'m> {
     /// Save RAM
     ///
     /// Mapped in banks `0x70` to `0x7D` from `0x0000` to `0x7FFF`
@@ -11,19 +12,20 @@ pub struct ExHiROM {
     /// ROM read from the cartridge
     ///
     /// Mapped in banks `0x80 - 0xFF` from `0x8000 - 0xFFFF`, mirrored in `0x00 - 0x7D` from `0x8000 - 0xFFFF`
-    rom: Vec<u8>,
+    rom: &'m [u8],
 }
 
-impl ExHiROM {
-    pub fn new() -> ExHiROM {
-        ExHiROM {
-            sram: Vec::new(),
-            rom: Vec::new(),
+impl<'m> ExHiROM<'m> {
+    pub fn new(rom: &'m [u8], sram_size: usize) -> Self {
+        let sram = vec![0; sram_size * 1024];
+        Self {
+            rom,
+            sram,
         }
     }
 }
 
-impl Mappermode for ExHiROM {
+impl Mappermode for ExHiROM<'_> {
     fn read(&self, long_addr: u32) -> Option<u8> {
         todo!()
     }
@@ -32,35 +34,23 @@ impl Mappermode for ExHiROM {
         todo!()
     }
 
-    fn copy_bytes_to_rom(&mut self, bytes: &[u8]) {
-        for byte in bytes {
-            self.rom.push(*byte);
-        }
-    }
-
-    fn get_rom_size(&self) -> usize {
+    fn rom_size(&self) -> usize {
         self.rom.len()
     }
 
-    fn set_ram_size(&mut self, size: u8) {
-        self.sram = vec![0; (1 << size) * 1024];
-    }
-
-    fn get_sram_size(&self) -> usize {
+    fn sram_size(&self) -> usize {
         self.sram.len()
     }
 
-    fn get_memory_map_mode(&self) -> u8 {
-        0x05
-    }
-
     fn reset(&mut self) {
-        self.rom = Vec::new();
-        self.sram = Vec::new();
+        // don't want to reallocate
+        for x in self.sram.iter_mut() {
+            *x = 0;
+        }
     }
 
-    fn get_sram_bytes(&self) -> Vec<u8> {
-        self.sram.clone()
+    fn sram_bytes(&self) -> &[u8] {
+        &self.sram
     }
 
     fn copy_bytes_to_sram(&mut self, bytes: &[u8]) {

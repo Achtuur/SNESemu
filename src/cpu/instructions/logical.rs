@@ -1,6 +1,6 @@
 use crate::cpu::{processorstatusflag::ProcessorStatusFlags, Cpu};
 
-impl Cpu {
+impl Cpu<'_> {
     /// AND Accumulator with Memory (DP Indexed Indirect,X)
     pub fn exe_and(&mut self, data: u16) {
         self.set_acc(self.acc() & data);
@@ -18,7 +18,7 @@ impl Cpu {
     /// Test Bits (Direct Page)
     pub fn exe_bit(&mut self, data: u16) {
         // Get amount of bits to shift right for negative and overflow flag based on bit mode
-        let (n, v) = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        let (n, v) = match self.is_emulation_mode() {
             true => (7, 6),
             false => (15, 14),
         };
@@ -69,7 +69,7 @@ impl Cpu {
 
     /// Rotate Memory or Accumulator Left (Direct Page)
     pub fn exe_rol(&mut self, low_addr: u32, high_addr: u32) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => {
                 let mut val = self.mem_read(low_addr);
                 let c = self.carry() as u8;
@@ -96,7 +96,7 @@ impl Cpu {
     }
 
     pub fn exe_rola(&mut self) {
-        let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        let b = match self.is_emulation_mode() {
             true => 7,
             false => 15,
         };
@@ -113,7 +113,7 @@ impl Cpu {
 
     /// Rotate Memory or Accumulator Right (Direct Page)
     pub fn exe_ror(&mut self, low_addr: u32, high_addr: u32) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => {
                 let mut val = self.mem_read(low_addr);
                 let c = self.carry() as u8;
@@ -141,7 +141,7 @@ impl Cpu {
     }
 
     pub fn exe_rora(&mut self) {
-        let b = match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        let b = match self.is_emulation_mode() {
             true => 7,
             false => 15,
         };
@@ -158,7 +158,7 @@ impl Cpu {
 
     /// Test and Reset Memory Bits Against Accumulator (Direct Page)
     pub fn exe_trb(&mut self, low_addr: u32, high_addr: u32) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => {
                 let mut val = self.mem_read(low_addr);
                 let and = self.acc() as u8 & val;
@@ -178,7 +178,7 @@ impl Cpu {
 
     /// Test and Set Memory Bits Against Accumulator (Direct Page)
     pub fn exe_tsb(&mut self, low_addr: u32, high_addr: u32) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => {
                 let mut val = self.mem_read(low_addr);
                 let and = self.acc() as u8 & val;

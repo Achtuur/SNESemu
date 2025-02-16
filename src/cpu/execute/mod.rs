@@ -1,8 +1,10 @@
 pub mod instrdata;
 
-use super::{instructions::Instruction, Cpu, CpuError};
+use crate::to_word;
 
-impl Cpu {
+use super::{instructions::Instruction, processorstatusflag::ProcessorStatusFlags, Cpu, CpuError};
+
+impl Cpu<'_> {
     pub fn execute_nmi(&mut self) -> Result<(), CpuError> {
         self.exe_interrupt(0x00FFEA);
         Ok(())
@@ -16,10 +18,8 @@ impl Cpu {
     /// Executes `instr`, increments PC and adds to cycle wait time
     pub fn execute_op(&mut self, op: u8) -> Result<(), CpuError> {
         let instr = Instruction::from_op(op);
-        println!("Executing instruction: {:?}", instr);
         self.execute_instr(&instr);
         self.wait_cycles = instr.cycle_count();
-        self.pc = self.pc.wrapping_add(instr.byte_length() as u16);
         Ok(())
     }
 
@@ -29,6 +29,16 @@ impl Cpu {
         let data = instr_data.data;
         let low_addr = instr_data.low_addr;
         let high_addr = instr_data.high_addr;
+
+        tracing::debug!(
+            "[A: {:#04X}, X: {:#04X}, Y: {:#04X}]",
+            self.acc(), self.x(), self.y()
+        );
+
+        tracing::debug!(
+            "[PC: {:#2X}]: Executing {:?} ({:#02X}, {:#06X})",
+            self.get_pc_addr(), instr, data, low_addr
+        );
 
         match instr {
             I::Adc(_) => self.exe_adc(data),
@@ -88,10 +98,10 @@ impl Cpu {
 
             I::Jsr(_) => self.exe_jsr(low_addr),
 
-            I::Lda(_) => self.exe_lda(low_addr, high_addr),
+            I::Lda(_) => self.exe_lda(data),
 
-            I::Ldx(_) => self.exe_ldx(low_addr, high_addr),
-            I::Ldy(_) => self.exe_ldy(low_addr, high_addr),
+            I::Ldx(_) => self.exe_ldx(data),
+            I::Ldy(_) => self.exe_ldy(data),
 
             I::Lsra => self.exe_lsra(),
             I::Lsr(_) => self.exe_lsr(low_addr, high_addr),

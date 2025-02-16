@@ -1,19 +1,20 @@
 use instructions::Instruction;
 
-use self::{ memory::CpuMemory,
-    processorstatusflag::ProcessorStatusFlags,
-};
+use self::{memory::CpuMemory, processorstatusflag::ProcessorStatusFlags};
 
 mod execute;
 pub mod instructions;
 pub mod memory;
 pub mod processorstatusflag;
 
+mod error;
+pub use error::*;
+
 pub enum CpuError {
     PlaceHolder,
 }
 
-pub struct Cpu {
+pub struct Cpu<'mem> {
     // Registers
     /// Stack pointer
     /// (Points to the next available(unused) location on the stack.)
@@ -39,7 +40,7 @@ pub struct Cpu {
     x: u16,
 
     /// Index register Y
-    /// (Can be used to reference memory, to pass data to memory, or as counters for loops.)        
+    /// (Can be used to reference memory, to pass data to memory, or as counters for loops.)
     y: u16,
 
     /// Direct page register
@@ -59,18 +60,19 @@ pub struct Cpu {
     mdr: u8,
 
     /// Cpu Memory, holds ram, rom and other cpu registers. Is also used to communicate with controllers, apu and ppu
-    pub memory: CpuMemory,
+    pub memory: CpuMemory<'mem>,
 
     /// Amount of cycles to wait before next instruction is called (simulates instructions taking x cycles)
     wait_cycles: usize,
 }
 
-impl Cpu {
+impl<'mem> Cpu<'mem> {
     pub fn new() -> Self {
+
         Cpu {
             memory: CpuMemory::new(),
-            status: ProcessorStatusFlags::from_bits(0).unwrap(),
-            sp: 0,
+            status: ProcessorStatusFlags::default(),
+            sp: 0x100,
             pc: 0xFFFC,
             acc: 0,
             x: 0,
@@ -86,9 +88,10 @@ impl Cpu {
     /// Reset CPU, sets all values to initial state
     pub fn reset(&mut self) {
         // self.memory.lock().unwrap().reset(); // todo -> implement memory reset
-        self.status = ProcessorStatusFlags::from_bits(0).unwrap();
+        self.memory.reset();
+        self.status = ProcessorStatusFlags::default();
         self.sp = 0;
-        self.pc = 0xFFFC; // reset vector
+        self.pc = self.mem_read_long(0xFFFC, 0xFFFC + 1); // reset vector
         self.acc = 0;
         self.x = 0;
         self.y = 0;
@@ -124,8 +127,14 @@ impl Cpu {
         }
 
         // read & execute instruction
-        let op = self.mem_read(self.get_pc_addr());
+        let op = self.read_pc();
         self.execute_op(op)
+    }
+
+    pub fn read_pc(&mut self) -> u8 {
+        let b = self.mem_read(self.get_pc_addr());
+        self.pc = self.pc.wrapping_add(1);
+        b
     }
 
     /// Returns pc long address
@@ -175,11 +184,17 @@ impl Cpu {
         }
     }
 
+    /// Returns whether the CPU is in emulation mode.
+    /// The accumulator is 8 bits in that case.
+    pub fn is_emulation_mode(&self) -> bool {
+        self.status.contains(ProcessorStatusFlags::Accumulator8bit)
+    }
+
     /// Returns accumulator value as either 16 bit or 8 bits depending on accumulator 8 bit flag.
     ///
     /// 8 bit value is actually just 16 bit value ANDed with `0xF`
     pub fn acc(&self) -> u16 {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => self.acc & 0xF,
             false => self.acc,
         }
@@ -188,7 +203,7 @@ impl Cpu {
     /// Set accumulator, sets lower bytes of accumulator to `val` if 8 bit mode for accumulator register is enabled,
     /// else set accumulator to `val`
     pub fn set_acc(&mut self, val: u16) {
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => self.acc = (self.acc & 0xF0) | (val & 0xF),
             false => self.acc = val,
         }
@@ -197,13 +212,13 @@ impl Cpu {
     /// Call this function after setting accumulator to set negative and zero flags. Takes into account 16/8 bit mode
     pub fn set_acc_nz_flag(&mut self) {
         self.status.set(ProcessorStatusFlags::Zero, self.acc == 0);
-        match self.status.contains(ProcessorStatusFlags::Accumulator8bit) {
+        match self.is_emulation_mode() {
             true => self
                 .status
-                .set(ProcessorStatusFlags::Negative, (self.acc as i8) < 0),
+                .set(ProcessorStatusFlags::Negative, (self.acc & 0x8) > 0),
             false => self
                 .status
-                .set(ProcessorStatusFlags::Negative, (self.acc as i16) < 0),
+                .set(ProcessorStatusFlags::Negative, (self.acc & 0x80) > 0),
         }
     }
 
@@ -231,10 +246,10 @@ impl Cpu {
         match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
             true => self
                 .status
-                .set(ProcessorStatusFlags::Negative, (self.x as i8) < 0),
+                .set(ProcessorStatusFlags::Negative, (self.x & 0x8) > 0),
             false => self
                 .status
-                .set(ProcessorStatusFlags::Negative, (self.x as i16) < 0),
+                .set(ProcessorStatusFlags::Negative, (self.x & 0x80) > 0),
         }
     }
 
@@ -262,10 +277,10 @@ impl Cpu {
         match self.status.contains(ProcessorStatusFlags::XYreg8bit) {
             true => self
                 .status
-                .set(ProcessorStatusFlags::Negative, (self.y as i8) < 0),
+                .set(ProcessorStatusFlags::Negative, (self.y & 0x8) > 0),
             false => self
                 .status
-                .set(ProcessorStatusFlags::Negative, (self.y as i16) < 0),
+                .set(ProcessorStatusFlags::Negative, (self.y & 0x80) > 0),
         }
     }
 
@@ -273,14 +288,14 @@ impl Cpu {
     ///
     /// Locks `self.memory`
     pub fn push_byte_stack(&mut self, byte: u8) {
-        self.mem_write(self.sp as u32, byte);
+        self.mem_write(0x100 | self.sp as u32, byte);
         self.sp -= 1;
     }
 
     /// Pull single byte from stack and puts it in `self.mdr` and returns `self.mdr`.
     /// Increments stack pointer.
     pub fn pull_byte_stack(&mut self) -> u8 {
-        self.mem_read(self.sp as u32);
+        self.mem_read(0x100 | self.sp as u32);
         self.sp += 1;
         self.mdr
     }

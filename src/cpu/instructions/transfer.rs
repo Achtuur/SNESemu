@@ -1,6 +1,6 @@
 use crate::cpu::Cpu;
 
-impl Cpu {
+impl Cpu<'_> {
     /// Transfer Accumulator to Index Register X (Implied)
     pub fn exe_tax(&mut self) {
         self.set_x(self.acc());
