@@ -189,12 +189,12 @@ impl CartridgeMetadata<'_> {
             .collect::<Vec<u8>>();
 
         // check if every character except the last is either a space or a capital letter
-        if game_name[0..20]
-            .iter()
-            .any(|byte| !matches!(byte, 0x20 | 0x41..=0x5A))
-        {
-            return Err(CartridgeParseError::InvalidGameName);
-        }
+        // if game_name[0..20]
+        //     .iter()
+        //     .any(|byte| !matches!(byte, 0x20 | 0x41..=0x5A))
+        // {
+        //     return Err(CartridgeParseError::InvalidGameName);
+        // }
 
         metadata.set_title(&game_name);
 

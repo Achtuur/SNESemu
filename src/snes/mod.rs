@@ -65,7 +65,8 @@ impl PixEngine for SnesApp<'_> {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         self.screen.init(s)?;
 
-        let rom = include_bytes!("../../resources/rom/Super Mario World.smc");
+        // let rom = include_bytes!("../../resources/rom/Super Mario World.smc");
+        let rom = include_bytes!("../../resources/rom/cputest/cputest-basic.sfc");
         self.cpu.memory = CpuMemory::from_cartridge(rom)?;
 
         let ppumem = arc_mut!(PpuMemory::new());
